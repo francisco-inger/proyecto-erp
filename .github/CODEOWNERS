@@ -1,0 +1,40 @@
+# CODEOWNERS — hace cumplir el mapa de propiedad de docs/contexts/00-reglas-generales.md
+# Reemplaza los usuarios @placeholder por los usernames reales de GitHub del equipo.
+# Con "branch protection" activado en `main`/`develop` exigiendo review de
+# CODEOWNERS, GitHub bloqueará el merge hasta que el dueño de la carpeta apruebe.
+
+# Core — Diego (Tech Lead)
+/src/core/                @diego-tech-lead
+/src/App.jsx              @diego-tech-lead
+
+# Módulo Ventas + Plugin Manager — Eliannys
+/src/modules/ventas/          @eliannys-backend
+/src/modules/plugin-manager/  @eliannys-backend
+
+# Módulo IA / Automatización — Daniel
+/backend/ai/               @daniel-ia
+
+# Módulo Chatbot / NLP — compartido Daniel + Francisco
+/src/modules/chatbot/      @daniel-ia @francisco-chatbot
+
+# Integraciones — Leandro
+/backend/integrations/     @leandro-integraciones
+
+# Frontend Web general — Benjamin
+/src/pages/                @benjamin-frontend
+/src/core/layout/          @benjamin-frontend @diego-tech-lead
+
+# Analytics / Reportes — Kendry
+/src/modules/reportes/     @kendry-analytics
+
+# Mobile — Rafi
+/mobile/                   @rafi-mobile
+
+# CRM + Base de datos — Ediana
+/src/modules/crm/          @ediana-bd-crm
+/backend/db/                @ediana-bd-crm
+
+# Hosting / DevOps / Desktop — Ana María
+/.github/workflows/        @anamaria-devops
+/desktop/                  @anamaria-devops
+/docker/                   @anamaria-devops
