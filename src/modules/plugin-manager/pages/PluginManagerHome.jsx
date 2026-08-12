@@ -1,448 +1,2723 @@
+
+
 /*
-  PluginManagerHome — appes.erp
-  Sección principal del Plugin Manager & Marketplace.
-  Mapea exactamente la interfaz del diseño de Plugins:
-  KPIs, pestañas, plugins destacados, tabla de plugins instalados,
-  categorías de la barra lateral, recursos y estado del sistema.
-*/
-import { useState } from 'react'
+ * PluginManagerHome — appes.erp
+ *
+ * Versión protegida contra:
+ * - Datos undefined/null
+ * - Servicios que todavía no existen
+ * - Arrays inválidos
+ * - Plugins duplicados
+ * - Errores al cargar
+ * - Pantalla en blanco
+ * - Instalación ZIP
+ * - Catálogo
+ * - Plugins instalados
+ * - Destacados
+ * - Categorías
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { pluginManagerService } from '../services/pluginManager.service'
 import './PluginManagerHome.css'
+
+const EMPTY_STATE = {
+  catalog: [],
+  installed: [],
+  featured: [],
+  categories: [
+    {
+      name: 'Todas',
+      count: 0,
+    },
+  ],
+}
+
+function normalizeArray(value) {
+  return Array.isArray(value) ? value : []
+}
+
+function normalizeCategories(value, catalog = []) {
+  if (!Array.isArray(value) || value.length === 0) {
+    const categories = new Map()
+
+    catalog.forEach((plugin) => {
+      const category = String(plugin?.categoria || '').trim()
+
+      if (category) {
+        categories.set(
+          category,
+          (categories.get(category) || 0) + 1
+        )
+      }
+    })
+
+    return [
+      {
+        name: 'Todas',
+        count: catalog.length,
+      },
+      ...Array.from(categories.entries()).map(
+        ([name, count]) => ({
+          name,
+          count,
+        })
+      ),
+    ]
+  }
+
+  return value
+    .filter(Boolean)
+    .map((category) => {
+      if (typeof category === 'string') {
+        return {
+          name: category,
+          count: 0,
+        }
+      }
+
+      return {
+        name: String(category?.name || 'Sin categoría'),
+        count: Number(category?.count || 0),
+      }
+    })
+}
+
+function safeLoadPlugins() {
+  try {
+    const catalog = normalizeArray(
+      pluginManagerService?.getCatalog?.()
+    )
+
+    const installed = normalizeArray(
+      pluginManagerService?.getInstalledPlugins?.()
+    )
+
+    const featured = normalizeArray(
+      pluginManagerService?.getFeaturedPlugins?.()
+    )
+
+    const categories = normalizeCategories(
+      pluginManagerService?.getCategories?.(),
+      catalog
+    )
+
+    return {
+      catalog,
+      installed,
+      featured,
+      categories:
+        categories.length > 0
+          ? categories
+          : EMPTY_STATE.categories,
+    }
+  } catch (error) {
+    console.error(
+      'Plugin Manager: error cargando datos:',
+      error
+    )
+
+    return EMPTY_STATE
+  }
+}
 
 export function PluginManagerHome() {
   const [activeTab, setActiveTab] = useState('Todos')
   const [selectedCat, setSelectedCat] = useState('Todas')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [showStoreModal, setShowStoreModal] = useState(false)
 
-  // Datos desde el servicio
-  const [featured, setFeatured] = useState(() => pluginManagerService.getFeaturedPlugins())
-  const [installed, setInstalled] = useState(() => pluginManagerService.getInstalledPlugins())
-  const categories = pluginManagerService.getCategories()
-  const systemInfo = pluginManagerService.getSystemInfo()
+  const [showUploadModal, setShowUploadModal] =
+    useState(false)
 
-  // Alternar instalación de plugin destacado
-  const toggleInstallFeatured = (id) => {
-    setFeatured((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const nextInstalado = !item.instalado
-          if (nextInstalado) {
-            // Agregar a instalados
-            setInstalled((inst) => [
-              ...inst,
-              {
-                id: item.id,
-                nombre: item.nombre,
-                categoria: item.categoria,
-                color: item.color,
-                icon: item.icon,
-                version: '1.0.0',
-                estado: 'Activo',
-                ultimaAct: 'Hoy',
-              },
-            ])
-          } else {
-            // Remover de instalados
-            setInstalled((inst) => inst.filter((x) => x.id !== id))
-          }
-          return { ...item, instalado: nextInstalado }
-        }
-        return item
-      })
-    )
-  }
+  const [showStoreModal, setShowStoreModal] =
+    useState(false)
 
-  // Alternar estado de plugin instalado (Activo / Inactivo)
-  const toggleStatusInstalled = (id) => {
-    setInstalled((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, estado: item.estado === 'Activo' ? 'Inactivo' : 'Activo' } : item
+  const [selectedPluginFile, setSelectedPluginFile] =
+    useState(null)
+
+  const [uploadMessage, setUploadMessage] =
+    useState('')
+
+  const [uploadError, setUploadError] =
+    useState('')
+
+  const [isUploading, setIsUploading] =
+    useState(false)
+
+  const [data, setData] = useState(EMPTY_STATE)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const [loadError, setLoadError] = useState('')
+
+  /*
+   * CARGA INICIAL
+   */
+
+  useEffect(() => {
+    let mounted = true
+
+    try {
+      const result = safeLoadPlugins()
+
+      if (mounted) {
+        setData(result)
+        setLoadError('')
+        setIsLoading(false)
+      }
+    } catch (error) {
+      console.error(error)
+
+      if (mounted) {
+        setData(EMPTY_STATE)
+        setLoadError(
+          'No se pudieron cargar los plugins.'
+        )
+        setIsLoading(false)
+      }
+    }
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const catalog = normalizeArray(data?.catalog)
+  const installed = normalizeArray(data?.installed)
+  const featured = normalizeArray(data?.featured)
+  const categories = normalizeArray(data?.categories)
+
+  /*
+   * INFORMACIÓN DEL SISTEMA
+   */
+
+  const systemInfo = useMemo(() => {
+    const fallback = {
+      version: '1.0.0',
+      entorno: 'Producción',
+      estado: 'Óptimo',
+      uptime: '—',
+    }
+
+    try {
+      if (
+        typeof pluginManagerService?.getSystemInfo !==
+        'function'
+      ) {
+        return fallback
+      }
+
+      const result =
+        pluginManagerService.getSystemInfo()
+
+      if (!result || typeof result !== 'object') {
+        return fallback
+      }
+
+      return {
+        ...fallback,
+        ...result,
+      }
+    } catch (error) {
+      console.error(
+        'Plugin Manager: error obteniendo información:',
+        error
       )
+
+      return fallback
+    }
+  }, [])
+
+  /*
+   * REFRESCAR
+   */
+
+  const refreshPlugins = useCallback(() => {
+    try {
+      const result = safeLoadPlugins()
+
+      setData(result)
+      setLoadError('')
+    } catch (error) {
+      console.error(
+        'Plugin Manager: error actualizando:',
+        error
+      )
+    }
+  }, [])
+
+  /*
+   * MOSTRAR TODOS
+   */
+
+  const showAllPlugins = useCallback(() => {
+    setActiveTab('Todos')
+    setSelectedCat('Todas')
+    setSearchQuery('')
+  }, [])
+
+  /*
+   * CAMBIAR TAB
+   */
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab)
+
+    if (tab === 'Todos') {
+      setSelectedCat('Todas')
+    }
+  }, [])
+
+  /*
+   * DESTACADOS
+   */
+
+  const toggleFeatured = useCallback(
+    (id) => {
+      try {
+        if (
+          typeof pluginManagerService?.toggleFeatured !==
+          'function'
+        ) {
+          console.warn(
+            'toggleFeatured no está disponible.'
+          )
+          return
+        }
+
+        pluginManagerService.toggleFeatured(id)
+        refreshPlugins()
+      } catch (error) {
+        console.error(
+          'Error cambiando destacado:',
+          error
+        )
+      }
+    },
+    [refreshPlugins]
+  )
+
+  /*
+   * INSTALAR DESDE CATÁLOGO
+   */
+
+  const installCatalogPlugin = useCallback(
+    (id) => {
+      try {
+        const plugin = catalog.find(
+          (item) => item?.id === id
+        )
+
+        if (!plugin) {
+          console.warn(
+            'Plugin no encontrado:',
+            id
+          )
+          return
+        }
+
+        if (
+          typeof pluginManagerService?.installPlugin !==
+          'function'
+        ) {
+          console.error(
+            'installPlugin no está disponible.'
+          )
+          return
+        }
+
+        const alreadyInstalled = installed.some(
+          (item) => item?.id === id
+        )
+
+        if (alreadyInstalled) {
+          return
+        }
+
+        pluginManagerService.installPlugin(plugin)
+        refreshPlugins()
+      } catch (error) {
+        console.error(
+          'Error instalando plugin:',
+          error
+        )
+      }
+    },
+    [catalog, installed, refreshPlugins]
+  )
+
+  /*
+   * INSTALAR DESTACADO
+   */
+
+  const installFeatured = useCallback(
+    (id) => {
+      installCatalogPlugin(id)
+    },
+    [installCatalogPlugin]
+  )
+
+  /*
+   * ACTIVAR / DESACTIVAR
+   */
+
+  const toggleStatusInstalled = useCallback(
+    (id) => {
+      try {
+        if (
+          typeof pluginManagerService?.togglePluginStatus !==
+          'function'
+        ) {
+          console.warn(
+            'togglePluginStatus no está disponible.'
+          )
+          return
+        }
+
+        pluginManagerService.togglePluginStatus(id)
+        refreshPlugins()
+      } catch (error) {
+        console.error(
+          'Error cambiando estado:',
+          error
+        )
+      }
+    },
+    [refreshPlugins]
+  )
+
+  /*
+   * DESINSTALAR
+   */
+
+  const deleteInstalled = useCallback(
+    (id) => {
+      try {
+        const plugin = installed.find(
+          (item) => item?.id === id
+        )
+
+        if (!plugin) {
+          return
+        }
+
+        const confirmed = window.confirm(
+          `¿Deseas desinstalar "${plugin.nombre || 'este plugin'}"?`
+        )
+
+        if (!confirmed) {
+          return
+        }
+
+        if (
+          typeof pluginManagerService?.uninstallPlugin !==
+          'function'
+        ) {
+          console.error(
+            'uninstallPlugin no está disponible.'
+          )
+          return
+        }
+
+        pluginManagerService.uninstallPlugin(id)
+        refreshPlugins()
+      } catch (error) {
+        console.error(
+          'Error desinstalando plugin:',
+          error
+        )
+      }
+    },
+    [installed, refreshPlugins]
+  )
+
+  /*
+   * INSTALAR DESDE TIENDA
+   */
+
+  const installStorePlugin = useCallback(
+    (plugin) => {
+      if (!plugin) {
+        return
+      }
+
+      try {
+        const exists = installed.some(
+          (item) => item?.id === plugin?.id
+        )
+
+        if (exists) {
+          return
+        }
+
+        if (
+          typeof pluginManagerService?.installPlugin !==
+          'function'
+        ) {
+          console.error(
+            'installPlugin no está disponible.'
+          )
+          return
+        }
+
+        pluginManagerService.installPlugin(plugin)
+        refreshPlugins()
+      } catch (error) {
+        console.error(
+          'Error instalando plugin:',
+          error
+        )
+      }
+    },
+    [installed, refreshPlugins]
+  )
+
+  /*
+   * BÚSQUEDA
+   */
+
+  const query = String(searchQuery || '')
+    .trim()
+    .toLowerCase()
+
+  /*
+   * FILTRO DE CATÁLOGO
+   */
+
+  const filteredCatalog = useMemo(() => {
+    return catalog.filter((plugin) => {
+      if (!plugin) {
+        return false
+      }
+
+      const categoria = String(
+        plugin?.categoria || ''
+      ).toLowerCase()
+
+      const nombre = String(
+        plugin?.nombre || ''
+      ).toLowerCase()
+
+      const descripcion = String(
+        plugin?.descripcion || ''
+      ).toLowerCase()
+
+      const matchesCat =
+        selectedCat === 'Todas' ||
+        categoria ===
+          String(selectedCat).toLowerCase()
+
+      const matchesSearch =
+        query === '' ||
+        nombre.includes(query) ||
+        descripcion.includes(query) ||
+        categoria.includes(query)
+
+      return matchesCat && matchesSearch
+    })
+  }, [catalog, selectedCat, query])
+
+  /*
+   * FILTRO INSTALADOS
+   */
+
+  const filteredInstalled = useMemo(() => {
+    return installed.filter((plugin) => {
+      if (!plugin) {
+        return false
+      }
+
+      const categoria = String(
+        plugin?.categoria || ''
+      ).toLowerCase()
+
+      const nombre = String(
+        plugin?.nombre || ''
+      ).toLowerCase()
+
+      const descripcion = String(
+        plugin?.descripcion || ''
+      ).toLowerCase()
+
+      const origen = String(
+        plugin?.origen || ''
+      ).toLowerCase()
+
+      const matchesCat =
+        selectedCat === 'Todas' ||
+        categoria ===
+          String(selectedCat).toLowerCase()
+
+      const matchesSearch =
+        query === '' ||
+        nombre.includes(query) ||
+        descripcion.includes(query) ||
+        categoria.includes(query)
+
+      let matchesTab = true
+
+      switch (activeTab) {
+        case 'Personalizados':
+          matchesTab =
+            origen === 'zip' ||
+            origen === 'personalizado'
+          break
+
+        case 'Oficiales':
+          matchesTab =
+            origen !== 'zip' &&
+            origen !== 'personalizado'
+          break
+
+        case 'Instalados':
+        default:
+          matchesTab = true
+          break
+      }
+
+      return (
+        matchesCat &&
+        matchesSearch &&
+        matchesTab
+      )
+    })
+  }, [
+    installed,
+    selectedCat,
+    query,
+    activeTab,
+  ])
+
+  /*
+   * FILTRO DESTACADOS
+   */
+
+  const filteredFeatured = useMemo(() => {
+    return featured.filter((plugin) => {
+      if (!plugin) {
+        return false
+      }
+
+      const categoria = String(
+        plugin?.categoria || ''
+      ).toLowerCase()
+
+      const nombre = String(
+        plugin?.nombre || ''
+      ).toLowerCase()
+
+      const descripcion = String(
+        plugin?.descripcion || ''
+      ).toLowerCase()
+
+      const matchesCat =
+        selectedCat === 'Todas' ||
+        categoria ===
+          String(selectedCat).toLowerCase()
+
+      const matchesSearch =
+        query === '' ||
+        nombre.includes(query) ||
+        descripcion.includes(query) ||
+        categoria.includes(query)
+
+      return matchesCat && matchesSearch
+    })
+  }, [
+    featured,
+    selectedCat,
+    query,
+  ])
+
+  /*
+   * CONTADORES
+   */
+
+  const installedCount = installed.length
+
+  const availableCount = catalog.length
+
+  const customCount = installed.filter(
+    (plugin) => {
+      const origen = String(
+        plugin?.origen || ''
+      ).toLowerCase()
+
+      return (
+        origen === 'zip' ||
+        origen === 'personalizado'
+      )
+    }
+  ).length
+
+  /*
+   * ARCHIVO ZIP
+   */
+
+  const handlePluginFileChange = (event) => {
+    const file =
+      event?.target?.files?.[0]
+
+    setUploadMessage('')
+    setUploadError('')
+    setSelectedPluginFile(null)
+
+    if (!file) {
+      return
+    }
+
+    if (
+      !file.name
+        .toLowerCase()
+        .endsWith('.zip')
+    ) {
+      setUploadError(
+        'Solo se permiten archivos .zip.'
+      )
+      return
+    }
+
+    setSelectedPluginFile(file)
+  }
+
+  /*
+   * INSTALAR ZIP
+   */
+
+  const handleInstallZip = async () => {
+    setUploadMessage('')
+    setUploadError('')
+
+    if (!selectedPluginFile) {
+      setUploadError(
+        'Selecciona un archivo .zip primero.'
+      )
+      return
+    }
+
+    if (
+      typeof pluginManagerService?.installPluginFromZip !==
+      'function'
+    ) {
+      setUploadError(
+        'La instalación de plugins ZIP no está disponible en este momento.'
+      )
+      return
+    }
+
+    try {
+      setIsUploading(true)
+
+      const result =
+        await pluginManagerService.installPluginFromZip(
+          selectedPluginFile
+        )
+
+      if (result?.alreadyInstalled) {
+        setUploadError(
+          `El plugin "${
+            result?.plugin?.nombre || ''
+          }" ya está instalado.`
+        )
+
+        refreshPlugins()
+        return
+      }
+
+      if (!result?.success) {
+        setUploadError(
+          result?.message ||
+            'No se pudo instalar el plugin.'
+        )
+
+        return
+      }
+
+      setUploadMessage(
+        `${
+          result?.plugin?.nombre ||
+          'Plugin'
+        } instalado correctamente.`
+      )
+
+      setSelectedPluginFile(null)
+
+      refreshPlugins()
+
+      setTimeout(() => {
+        setShowUploadModal(false)
+        setUploadMessage('')
+      }, 1200)
+    } catch (error) {
+      console.error(
+        'Error instalando plugin ZIP:',
+        error
+      )
+
+      setUploadError(
+        error?.message ||
+          'No se pudo instalar el plugin.'
+      )
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  /*
+   * CARGANDO
+   */
+
+  if (isLoading) {
+    return (
+      <div className="plugins-root">
+        <div
+          style={{
+            minHeight: 300,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              textAlign: 'center',
+              color:
+                'var(--color-ink-soft)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 36,
+                marginBottom: 10,
+              }}
+            >
+              🧩
+            </div>
+
+            <div>
+              Cargando Plugin Manager...
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 
-  // Eliminar plugin instalado
-  const deleteInstalled = (id) => {
-    setInstalled((prev) => prev.filter((item) => item.id !== id))
-  }
-
-  // Filtrado de plugins destacados
-  const filteredFeatured = featured.filter((item) => {
-    const matchesCat = selectedCat === 'Todas' || item.categoria.toLowerCase() === selectedCat.toLowerCase()
-    const matchesSearch = item.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || item.descripcion.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCat && matchesSearch
-  })
-
-  // Filtrado de plugins instalados
-  const filteredInstalled = installed.filter((item) => {
-    const matchesCat = selectedCat === 'Todas' || item.categoria.toLowerCase() === selectedCat.toLowerCase()
-    const matchesSearch = item.nombre.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCat && matchesSearch
-  })
+  /*
+   * RENDER
+   */
 
   return (
     <div className="plugins-root">
-      {/* ── Encabezado ── */}
+
+      {/* HEADER */}
+
       <div className="plugins-header">
+
         <div>
-          <h2 className="plugins-title">Plugins</h2>
-          <p className="plugins-subtitle">Extiende y personaliza tu ERP</p>
+          <h2 className="plugins-title">
+            Plugins
+          </h2>
+
+          <p className="plugins-subtitle">
+            Extiende y personaliza tu ERP
+          </p>
         </div>
+
         <div className="plugins-header-actions">
-          <button className="btn btn-secondary" onClick={() => setShowUploadModal(true)}>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setUploadMessage('')
+              setUploadError('')
+              setSelectedPluginFile(null)
+              setShowUploadModal(true)
+            }}
+          >
             📤 Subir Plugin
           </button>
-          <button className="btn btn-primary" onClick={() => setShowStoreModal(true)}>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() =>
+              setShowStoreModal(true)
+            }
+          >
             🛍️ Tienda de Plugins
           </button>
+
         </div>
+
       </div>
 
-      {/* ── Barra de Pestañas y Filtros ── */}
+      {/* ERROR DE CARGA */}
+
+      {loadError && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: '12px 16px',
+            borderRadius: 8,
+            background: '#FEF3C7',
+            color: '#92400E',
+            fontSize: 13,
+          }}
+        >
+          ⚠️ {loadError}
+        </div>
+      )}
+
+      {/* TABS */}
+
       <div className="plugins-subnav">
+
         <div className="plugins-tabs">
-          {['Todos', 'Instalados', 'Oficiales', 'Personalizados'].map((tab) => (
+
+          {[
+            'Todos',
+            'Instalados',
+            'Oficiales',
+            'Personalizados',
+          ].map((tab) => (
             <button
+              type="button"
               key={tab}
-              className={`plugins-tab${activeTab === tab ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab)}
+              className={`plugins-tab ${
+                activeTab === tab
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() =>
+                handleTabChange(tab)
+              }
             >
               {tab}
             </button>
           ))}
+
         </div>
 
         <div className="plugins-filters">
+
           <div className="plugins-search">
+
             <span>🔍</span>
+
             <input
               type="text"
               placeholder="Buscar plugins..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) =>
+                setSearchQuery(
+                  event.target.value
+                )
+              }
             />
+
           </div>
+
           <select
             className="plugins-cat-select"
             value={selectedCat}
-            onChange={(e) => setSelectedCat(e.target.value)}
+            onChange={(event) =>
+              setSelectedCat(
+                event.target.value
+              )
+            }
           >
-            {categories.map((c) => (
-              <option key={c.name} value={c.name}>
-                Categoría: {c.name}
-              </option>
-            ))}
+
+            {categories.map(
+              (category, index) => (
+                <option
+                  key={`${category?.name || 'cat'}-${index}`}
+                  value={
+                    category?.name ||
+                    'Todas'
+                  }
+                >
+                  Categoría:{' '}
+                  {category?.name ||
+                    'Todas'}
+                </option>
+              )
+            )}
+
           </select>
+
         </div>
+
       </div>
 
-      {/* ── Tarjetas KPI de Estadísticas (4 Stat Cards) ── */}
+      {/* ESTADÍSTICAS */}
+
       <div className="plugins-stats-grid">
+
         <div className="plugin-stat-card">
-          <div className="plugin-stat-icon" style={{ background: '#F3E8FF', color: '#6D28D9' }}>
+
+          <div
+            className="plugin-stat-icon"
+            style={{
+              background: '#F3E8FF',
+              color: '#6D28D9',
+            }}
+          >
             🧩
           </div>
+
           <div className="plugin-stat-info">
-            <span className="plugin-stat-title">Plugins Instalados</span>
-            <span className="plugin-stat-num">{installed.length}</span>
-            <span className="plugin-stat-sub">
-              <span style={{ color: 'var(--color-success)' }}>●</span> Activos en tu sistema
+
+            <span className="plugin-stat-title">
+              Plugins Instalados
             </span>
+
+            <span className="plugin-stat-num">
+              {installedCount}
+            </span>
+
+            <span className="plugin-stat-sub">
+              <span
+                style={{
+                  color:
+                    'var(--color-success)',
+                }}
+              >
+                ●
+              </span>{' '}
+              Activos en tu sistema
+            </span>
+
           </div>
+
         </div>
 
         <div className="plugin-stat-card">
-          <div className="plugin-stat-icon" style={{ background: '#E6F9F5', color: '#157F5A' }}>
+
+          <div
+            className="plugin-stat-icon"
+            style={{
+              background: '#E6F9F5',
+              color: '#157F5A',
+            }}
+          >
             🛍️
           </div>
+
           <div className="plugin-stat-info">
-            <span className="plugin-stat-title">Plugins Disponibles</span>
-            <span className="plugin-stat-num">48</span>
-            <span className="plugin-stat-sub">
-              <span style={{ color: 'var(--color-accent)' }}>●</span> En la tienda oficial
+
+            <span className="plugin-stat-title">
+              Plugins Disponibles
             </span>
+
+            <span className="plugin-stat-num">
+              {availableCount}
+            </span>
+
+            <span className="plugin-stat-sub">
+              <span
+                style={{
+                  color:
+                    'var(--color-accent)',
+                }}
+              >
+                ●
+              </span>{' '}
+              En el catálogo
+            </span>
+
           </div>
+
         </div>
 
         <div className="plugin-stat-card">
-          <div className="plugin-stat-icon" style={{ background: '#E8F0FE', color: '#1F3A93' }}>
+
+          <div
+            className="plugin-stat-icon"
+            style={{
+              background: '#E8F0FE',
+              color: '#1F3A93',
+            }}
+          >
             📥
           </div>
+
           <div className="plugin-stat-info">
-            <span className="plugin-stat-title">Actualizaciones</span>
-            <span className="plugin-stat-num">3</span>
-            <span className="plugin-stat-sub">
-              <span style={{ color: 'var(--color-warning)' }}>●</span> Actualizaciones disponibles
+
+            <span className="plugin-stat-title">
+              Destacados
             </span>
+
+            <span className="plugin-stat-num">
+              {featured.length}
+            </span>
+
+            <span className="plugin-stat-sub">
+              <span
+                style={{
+                  color:
+                    'var(--color-warning)',
+                }}
+              >
+                ●
+              </span>{' '}
+              Seleccionados por ti
+            </span>
+
           </div>
+
         </div>
 
         <div className="plugin-stat-card">
-          <div className="plugin-stat-icon" style={{ background: '#FEF3C7', color: '#B45309' }}>
+
+          <div
+            className="plugin-stat-icon"
+            style={{
+              background: '#FEF3C7',
+              color: '#B45309',
+            }}
+          >
             🛡️
           </div>
+
           <div className="plugin-stat-info">
-            <span className="plugin-stat-title">Personalizados</span>
-            <span className="plugin-stat-num">5</span>
-            <span className="plugin-stat-sub">
-              <span style={{ color: 'var(--color-ink-soft)' }}>●</span> Desarrollos propios
+
+            <span className="plugin-stat-title">
+              Personalizados
             </span>
+
+            <span className="plugin-stat-num">
+              {customCount}
+            </span>
+
+            <span className="plugin-stat-sub">
+              <span
+                style={{
+                  color:
+                    'var(--color-ink-soft)',
+                }}
+              >
+                ●
+              </span>{' '}
+              Desarrollos propios
+            </span>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* ── Disposición Principal (Contenido Izquierdo + Barra Lateral Derecha) ── */}
+      {/* LAYOUT */}
+
       <div className="plugins-main-layout">
+
         <div className="plugins-left-content">
-          {/* Plugins Destacados */}
-          {activeTab !== 'Instalados' && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={{ fontSize: 16, margin: 0 }}>Plugins Destacados</h3>
-                <a href="#ver-todos" style={{ fontSize: 13, color: 'var(--color-accent)' }}>
-                  Ver todos
-                </a>
+
+          {/* DESTACADOS */}
+
+          {activeTab === 'Todos' &&
+            filteredFeatured.length > 0 && (
+              <div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent:
+                      'space-between',
+                    alignItems: 'center',
+                    marginBottom: 14,
+                  }}
+                >
+
+                  <h3
+                    style={{
+                      fontSize: 16,
+                      margin: 0,
+                    }}
+                  >
+                    ⭐ Plugins Destacados
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={
+                      showAllPlugins
+                    }
+                    style={{
+                      border: 0,
+                      background:
+                        'none',
+                      padding: 0,
+                      fontSize: 13,
+                      color:
+                        'var(--color-accent)',
+                      cursor:
+                        'pointer',
+                    }}
+                  >
+                    Ver todos
+                  </button>
+
+                </div>
+
+                <div className="plugins-featured-grid">
+
+                  {filteredFeatured.map(
+                    (plugin) => {
+
+                      const isInstalled =
+                        installed.some(
+                          (item) =>
+                            item?.id ===
+                            plugin?.id
+                        )
+
+                      return (
+                        <div
+                          key={plugin.id}
+                          className="plugin-card"
+                        >
+
+                          <div>
+
+                            <div className="plugin-card-header">
+
+                              <div
+                                className="plugin-card-icon"
+                                style={{
+                                  background:
+                                    plugin?.bgColor ||
+                                    'var(--color-surface-alt)',
+                                  color:
+                                    plugin?.color ||
+                                    'var(--color-accent)',
+                                }}
+                              >
+                                {plugin?.icon ||
+                                  '🧩'}
+                              </div>
+
+                              <div
+                                style={{
+                                  flex: 1,
+                                }}
+                              >
+
+                                <div
+                                  style={{
+                                    display:
+                                      'flex',
+                                    justifyContent:
+                                      'space-between',
+                                    gap: 8,
+                                  }}
+                                >
+
+                                  <div>
+
+                                    <h4 className="plugin-card-title">
+                                      {plugin?.nombre ||
+                                        'Plugin'}
+                                    </h4>
+
+                                    <span
+                                      className="plugin-card-cat"
+                                      style={{
+                                        color:
+                                          plugin?.color ||
+                                          'var(--color-accent)',
+                                      }}
+                                    >
+                                      {plugin?.categoria ||
+                                        'General'}
+                                    </span>
+
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    title="Quitar de destacados"
+                                    onClick={() =>
+                                      toggleFeatured(
+                                        plugin.id
+                                      )
+                                    }
+                                    style={{
+                                      border: 0,
+                                      background:
+                                        'transparent',
+                                      fontSize: 22,
+                                      cursor:
+                                        'pointer',
+                                      padding: 0,
+                                      lineHeight: 1,
+                                    }}
+                                  >
+                                    ⭐
+                                  </button>
+
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                            <p
+                              className="plugin-card-desc"
+                              style={{
+                                marginTop: 10,
+                              }}
+                            >
+                              {plugin?.descripcion ||
+                                'Extensión para ampliar las funciones del ERP.'}
+                            </p>
+
+                          </div>
+
+                          <div className="plugin-card-footer">
+
+                            <div className="plugin-rating">
+                              ★{' '}
+                              {plugin?.rating ||
+                                0}{' '}
+                              <span>
+                                (
+                                {plugin?.reviews ||
+                                  0}
+                                )
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{
+                                fontSize: 12,
+                                padding:
+                                  '5px 12px',
+                              }}
+                              disabled={
+                                isInstalled
+                              }
+                              onClick={() =>
+                                installFeatured(
+                                  plugin.id
+                                )
+                              }
+                            >
+                              {isInstalled
+                                ? '✓ Instalado'
+                                : 'Instalar'}
+                            </button>
+
+                          </div>
+
+                        </div>
+                      )
+                    }
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+          {/* CATÁLOGO */}
+
+          {activeTab === 'Todos' && (
+            <div
+              className="card"
+              style={{
+                padding: 0,
+                overflow: 'hidden',
+                marginTop: 20,
+              }}
+            >
+
+              <div
+                style={{
+                  padding:
+                    '16px 20px',
+                  borderBottom:
+                    '1px solid var(--color-line)',
+                  display: 'flex',
+                  justifyContent:
+                    'space-between',
+                  alignItems: 'center',
+                }}
+              >
+
+                <div>
+
+                  <h3
+                    style={{
+                      fontSize: 16,
+                      margin: 0,
+                    }}
+                  >
+                    Todos los Plugins
+                  </h3>
+
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color:
+                        'var(--color-ink-faint)',
+                    }}
+                  >
+                    Catálogo completo de
+                    plugins
+                  </span>
+
+                </div>
+
+                <span
+                  style={{
+                    fontSize: 12,
+                    color:
+                      'var(--color-ink-faint)',
+                  }}
+                >
+                  {filteredCatalog.length}{' '}
+                  resultado
+                  {filteredCatalog.length ===
+                  1
+                    ? ''
+                    : 's'}
+                </span>
+
               </div>
 
-              <div className="plugins-featured-grid">
-                {filteredFeatured.map((p) => (
-                  <div key={p.id} className="plugin-card">
-                    <div>
-                      <div className="plugin-card-header">
-                        <div className="plugin-card-icon" style={{ background: p.bgColor, color: p.color }}>
-                          {p.icon}
-                        </div>
-                        <div>
-                          <h4 className="plugin-card-title">{p.nombre}</h4>
-                          <span className="plugin-card-cat" style={{ color: p.color }}>
-                            {p.categoria}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="plugin-card-desc" style={{ marginTop: 10 }}>
-                        {p.descripcion}
-                      </p>
-                    </div>
+              <div
+                style={{
+                  width: '100%',
+                  overflowX: 'auto',
+                }}
+              >
 
-                    <div className="plugin-card-footer">
-                      <div className="plugin-rating">
-                        ★ {p.rating} <span>({p.reviews})</span>
-                      </div>
-                      <button
-                        className={`btn ${p.instalado ? 'btn-secondary' : 'btn-secondary'}`}
-                        style={{ fontSize: 12, padding: '5px 12px' }}
-                        onClick={() => toggleInstallFeatured(p.id)}
+                <table className="plugins-table">
+
+                  <thead>
+                    <tr>
+                      <th>Plugin</th>
+                      <th>Categoría</th>
+                      <th>Versión</th>
+                      <th>Estado</th>
+                      <th
+                        style={{
+                          textAlign:
+                            'center',
+                        }}
                       >
-                        {p.instalado ? '✓ Instalado' : 'Instalar'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        Destacado
+                      </th>
+                      <th
+                        style={{
+                          textAlign:
+                            'right',
+                        }}
+                      >
+                        Acción
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    {filteredCatalog.length ===
+                    0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          style={{
+                            textAlign:
+                              'center',
+                            padding: 30,
+                          }}
+                        >
+                          🧩 No se encontraron
+                          plugins.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredCatalog.map(
+                        (plugin) => {
+
+                          const isInstalled =
+                            installed.some(
+                              (item) =>
+                                item?.id ===
+                                plugin?.id
+                            )
+
+                          const isFeatured =
+                            featured.some(
+                              (item) =>
+                                item?.id ===
+                                plugin?.id
+                            )
+
+                          return (
+                            <tr
+                              key={
+                                plugin.id
+                              }
+                            >
+
+                              <td>
+
+                                <div className="plugin-table-info">
+
+                                  <div
+                                    className="plugin-table-icon"
+                                    style={{
+                                      background:
+                                        plugin?.bgColor ||
+                                        'var(--color-surface-alt)',
+                                      color:
+                                        plugin?.color ||
+                                        'var(--color-accent)',
+                                    }}
+                                  >
+                                    {plugin?.icon ||
+                                      '🧩'}
+                                  </div>
+
+                                  <div>
+
+                                    <span className="plugin-table-name">
+                                      {plugin?.nombre ||
+                                        'Plugin'}
+                                    </span>
+
+                                    <span className="plugin-table-cat">
+                                      {plugin?.descripcion ||
+                                        'Plugin para el ERP'}
+                                    </span>
+
+                                  </div>
+
+                                </div>
+
+                              </td>
+
+                              <td>
+                                {plugin?.categoria ||
+                                  'General'}
+                              </td>
+
+                              <td>
+                                {plugin?.version ||
+                                  '1.0.0'}
+                              </td>
+
+                              <td>
+
+                                {isInstalled ? (
+                                  <span
+                                    style={{
+                                      color:
+                                        'var(--color-success)',
+                                      fontWeight:
+                                        600,
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    ● Instalado
+                                  </span>
+                                ) : (
+                                  <span
+                                    style={{
+                                      color:
+                                        'var(--color-ink-faint)',
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    Disponible
+                                  </span>
+                                )}
+
+                              </td>
+
+                              <td
+                                style={{
+                                  textAlign:
+                                    'center',
+                                }}
+                              >
+
+                                <button
+                                  type="button"
+                                  title={
+                                    isFeatured
+                                      ? 'Quitar de destacados'
+                                      : 'Marcar como destacado'
+                                  }
+                                  onClick={() =>
+                                    toggleFeatured(
+                                      plugin.id
+                                    )
+                                  }
+                                  style={{
+                                    border: 0,
+                                    background:
+                                      'transparent',
+                                    cursor:
+                                      'pointer',
+                                    fontSize: 22,
+                                    padding:
+                                      '4px 8px',
+                                    opacity:
+                                      isFeatured
+                                        ? 1
+                                        : 0.35,
+                                  }}
+                                >
+                                  {isFeatured
+                                    ? '⭐'
+                                    : '☆'}
+                                </button>
+
+                              </td>
+
+                              <td
+                                style={{
+                                  textAlign:
+                                    'right',
+                                }}
+                              >
+
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary"
+                                  style={{
+                                    fontSize: 11,
+                                    padding:
+                                      '4px 10px',
+                                  }}
+                                  disabled={
+                                    isInstalled
+                                  }
+                                  onClick={() =>
+                                    installCatalogPlugin(
+                                      plugin.id
+                                    )
+                                  }
+                                >
+                                  {isInstalled
+                                    ? '✓ Instalado'
+                                    : 'Instalar'}
+                                </button>
+
+                              </td>
+
+                            </tr>
+                          )
+                        }
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
               </div>
+
             </div>
           )}
 
-          {/* Tabla de Plugins Instalados */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-line)' }}>
-              <h3 style={{ fontSize: 16, margin: 0 }}>Plugins Instalados</h3>
-            </div>
+          {/* INSTALADOS */}
 
-            <table className="plugins-table">
-              <thead>
-                <tr>
-                  <th>Plugin</th>
-                  <th>Versión</th>
-                  <th>Estado</th>
-                  <th>Última Actualización</th>
-                  <th style={{ textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInstalled.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: 24, color: 'var(--color-ink-faint)' }}>
-                      No hay plugins instalados en esta categoría.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredInstalled.map((p) => (
-                    <tr key={p.id}>
-                      <td>
-                        <div className="plugin-table-info">
-                          <div className="plugin-table-icon" style={{ background: 'var(--color-surface-alt)', color: p.color }}>
-                            {p.icon}
-                          </div>
-                          <div>
-                            <span className="plugin-table-name">{p.nombre}</span>
-                            <span className="plugin-table-cat">{p.categoria}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ color: 'var(--color-ink-soft)', fontFamily: 'var(--font-mono)' }}>{p.version}</td>
-                      <td>
-                        <span
-                          style={{
-                            color: p.estado === 'Activo' ? 'var(--color-success)' : 'var(--color-ink-faint)',
-                            fontWeight: 600,
-                            fontSize: 12,
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => toggleStatusInstalled(p.id)}
-                          title="Haz clic para activar/desactivar"
-                        >
-                          ● {p.estado}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--color-ink-faint)' }}>{p.ultimaAct}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div className="plugin-action-btns" style={{ justifyContent: 'flex-end' }}>
-                          <button className="plugin-action-btn" title="Configuración">
-                            ⚙️
-                          </button>
-                          <button className="plugin-action-btn" title="Información">
-                            ℹ️
-                          </button>
-                          <button
-                            className="plugin-action-btn danger"
-                            title="Desinstalar plugin"
-                            onClick={() => deleteInstalled(p.id)}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
+          {activeTab !== 'Todos' && (
+            <div
+              className="card"
+              style={{
+                padding: 0,
+                overflow: 'hidden',
+                marginTop: 20,
+              }}
+            >
+
+              <div
+                style={{
+                  padding:
+                    '16px 20px',
+                  borderBottom:
+                    '1px solid var(--color-line)',
+                  display: 'flex',
+                  justifyContent:
+                    'space-between',
+                  alignItems: 'center',
+                }}
+              >
+
+                <h3
+                  style={{
+                    fontSize: 16,
+                    margin: 0,
+                  }}
+                >
+                  Plugins {activeTab}
+                </h3>
+
+                <span
+                  style={{
+                    fontSize: 12,
+                    color:
+                      'var(--color-ink-faint)',
+                  }}
+                >
+                  {filteredInstalled.length}{' '}
+                  resultado
+                  {filteredInstalled.length ===
+                  1
+                    ? ''
+                    : 's'}
+                </span>
+
+              </div>
+
+              <div
+                style={{
+                  width: '100%',
+                  overflowX: 'auto',
+                }}
+              >
+
+                <table className="plugins-table">
+
+                  <thead>
+                    <tr>
+                      <th>Plugin</th>
+                      <th>Versión</th>
+                      <th>Estado</th>
+                      <th>
+                        Última Actualización
+                      </th>
+                      <th
+                        style={{
+                          textAlign:
+                            'center',
+                        }}
+                      >
+                        Destacado
+                      </th>
+                      <th
+                        style={{
+                          textAlign:
+                            'right',
+                        }}
+                      >
+                        Acciones
+                      </th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
 
-            <div style={{ padding: '12px', textAlign: 'center', borderTop: '1px solid var(--color-line)' }}>
-              <a href="#todos-instalados" style={{ fontSize: 13, color: 'var(--color-accent)' }}>
-                Ver todos los plugins instalados →
-              </a>
+                  <tbody>
+
+                    {filteredInstalled.length ===
+                    0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          style={{
+                            textAlign:
+                              'center',
+                            padding: 30,
+                            color:
+                              'var(--color-ink-faint)',
+                          }}
+                        >
+
+                          <div
+                            style={{
+                              fontSize: 28,
+                              marginBottom: 8,
+                            }}
+                          >
+                            🧩
+                          </div>
+
+                          <div>
+                            No hay plugins
+                            para mostrar.
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={
+                              showAllPlugins
+                            }
+                            className="btn btn-secondary"
+                            style={{
+                              marginTop: 12,
+                              fontSize: 12,
+                            }}
+                          >
+                            Ver todos los
+                            plugins
+                          </button>
+
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInstalled.map(
+                        (plugin) => {
+
+                          const isFeatured =
+                            featured.some(
+                              (item) =>
+                                item?.id ===
+                                plugin?.id
+                            )
+
+                          return (
+                            <tr
+                              key={
+                                plugin.id
+                              }
+                            >
+
+                              <td>
+
+                                <div className="plugin-table-info">
+
+                                  <div
+                                    className="plugin-table-icon"
+                                    style={{
+                                      background:
+                                        plugin?.bgColor ||
+                                        'var(--color-surface-alt)',
+                                      color:
+                                        plugin?.color ||
+                                        'var(--color-accent)',
+                                    }}
+                                  >
+                                    {plugin?.icon ||
+                                      '🧩'}
+                                  </div>
+
+                                  <div>
+
+                                    <span className="plugin-table-name">
+                                      {plugin?.nombre ||
+                                        'Plugin'}
+                                    </span>
+
+                                    <span className="plugin-table-cat">
+                                      {plugin?.categoria ||
+                                        'General'}
+
+                                      {String(
+                                        plugin?.origen ||
+                                          ''
+                                      ).toUpperCase() ===
+                                        'ZIP' &&
+                                        ' · ZIP'}
+                                    </span>
+
+                                  </div>
+
+                                </div>
+
+                              </td>
+
+                              <td
+                                style={{
+                                  color:
+                                    'var(--color-ink-soft)',
+                                  fontFamily:
+                                    'var(--font-mono)',
+                                }}
+                              >
+                                {plugin?.version ||
+                                  '1.0.0'}
+                              </td>
+
+                              <td>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleStatusInstalled(
+                                      plugin.id
+                                    )
+                                  }
+                                  title="Activar / desactivar"
+                                  style={{
+                                    border: 0,
+                                    background:
+                                      'none',
+                                    padding: 0,
+                                    color:
+                                      plugin?.estado ===
+                                      'Activo'
+                                        ? 'var(--color-success)'
+                                        : 'var(--color-ink-faint)',
+                                    fontWeight:
+                                      600,
+                                    fontSize: 12,
+                                    cursor:
+                                      'pointer',
+                                  }}
+                                >
+                                  ●{' '}
+                                  {plugin?.estado ||
+                                    'Activo'}
+                                </button>
+
+                              </td>
+
+                              <td
+                                style={{
+                                  color:
+                                    'var(--color-ink-faint)',
+                                }}
+                              >
+                                {plugin?.ultimaAct ||
+                                  '—'}
+                              </td>
+
+                              <td
+                                style={{
+                                  textAlign:
+                                    'center',
+                                }}
+                              >
+
+                                <button
+                                  type="button"
+                                  title={
+                                    isFeatured
+                                      ? 'Quitar de destacados'
+                                      : 'Marcar como destacado'
+                                  }
+                                  onClick={() =>
+                                    toggleFeatured(
+                                      plugin.id
+                                    )
+                                  }
+                                  style={{
+                                    border: 0,
+                                    background:
+                                      'transparent',
+                                    cursor:
+                                      'pointer',
+                                    fontSize: 22,
+                                    padding:
+                                      '4px 8px',
+                                    opacity:
+                                      isFeatured
+                                        ? 1
+                                        : 0.35,
+                                  }}
+                                >
+                                  {isFeatured
+                                    ? '⭐'
+                                    : '☆'}
+                                </button>
+
+                              </td>
+
+                              <td
+                                style={{
+                                  textAlign:
+                                    'right',
+                                }}
+                              >
+
+                                <div
+                                  className="plugin-action-btns"
+                                  style={{
+                                    justifyContent:
+                                      'flex-end',
+                                  }}
+                                >
+
+                                  <button
+                                    type="button"
+                                    className="plugin-action-btn"
+                                    title="Configuración"
+                                    onClick={() =>
+                                      window.alert(
+                                        `Configuración de ${
+                                          plugin?.nombre ||
+                                          'Plugin'
+                                        }`
+                                      )
+                                    }
+                                  >
+                                    ⚙️
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="plugin-action-btn"
+                                    title="Información"
+                                    onClick={() =>
+                                      window.alert(
+                                        `${
+                                          plugin?.nombre ||
+                                          'Plugin'
+                                        }\nVersión: ${
+                                          plugin?.version ||
+                                          '1.0.0'
+                                        }\nCategoría: ${
+                                          plugin?.categoria ||
+                                          'General'
+                                        }`
+                                      )
+                                    }
+                                  >
+                                    ℹ️
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="plugin-action-btn danger"
+                                    title="Desinstalar plugin"
+                                    onClick={() =>
+                                      deleteInstalled(
+                                        plugin.id
+                                      )
+                                    }
+                                  >
+                                    🗑️
+                                  </button>
+
+                                </div>
+
+                              </td>
+
+                            </tr>
+                          )
+                        }
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+              <div
+                style={{
+                  padding: 12,
+                  textAlign: 'center',
+                  borderTop:
+                    '1px solid var(--color-line)',
+                }}
+              >
+
+                <button
+                  type="button"
+                  onClick={
+                    showAllPlugins
+                  }
+                  style={{
+                    border: 0,
+                    background:
+                      'transparent',
+                    fontSize: 13,
+                    color:
+                      'var(--color-accent)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Ver todos los plugins →
+                </button>
+
+              </div>
+
             </div>
-          </div>
+          )}
+
         </div>
 
-        {/* ── Barra Lateral Derecha (Categorías, Recursos y Estado) ── */}
+        {/* SIDEBAR */}
+
         <div className="plugins-right-sidebar">
-          {/* Categorías */}
-          <div className="card" style={{ padding: 16 }}>
-            <h4 style={{ fontSize: 14, margin: '0 0 12px 0' }}>Categorías</h4>
+
+          <div
+            className="card"
+            style={{
+              padding: 16,
+            }}
+          >
+
+            <h4
+              style={{
+                fontSize: 14,
+                margin:
+                  '0 0 12px 0',
+              }}
+            >
+              Categorías
+            </h4>
+
             <ul className="plugins-cat-list">
-              {categories.map((cat) => (
-                <li
-                  key={cat.name}
-                  className={`plugins-cat-item${selectedCat === cat.name ? ' active' : ''}`}
-                  onClick={() => setSelectedCat(cat.name)}
-                >
-                  <span>{cat.name}</span>
-                  <span className="plugins-cat-count">{cat.count}</span>
-                </li>
-              ))}
+
+              {categories.map(
+                (category, index) => (
+                  <li
+                    key={`${category?.name || 'category'}-${index}`}
+                    className={`plugins-cat-item ${
+                      selectedCat ===
+                      category?.name
+                        ? 'active'
+                        : ''
+                    }`}
+                    onClick={() =>
+                      setSelectedCat(
+                        category?.name ||
+                          'Todas'
+                      )
+                    }
+                  >
+
+                    <span>
+                      {category?.name ||
+                        'Todas'}
+                    </span>
+
+                    <span className="plugins-cat-count">
+                      {category?.count || 0}
+                    </span>
+
+                  </li>
+                )
+              )}
+
             </ul>
+
           </div>
 
-          {/* Recursos */}
-          <div className="card" style={{ padding: 16 }}>
-            <h4 style={{ fontSize: 14, margin: '0 0 12px 0' }}>Recursos</h4>
+          <div
+            className="card"
+            style={{
+              padding: 16,
+            }}
+          >
+
+            <h4
+              style={{
+                fontSize: 14,
+                margin:
+                  '0 0 12px 0',
+              }}
+            >
+              Recursos
+            </h4>
+
             <div>
-              <a href="#doc" className="plugins-resource-item">
-                <span className="plugins-resource-icon">📖</span>
+
+              <a
+                href="#doc"
+                className="plugins-resource-item"
+              >
+                <span className="plugins-resource-icon">
+                  📖
+                </span>
+
                 <div>
-                  <span className="plugins-resource-title">Documentación ↗</span>
-                  <span className="plugins-resource-desc">Guías y documentación oficial</span>
+                  <span className="plugins-resource-title">
+                    Documentación ↗
+                  </span>
+
+                  <span className="plugins-resource-desc">
+                    Guías y documentación
+                    oficial
+                  </span>
                 </div>
               </a>
-              <a href="#dev" className="plugins-resource-item">
-                <span className="plugins-resource-icon">👥</span>
+
+              <a
+                href="#dev"
+                className="plugins-resource-item"
+              >
+                <span className="plugins-resource-icon">
+                  👥
+                </span>
+
                 <div>
-                  <span className="plugins-resource-title">Desarrolladores ↗</span>
-                  <span className="plugins-resource-desc">Crea tus propios plugins</span>
+                  <span className="plugins-resource-title">
+                    Desarrolladores ↗
+                  </span>
+
+                  <span className="plugins-resource-desc">
+                    Crea tus propios plugins
+                  </span>
                 </div>
               </a>
-              <a href="#soporte" className="plugins-resource-item">
-                <span className="plugins-resource-icon">🎧</span>
+
+              <a
+                href="#soporte"
+                className="plugins-resource-item"
+              >
+                <span className="plugins-resource-icon">
+                  🎧
+                </span>
+
                 <div>
-                  <span className="plugins-resource-title">Soporte ↗</span>
-                  <span className="plugins-resource-desc">Obtén ayuda y soporte</span>
+                  <span className="plugins-resource-title">
+                    Soporte ↗
+                  </span>
+
+                  <span className="plugins-resource-desc">
+                    Obtén ayuda y soporte
+                  </span>
                 </div>
               </a>
+
             </div>
+
           </div>
 
-          {/* Información del Sistema */}
           <div className="system-info-card">
-            <h4 style={{ fontSize: 13, margin: '0 0 10px 0' }}>Información del Sistema</h4>
+
+            <h4
+              style={{
+                fontSize: 13,
+                margin:
+                  '0 0 10px 0',
+              }}
+            >
+              Información del Sistema
+            </h4>
+
             <div className="system-info-row">
-              <span className="system-info-label">Versión</span>
-              <span className="system-info-val">{systemInfo.version}</span>
+              <span className="system-info-label">
+                Versión
+              </span>
+
+              <span className="system-info-val">
+                {systemInfo.version}
+              </span>
             </div>
+
             <div className="system-info-row">
-              <span className="system-info-label">Entorno</span>
-              <span className="system-info-val">{systemInfo.entorno}</span>
+              <span className="system-info-label">
+                Entorno
+              </span>
+
+              <span className="system-info-val">
+                {systemInfo.entorno}
+              </span>
             </div>
+
             <div className="system-info-row">
-              <span className="system-info-label">Estado</span>
-              <span className="system-info-val" style={{ color: 'var(--color-success)' }}>
+              <span className="system-info-label">
+                Estado
+              </span>
+
+              <span
+                className="system-info-val"
+                style={{
+                  color:
+                    'var(--color-success)',
+                }}
+              >
                 ● {systemInfo.estado}
               </span>
             </div>
+
             <div className="system-info-row">
-              <span className="system-info-label">Uptime</span>
-              <span className="system-info-val">{systemInfo.uptime}</span>
+              <span className="system-info-label">
+                Uptime
+              </span>
+
+              <span className="system-info-val">
+                {systemInfo.uptime}
+              </span>
             </div>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* ── Modal: Subir Plugin ── */}
+      {/* MODAL ZIP */}
+
       {showUploadModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 420, padding: 24, background: '#fff' }}>
-            <h3 style={{ margin: '0 0 8px 0' }}>Subir Plugin Personalizado</h3>
-            <p style={{ fontSize: 13, color: 'var(--color-ink-soft)', marginBottom: 16 }}>
-              Sube un paquete comprimido <code>.zip</code> con el manifiesto y código de tu plugin.
+        <div
+          onClick={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              if (!isUploading) {
+                setShowUploadModal(false)
+              }
+            }
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background:
+              'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent:
+              'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+
+          <div
+            className="card"
+            style={{
+              width: 520,
+              maxWidth: '100%',
+              padding: 24,
+              background: '#fff',
+            }}
+          >
+
+            <h3
+              style={{
+                margin:
+                  '0 0 8px 0',
+              }}
+            >
+              📤 Subir Plugin
+            </h3>
+
+            <p
+              style={{
+                fontSize: 13,
+                color:
+                  'var(--color-ink-soft)',
+                marginBottom: 18,
+              }}
+            >
+              Selecciona un archivo ZIP
+              que contenga el{' '}
+              <strong>
+                manifest.json
+              </strong>{' '}
+              del plugin.
             </p>
-            <div style={{ border: '2px dashed var(--color-line)', padding: 24, textAlign: 'center', borderRadius: 8, cursor: 'pointer', marginBottom: 16 }}>
-              📁 Haz clic o arrastra tu archivo .zip aquí
+
+            <label
+              style={{
+                display: 'block',
+                border:
+                  '2px dashed var(--color-line)',
+                padding: 24,
+                textAlign:
+                  'center',
+                borderRadius: 8,
+                cursor:
+                  'pointer',
+                marginBottom: 16,
+                background:
+                  'var(--color-surface-alt)',
+              }}
+            >
+
+              <input
+                type="file"
+                accept=".zip"
+                onChange={
+                  handlePluginFileChange
+                }
+                style={{
+                  display: 'none',
+                }}
+              />
+
+              <div
+                style={{
+                  fontSize: 28,
+                  marginBottom: 8,
+                }}
+              >
+                📦
+              </div>
+
+              <strong>
+                Haz clic para
+                seleccionar tu
+                plugin
+              </strong>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  color:
+                    'var(--color-ink-soft)',
+                  marginTop: 6,
+                }}
+              >
+                Archivo comprimido
+                .zip
+              </div>
+
+            </label>
+
+            {selectedPluginFile && (
+              <div
+                style={{
+                  padding:
+                    '10px 12px',
+                  borderRadius: 6,
+                  background:
+                    '#E6F9F5',
+                  color:
+                    '#157F5A',
+                  fontSize: 13,
+                  marginBottom: 12,
+                }}
+              >
+                📦{' '}
+                {
+                  selectedPluginFile.name
+                }
+              </div>
+            )}
+
+            {uploadError && (
+              <div
+                style={{
+                  padding:
+                    '10px 12px',
+                  borderRadius: 6,
+                  background:
+                    '#FEE2E2',
+                  color:
+                    '#B91C1C',
+                  fontSize: 13,
+                  marginBottom: 12,
+                }}
+              >
+                ⚠️ {uploadError}
+              </div>
+            )}
+
+            {uploadMessage && (
+              <div
+                style={{
+                  padding:
+                    '10px 12px',
+                  borderRadius: 6,
+                  background:
+                    '#E6F9F5',
+                  color:
+                    '#157F5A',
+                  fontSize: 13,
+                  marginBottom: 12,
+                }}
+              >
+                ✓ {uploadMessage}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent:
+                  'flex-end',
+                gap: 10,
+                marginTop: 18,
+              }}
+            >
+
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowUploadModal(
+                    false
+                  )
+                  setSelectedPluginFile(
+                    null
+                  )
+                  setUploadMessage('')
+                  setUploadError('')
+                }}
+                disabled={
+                  isUploading
+                }
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={
+                  handleInstallZip
+                }
+                disabled={
+                  !selectedPluginFile ||
+                  isUploading
+                }
+              >
+                {isUploading
+                  ? 'Instalando...'
+                  : '📥 Instalar Plugin'}
+              </button>
+
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn btn-secondary" onClick={() => setShowUploadModal(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={() => setShowUploadModal(false)}>Subir e Instalar</button>
-            </div>
+
           </div>
+
         </div>
       )}
 
-      {/* ── Modal: Tienda de Plugins ── */}
+      {/* MODAL TIENDA */}
+
       {showStoreModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 500, padding: 24, background: '#fff' }}>
-            <h3 style={{ margin: '0 0 8px 0' }}>🛍️ Tienda de Plugins Oficial</h3>
-            <p style={{ fontSize: 13, color: 'var(--color-ink-soft)', marginBottom: 16 }}>
-              Explora más de 48 extensiones verificadas para ampliar las funciones de tu ERP.
+        <div
+          onClick={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setShowStoreModal(
+                false
+              )
+            }
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background:
+              'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent:
+              'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+        >
+
+          <div
+            className="card"
+            style={{
+              width: 500,
+              maxWidth: '100%',
+              padding: 24,
+              background: '#fff',
+            }}
+          >
+
+            <h3
+              style={{
+                margin:
+                  '0 0 8px 0',
+              }}
+            >
+              🛍️ Tienda de Plugins
+            </h3>
+
+            <p
+              style={{
+                fontSize: 13,
+                color:
+                  'var(--color-ink-soft)',
+                marginBottom: 16,
+              }}
+            >
+              Instala plugins disponibles
+              en el catálogo.
             </p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--color-surface-alt)', borderRadius: 4 }}>
-                <span>📦 Facturación Electrónica NCF</span>
-                <button className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}>Instalar</button>
-              </li>
-              <li style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--color-surface-alt)', borderRadius: 4 }}>
-                <span>💬 Conector WhatsApp Business API</span>
-                <button className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}>Instalar</button>
-              </li>
-            </ul>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={() => setShowStoreModal(false)}>Cerrar Tienda</button>
+
+            <div
+              style={{
+                maxHeight: 350,
+                overflowY:
+                  'auto',
+              }}
+            >
+
+              {catalog.length === 0 ? (
+                <div
+                  style={{
+                    padding: 30,
+                    textAlign:
+                      'center',
+                    color:
+                      'var(--color-ink-faint)',
+                  }}
+                >
+                  🧩 No hay plugins
+                  disponibles.
+                </div>
+              ) : (
+                catalog.map(
+                  (plugin) => {
+
+                    const isInstalled =
+                      installed.some(
+                        (item) =>
+                          item?.id ===
+                          plugin?.id
+                      )
+
+                    const isFeatured =
+                      featured.some(
+                        (item) =>
+                          item?.id ===
+                          plugin?.id
+                      )
+
+                    return (
+                      <div
+                        key={
+                          plugin.id
+                        }
+                        style={{
+                          display:
+                            'flex',
+                          justifyContent:
+                            'space-between',
+                          alignItems:
+                            'center',
+                          gap: 10,
+                          padding:
+                            '10px 12px',
+                          background:
+                            'var(--color-surface-alt)',
+                          borderRadius:
+                            6,
+                          marginBottom: 8,
+                        }}
+                      >
+
+                        <div>
+
+                          <strong
+                            style={{
+                              fontSize:
+                                13,
+                            }}
+                          >
+                            {plugin?.icon ||
+                              '🧩'}{' '}
+                            {plugin?.nombre ||
+                              'Plugin'}
+                          </strong>
+
+                          <div
+                            style={{
+                              fontSize:
+                                11,
+                              color:
+                                'var(--color-ink-soft)',
+                            }}
+                          >
+                            {plugin?.categoria ||
+                              'General'}
+                          </div>
+
+                        </div>
+
+                        <div
+                          style={{
+                            display:
+                              'flex',
+                            gap: 6,
+                            alignItems:
+                              'center',
+                          }}
+                        >
+
+                          <button
+                            type="button"
+                            title={
+                              isFeatured
+                                ? 'Quitar destacado'
+                                : 'Destacar plugin'
+                            }
+                            onClick={() =>
+                              toggleFeatured(
+                                plugin.id
+                              )
+                            }
+                            style={{
+                              border: 0,
+                              background:
+                                'transparent',
+                              cursor:
+                                'pointer',
+                              fontSize:
+                                19,
+                            }}
+                          >
+                            {isFeatured
+                              ? '⭐'
+                              : '☆'}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{
+                              fontSize:
+                                11,
+                              padding:
+                                '3px 8px',
+                            }}
+                            disabled={
+                              isInstalled
+                            }
+                            onClick={() =>
+                              installStorePlugin(
+                                plugin
+                              )
+                            }
+                          >
+                            {isInstalled
+                              ? '✓ Instalado'
+                              : 'Instalar'}
+                          </button>
+
+                        </div>
+
+                      </div>
+                    )
+                  }
+                )
+              )}
+
             </div>
+
+            <div
+              style={{
+                display:
+                  'flex',
+                justifyContent:
+                  'flex-end',
+                marginTop: 16,
+              }}
+            >
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() =>
+                  setShowStoreModal(
+                    false
+                  )
+                }
+              >
+                Cerrar Tienda
+              </button>
+
+            </div>
+
           </div>
+
         </div>
       )}
+
     </div>
   )
 }
+
