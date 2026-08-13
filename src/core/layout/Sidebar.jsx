@@ -6,15 +6,21 @@ import { getEnabledModules } from '../moduleRegistry'
 /* Orden y íconos del sidebar, alineados al mockup del proyecto */
 const MODULE_ICONS = {
   ventas:          '🛒',
-  compras:         '🏷️',
+  compras:         '🛍️',
   'rrhh-inventario': '📦',
   crm:             '👥',
-  finanzas:        '💰',
+  finanzas:        '💲',
   proyectos:       '📁',
   reportes:        '📊',
   chatbot:         '🤖',
-  integraciones:   '🌐',
+  integraciones:   '🔗',
   'plugin-manager':'🧩',
+}
+
+const MODULE_NAMES = {
+  'rrhh-inventario': 'Inventario',
+  'plugin-manager': 'Plugins',
+  chatbot: 'Asistente IA',
 }
 
 const MODULE_ORDER = ['ventas','compras','rrhh-inventario','crm','finanzas','proyectos','reportes','chatbot','integraciones','plugin-manager']
@@ -31,27 +37,64 @@ export function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div>
-        <div className="sidebar-brand">appes.erp</div>
-        <div style={{ fontSize: 11, color: 'var(--color-ink-faint)', marginTop: -14, marginBottom: 'var(--space-5)', paddingLeft: 2 }}>
-          ERP Inteligente y Modular
+      <div className="sidebar-top">
+        <div className="sidebar-brand-container">
+          <div className="sidebar-brand-logo">
+            <span className="sidebar-brand-name">appes.erp</span>
+          </div>
+          <div className="sidebar-brand-tag">
+            ERP Inteligente y Modular
+          </div>
         </div>
+
+        <nav className="sidebar-nav">
+          <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+            <span className="sidebar-icon">🏠</span> Dashboard
+          </NavLink>
+
+          {modules.map((mod) => (
+            <NavLink
+              key={mod.id}
+              to={mod.path}
+              className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+            >
+              <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
+              <span>{MODULE_NAMES[mod.id] ?? mod.name}</span>
+            </NavLink>
+          ))}
+          
+          <div className="sidebar-link inactive-link">
+            <span className="sidebar-icon">⚙️</span> Ajustes
+          </div>
+        </nav>
       </div>
 
-      <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
-        🏠 Dashboard
-      </NavLink>
+      {/* Tarjeta inferior del plan empresarial */}
+      <div className="sidebar-plan-card">
+        <div className="sidebar-plan-header">
+          <div className="sidebar-plan-title">
+            <span className="sidebar-plan-crown">👑</span>
+            <strong>Plan Empresarial</strong>
+          </div>
+          <span className="sidebar-plan-badge">Avanzado</span>
+        </div>
 
-      {modules.map((mod) => (
-        <NavLink
-          key={mod.id}
-          to={mod.path}
-          className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-        >
-          {MODULE_ICONS[mod.id] ?? '⬡'} {mod.name}
-        </NavLink>
-      ))}
+        <div className="sidebar-plan-usage">
+          <div className="sidebar-plan-usage-label">
+            <span>Uso del sistema</span>
+            <strong>68%</strong>
+          </div>
+          <div className="sidebar-plan-progress-bg">
+            <div className="sidebar-plan-progress-fill" style={{ width: '68%' }} />
+          </div>
+        </div>
+
+        <button className="sidebar-plan-btn">
+          Ver detalles
+        </button>
+      </div>
     </aside>
   )
 }
+
 

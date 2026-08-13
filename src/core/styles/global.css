@@ -147,7 +147,8 @@ button, input, select {
 .app-shell {
   display: grid;
   grid-template-columns: 240px 1fr;
-  min-height: 100%;
+  min-height: 100vh;
+  background: var(--color-bg-app);
 }
 
 .sidebar {
@@ -156,36 +157,177 @@ button, input, select {
   padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  justify-content: space-between;
+  height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
-.sidebar-brand {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  margin-bottom: var(--space-5);
-  color: var(--color-ink);
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sidebar-brand-container {
+  padding-left: 6px;
+}
+
+.sidebar-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-brand-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1E293B;
+  letter-spacing: -0.03em;
+}
+
+.sidebar-brand-tag {
+  font-size: 11px;
+  color: var(--color-ink-faint);
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .sidebar-link {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
   color: var(--color-ink-soft);
   font-weight: 500;
   font-size: 14px;
+  transition: all 120ms ease;
+  text-decoration: none;
 }
-.sidebar-link:hover { background: var(--color-surface-alt); text-decoration: none; }
-.sidebar-link.active { background: var(--color-surface-alt); color: var(--color-ink); }
+.sidebar-link:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.sidebar-link.active {
+  background: var(--color-accent);
+  color: var(--color-white);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(43, 56, 159, 0.25);
+}
+.sidebar-icon {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+.inactive-link {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/* Tarjeta inferior Plan Empresarial */
+.sidebar-plan-card {
+  background: #F8FAFC;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-plan-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-ink);
+}
+
+.sidebar-plan-crown {
+  font-size: 14px;
+}
+
+.sidebar-plan-badge {
+  font-size: 10px;
+  color: var(--color-ink-faint);
+  background: #E2E8F0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sidebar-plan-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-plan-usage-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-ink-soft);
+}
+
+.sidebar-plan-progress-bg {
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sidebar-plan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #2B389F);
+  border-radius: 3px;
+}
+
+.sidebar-plan-btn {
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: var(--color-accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+  width: 100%;
+}
+.sidebar-plan-btn:hover {
+  background: #E2E8F0;
+}
 
 .topbar {
-  height: 56px;
+  height: 64px;
+  background: var(--color-white);
   border-bottom: 1px solid var(--color-line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .main-content {
   padding: var(--space-6);
-  background: var(--color-white);
+  background: var(--color-bg-app);
+  min-height: calc(100vh - 64px);
 }
+

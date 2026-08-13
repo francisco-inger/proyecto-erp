@@ -1,8 +1,8 @@
 /*
   Dashboard — appes.erp
-  Vista principal. Muestra KPIs, gráfico de ventas, actividades recientes,
-  inventario, top productos, resumen financiero, AI/Chatbot y acciones rápidas.
-  Todos los datos se cargan desde dashboardService (API real → fallback).
+  Vista principal rediseñada según el mockup de referencia.
+  Muestra KPIs con Sparklines, gráfico de ventas suavizado, ventas por categoría (Donut),
+  asistente IA/Chatbot, actividades, inventario, top productos, financiero, integraciones y acciones rápidas.
 */
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../core/auth/AuthContext'
@@ -17,124 +17,187 @@ function fmtMoney(n) {
   return 'RD$ ' + Number(n).toLocaleString('es-DO')
 }
 
-function pct(current, prev) {
-  if (!prev) return 0
-  return (((current - prev) / prev) * 100).toFixed(1)
-}
+// ─── Mini Sparkline SVG (Curva suave con gradiente) ──────────────────────────
 
-// ─── Hook: carga todos los bloques del dashboard en paralelo ─────────────────
-
-function useDashboard() {
-  const [state, setState] = useState({
-    kpis: null, actividades: [], inventario: null,
-    topProductos: [], financiero: null, salesChart: [],
-    categorias: [], integraciones: [], loading: true, error: null,
-  })
-
-  useEffect(() => {
-    let alive = true
-    Promise.all([
-      dashboardService.getKpis(),
-      dashboardService.getActividades(),
-      dashboardService.getInventario(),
-      dashboardService.getTopProductos(),
-      dashboardService.getFinanciero(),
-      dashboardService.getSalesChart(),
-      dashboardService.getCategorias(),
-      dashboardService.getIntegraciones(),
-    ])
-      .then(([kpis, actividades, inventario, topProductos, financiero, salesChart, categorias, integraciones]) => {
-        if (alive) setState({ kpis, actividades, inventario, topProductos, financiero, salesChart, categorias, integraciones, loading: false, error: null })
-      })
-      .catch((e) => { if (alive) setState((s) => ({ ...s, loading: false, error: e.message })) })
-    return () => { alive = false }
-  }, [])
-
-  return state
-}
-
-// ─── Mini Sparkline (SVG inline) ──────────────────────────────────────────────
-
-function Sparkline({ data, color = '#1F3A93', fill = 'rgba(31,58,147,0.08)' }) {
+function Sparkline({ data, color = '#2563EB', fillId = 'blueGradient' }) {
   if (!data || data.length < 2) return null
-  const W = 300, H = 80
+  const W = 180, H = 45
   const vals = data.map((d) => d.valor)
   const min = Math.min(...vals), max = Math.max(...vals)
   const range = max - min || 1
+
   const pts = vals.map((v, i) => {
     const x = (i / (vals.length - 1)) * W
-    const y = H - ((v - min) / range) * (H - 8) - 4
-    return `${x},${y}`
+    const y = H - ((v - min) / range) * (H - 10) - 5
+    return { x, y }
   })
-  const poly = pts.join(' ')
-  const area = `M${pts[0]} ${pts.map((p) => `L${p}`).join(' ')} L${W},${H} L0,${H} Z`
+
+  // Generar curva beziér suave
+  let dPath = `M ${pts[0].x},${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const curr = pts[i]
+    const next = pts[i + 1]
+    const mx = (curr.x + next.x) / 2
+    dPath += ` C ${mx},${curr.y} ${mx},${next.y} ${next.x},${next.y}`
+  }
+
+  const areaPath = `${dPath} L ${W},${H} L 0,${H} Z`
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="dash-sparkline" preserveAspectRatio="none">
-      <path d={area} fill={fill} />
-      <polyline points={poly} fill="none" stroke={color} strokeWidth="2" />
+    <svg viewBox={`0 0 ${W} ${H}`} className="dash-sparkline-svg" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${fillId})`} />
+      <path d={dPath} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   )
 }
 
-// ─── Mini Donut Chart (SVG inline) ────────────────────────────────────────────
+// ─── Gráfico de Ventas Principal (Curva suave con nodos) ─────────────────────
 
-function DonutChart({ categorias }) {
-  const R = 52, cx = 70, cy = 70
-  const circumference = 2 * Math.PI * R
-  let offset = 0
-  const strokes = categorias.map((cat) => {
-    const dash = (cat.pct / 100) * circumference
-    const gap = circumference - dash
-    const el = (
-      <circle
-        key={cat.label}
-        cx={cx} cy={cy} r={R}
-        fill="none"
-        stroke={cat.color}
-        strokeWidth="20"
-        strokeDasharray={`${dash} ${gap}`}
-        strokeDashoffset={-offset}
-        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-      />
-    )
-    offset += dash
-    return el
-  })
+function MainSalesChart() {
+  // 12 puntos de control para la curva del mes
+  const points = [
+    { x: 20, y: 190, val: '60k', day: '01' },
+    { x: 80, y: 160, val: '90k', day: '05' },
+    { x: 120, y: 130, val: '120k', day: '' },
+    { x: 160, y: 175, val: '80k', day: '' },
+    { x: 200, y: 140, val: '110k', day: '10' },
+    { x: 240, y: 140, val: '110k', day: '' },
+    { x: 280, y: 100, val: '150k', day: '15' },
+    { x: 320, y: 70, val: '180k', day: '' },
+    { x: 360, y: 110, val: '140k', day: '' },
+    { x: 400, y: 125, val: '125k', day: '20' },
+    { x: 440, y: 90, val: '160k', day: '' },
+    { x: 480, y: 125, val: '130k', day: '25' },
+    { x: 520, y: 125, val: '130k', day: '' },
+    { x: 580, y: 40, val: '220k', day: '30' },
+  ]
+
+  const W = 600, H = 220
+
+  let dPath = `M ${points[0].x},${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const curr = points[i]
+    const next = points[i + 1]
+    const mx = (curr.x + next.x) / 2
+    dPath += ` C ${mx},${curr.y} ${mx},${next.y} ${next.x},${next.y}`
+  }
+
+  const areaPath = `${dPath} L ${W},${H} L ${points[0].x},${H} Z`
+
   return (
-    <svg viewBox="0 0 140 140" className="dash-donut">
-      {strokes}
-    </svg>
-  )
-}
+    <div className="dash-main-chart-wrapper">
+      <div className="dash-chart-y-axis">
+        <span>250k</span>
+        <span>200k</span>
+        <span>150k</span>
+        <span>100k</span>
+        <span>50k</span>
+        <span>0</span>
+      </div>
+      <div className="dash-chart-svg-container">
+        <svg viewBox={`0 0 ${W} ${H}`} className="dash-main-chart-svg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="mainAreaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+          {/* Guías horizontales */}
+          {[20, 60, 100, 140, 180, 210].map((yVal, idx) => (
+            <line key={idx} x1="0" y1={yVal} x2={W} y2={yVal} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="4 4" />
+          ))}
 
-function KpiCard({ label, value, prev, icon, iconBg }) {
-  const change = pct(value, prev)
-  const positive = change >= 0
-  return (
-    <div className="dash-kpi-card">
-      <div className="dash-kpi-icon" style={{ background: iconBg }}>{icon}</div>
-      <div className="dash-kpi-info">
-        <span className="dash-kpi-label">{label}</span>
-        <span className="dash-kpi-value">{value}</span>
-        <span className={`dash-kpi-change ${positive ? 'up' : 'down'}`}>
-          {positive ? '▲' : '▼'} {Math.abs(change)}% vs mes anterior
-        </span>
+          <path d={areaPath} fill="url(#mainAreaGradient)" />
+          <path d={dPath} fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" />
+
+          {/* Nodos de datos */}
+          {points.map((pt, idx) => (
+            <circle
+              key={idx}
+              cx={pt.x}
+              cy={pt.y}
+              r="4.5"
+              fill="#FFFFFF"
+              stroke="#2563EB"
+              strokeWidth="2.5"
+              className="dash-chart-dot"
+            />
+          ))}
+        </svg>
+        <div className="dash-chart-x-axis">
+          <span>01</span>
+          <span>05</span>
+          <span>10</span>
+          <span>15</span>
+          <span>20</span>
+          <span>25</span>
+          <span>30</span>
+        </div>
       </div>
     </div>
   )
 }
 
-// ─── Skeleton Loader ─────────────────────────────────────────────────────────
+// ─── Mini Donut Chart SVG ─────────────────────────────────────────────────────
 
-function Skeleton({ height = 80, radius = 8 }) {
-  return <div className="dash-skeleton" style={{ height, borderRadius: radius }} />
+function CategoryDonutChart() {
+  const categories = [
+    { label: 'Productos', pct: 45, color: '#2563EB' },
+    { label: 'Servicios', pct: 25, color: '#059669' },
+    { label: 'Suscripciones', pct: 20, color: '#D97706' },
+    { label: 'Otros', pct: 10, color: '#94A3B8' },
+  ]
+
+  const R = 48, cx = 65, cy = 65
+  const circumference = 2 * Math.PI * R
+  let offset = 0
+
+  const arcs = categories.map((cat) => {
+    const dash = (cat.pct / 100) * circumference
+    const gap = circumference - dash
+    const strokeDashoffset = -offset
+    offset += dash
+    return (
+      <circle
+        key={cat.label}
+        cx={cx}
+        cy={cy}
+        r={R}
+        fill="none"
+        stroke={cat.color}
+        strokeWidth="18"
+        strokeDasharray={`${dash} ${gap}`}
+        strokeDashoffset={strokeDashoffset}
+      />
+    )
+  })
+
+  return (
+    <div className="dash-donut-content">
+      <svg viewBox="0 0 130 130" className="dash-donut-svg">
+        {arcs}
+      </svg>
+      <ul className="dash-donut-legend">
+        {categories.map((c) => (
+          <li key={c.label}>
+            <span className="dash-legend-dot" style={{ background: c.color }} />
+            <span className="dash-legend-name">{c.label}</span>
+            <span className="dash-legend-pct">{c.pct}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 // ─── Chatbot Widget ───────────────────────────────────────────────────────────
-
-const QUICK_ACTIONS = ['Resumen de ventas', 'Top productos', 'Clientes nuevos', 'Estado de inventario']
 
 function ChatbotWidget() {
   const [msgs, setMsgs] = useState([
@@ -146,257 +209,448 @@ function ChatbotWidget() {
   const send = (text) => {
     if (!text.trim()) return
     const userMsg = { from: 'user', text }
-    const botMsg = { from: 'bot', text: `Consultando "${text}"... un momento.` }
+    const botMsg = { from: 'bot', text: `Procesando "${text}"... Generando resumen en tiempo real.` }
     setMsgs((m) => [...m, userMsg, botMsg])
     setInput('')
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
 
+  const quickActions = ['Resumen de ventas', 'Top productos', 'Clientes nuevos', 'Estado de inventario']
+
   return (
-    <div className="dash-chatbot">
+    <div className="card dash-chatbot-card">
       <div className="dash-chatbot-header">
-        <div className="dash-chatbot-avatar">🤖</div>
-        <div>
-          <strong>AI / Chatbot</strong>
-          <span className="dash-chatbot-status">● En línea</span>
+        <div className="dash-chatbot-title">
+          <span className="dash-chatbot-icon">🤖</span>
+          <div>
+            <strong>Asistente IA / Chatbot</strong>
+          </div>
+        </div>
+        <span className="dash-chatbot-online">● En línea</span>
+      </div>
+
+      <div className="dash-chatbot-body">
+        <div className="dash-chatbot-msg-container">
+          {msgs.map((m, i) => (
+            <div key={i} className={`dash-chatbot-bubble ${m.from}`}>
+              {m.from === 'bot' && <span className="dash-bot-avatar">🤖</span>}
+              <div className="dash-bubble-text">{m.text}</div>
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
+
+        <div className="dash-chatbot-chips">
+          {quickActions.map((act) => (
+            <button key={act} className="dash-chip-btn" onClick={() => send(act)}>
+              {act}
+            </button>
+          ))}
         </div>
       </div>
-      <div className="dash-chatbot-msgs">
-        {msgs.map((m, i) => (
-          <div key={i} className={`dash-chatbot-msg ${m.from}`}>{m.text}</div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
-      <div className="dash-chatbot-quick">
-        {QUICK_ACTIONS.map((a) => (
-          <button key={a} className="dash-chatbot-chip" onClick={() => send(a)}>{a}</button>
-        ))}
-      </div>
-      <div className="dash-chatbot-input-row">
+
+      <div className="dash-chatbot-input-container">
         <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send(input)}
           placeholder="Escribe tu pregunta..."
         />
-        <button className="btn btn-primary" onClick={() => send(input)}>➤</button>
+        <button className="dash-send-btn" onClick={() => send(input)}>
+          ➤
+        </button>
       </div>
     </div>
   )
 }
 
-// ─── Dashboard principal ──────────────────────────────────────────────────────
+// ─── Dashboard Principal ──────────────────────────────────────────────────────
 
 export function Dashboard() {
   const { user } = useAuth()
-  const { kpis, actividades, inventario, topProductos, financiero, salesChart, categorias, integraciones, loading } = useDashboard()
-
-  const [dateRange] = useState('01 - 31 May, 2025')
-
-  const actividadIcon = { venta: '🛒', factura: '📄', cliente: '👤', pago: '💳' }
+  const [salesSparkData] = useState([
+    { valor: 80000 }, { valor: 95000 }, { valor: 88000 }, { valor: 110000 },
+    { valor: 105000 }, { valor: 125000 }, { valor: 140000 }
+  ])
+  const [ordersSparkData] = useState([
+    { valor: 280 }, { valor: 290 }, { valor: 310 }, { valor: 300 },
+    { valor: 320 }, { valor: 315 }, { valor: 340 }
+  ])
+  const [clientsSparkData] = useState([
+    { valor: 1050 }, { valor: 1100 }, { valor: 1120 }, { valor: 1180 },
+    { valor: 1200 }, { valor: 1220 }, { valor: 1245 }
+  ])
+  const [profitSparkData] = useState([
+    { valor: 210000 }, { valor: 220000 }, { valor: 215000 }, { valor: 235000 },
+    { valor: 240000 }, { valor: 245000 }, { valor: 250000 }
+  ])
 
   return (
-    <div className="dash-root">
+    <div className="dash-container">
       {/* ── Encabezado ── */}
-      <div className="dash-header">
+      <div className="dash-header-row">
         <div>
-          <h2 className="dash-title">Dashboard</h2>
-          <p className="dash-subtitle">Resumen general de tu empresa</p>
+          <h1 className="dash-main-title">Dashboard</h1>
+          <p className="dash-main-subtitle">Resumen general de tu empresa</p>
         </div>
-        <div className="dash-header-actions">
-          <span className="dash-date-range">📅 {dateRange}</span>
-          <button className="btn btn-secondary">⧖ Filtros</button>
+        <div className="dash-header-controls">
+          <div className="dash-date-btn">
+            📅 <span>01 - 31 May, 2025</span> ▾
+          </div>
+          <button className="dash-filter-btn">
+            ⚡ Filtros
+          </button>
         </div>
       </div>
 
-      {/* ── KPIs ── */}
-      <div className="dash-kpis">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={88} />)
-        ) : kpis ? (
-          <>
-            <KpiCard label="Ventas del Mes"  value={fmtMoney(kpis.ventasMes?.value)}  prev={kpis.ventasMes?.prev}  icon="💲" iconBg="#E8F0FE" />
-            <KpiCard label="Órdenes"          value={kpis.ordenes?.value}               prev={kpis.ordenes?.prev}    icon="🛒" iconBg="#E6F9F5" />
-            <KpiCard label="Clientes"         value={kpis.clientes?.value?.toLocaleString()} prev={kpis.clientes?.prev} icon="👥" iconBg="#FEF3C7" />
-            <KpiCard label="Ganancias"        value={fmtMoney(kpis.ganancias?.value)}   prev={kpis.ganancias?.prev}  icon="📈" iconBg="#EDE9FE" />
-          </>
-        ) : null}
+      {/* ── 4 Tarjetas KPI Superiores con Sparklines ── */}
+      <div className="dash-kpi-grid">
+        {/* KPI 1: Ventas */}
+        <div className="card dash-kpi-box">
+          <div className="dash-kpi-top">
+            <div className="dash-kpi-circle-icon blue">
+              💲
+            </div>
+            <div className="dash-kpi-details">
+              <span className="dash-kpi-title">Ventas del Mes</span>
+              <h3 className="dash-kpi-number">RD$ 1,250,000</h3>
+              <span className="dash-kpi-badge success">
+                ↑ 12.5% <small>vs mes anterior</small>
+              </span>
+            </div>
+          </div>
+          <div className="dash-kpi-sparkline">
+            <Sparkline data={salesSparkData} color="#2563EB" fillId="blueSpark" />
+          </div>
+        </div>
+
+        {/* KPI 2: Órdenes */}
+        <div className="card dash-kpi-box">
+          <div className="dash-kpi-top">
+            <div className="dash-kpi-circle-icon green">
+              🛒
+            </div>
+            <div className="dash-kpi-details">
+              <span className="dash-kpi-title">Órdenes</span>
+              <h3 className="dash-kpi-number">320</h3>
+              <span className="dash-kpi-badge success">
+                ↑ 8.1% <small>vs mes anterior</small>
+              </span>
+            </div>
+          </div>
+          <div className="dash-kpi-sparkline">
+            <Sparkline data={ordersSparkData} color="#059669" fillId="greenSpark" />
+          </div>
+        </div>
+
+        {/* KPI 3: Clientes */}
+        <div className="card dash-kpi-box">
+          <div className="dash-kpi-top">
+            <div className="dash-kpi-circle-icon orange">
+              👥
+            </div>
+            <div className="dash-kpi-details">
+              <span className="dash-kpi-title">Clientes</span>
+              <h3 className="dash-kpi-number">1,245</h3>
+              <span className="dash-kpi-badge success">
+                ↑ 16% <small>vs mes anterior</small>
+              </span>
+            </div>
+          </div>
+          <div className="dash-kpi-sparkline">
+            <Sparkline data={clientsSparkData} color="#D97706" fillId="orangeSpark" />
+          </div>
+        </div>
+
+        {/* KPI 4: Ganancias */}
+        <div className="card dash-kpi-box">
+          <div className="dash-kpi-top">
+            <div className="dash-kpi-circle-icon purple">
+              📈
+            </div>
+            <div className="dash-kpi-details">
+              <span className="dash-kpi-title">Ganancias</span>
+              <h3 className="dash-kpi-number">RD$ 250,000</h3>
+              <span className="dash-kpi-badge success">
+                ↑ 10.3% <small>vs mes anterior</small>
+              </span>
+            </div>
+          </div>
+          <div className="dash-kpi-sparkline">
+            <Sparkline data={profitSparkData} color="#7C3AED" fillId="purpleSpark" />
+          </div>
+        </div>
       </div>
 
-      {/* ── Fila central ── */}
-      <div className="dash-mid-row">
-
-        {/* Gráfico de ventas */}
+      {/* ── Fila Central (3 Bloques) ── */}
+      <div className="dash-middle-grid">
+        {/* Bloque 1: Ventas (Line Chart) */}
         <div className="card dash-chart-card">
-          <div className="dash-section-header">
+          <div className="dash-card-header">
             <strong>Ventas</strong>
-            <select className="dash-select">
+            <select className="dash-dropdown-select">
               <option>Este mes</option>
               <option>Mes anterior</option>
-              <option>Últimos 3 meses</option>
             </select>
           </div>
-          {loading ? <Skeleton height={140} /> : <Sparkline data={salesChart} />}
-          <div className="dash-chart-axis">
-            {[1, 5, 10, 15, 20, 25, 30].map((d) => (
-              <span key={d}>{String(d).padStart(2, '0')}</span>
-            ))}
-          </div>
+          <MainSalesChart />
         </div>
 
-        {/* Ventas por categoría */}
+        {/* Bloque 2: Ventas por Categoría (Donut) */}
         <div className="card dash-donut-card">
-          <div className="dash-section-header"><strong>Ventas por Categoría</strong></div>
-          {loading ? <Skeleton height={140} /> : (
-            <div className="dash-donut-wrap">
-              <DonutChart categorias={categorias} />
-              <ul className="dash-donut-legend">
-                {categorias.map((c) => (
-                  <li key={c.label}>
-                    <span className="dash-dot" style={{ background: c.color }} />
-                    {c.label} <b>{c.pct}%</b>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="dash-card-header">
+            <strong>Ventas por Categoría</strong>
+          </div>
+          <CategoryDonutChart />
         </div>
 
-        {/* Chatbot */}
+        {/* Bloque 3: Chatbot IA */}
         <ChatbotWidget />
       </div>
 
-      {/* ── Fila de tablas ── */}
-      <div className="dash-tables-row">
-
-        {/* Actividades recientes */}
-        <div className="card">
-          <div className="dash-section-header">
+      {/* ── Fila de Tablas y Listas (4 Bloques) ── */}
+      <div className="dash-summary-row">
+        {/* Actividades Recientes */}
+        <div className="card dash-summary-card">
+          <div className="dash-card-header">
             <strong>Actividades Recientes</strong>
+            <Link to="/ventas" className="dash-header-link">Ver todas</Link>
           </div>
-          <ul className="dash-activity-list">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => <li key={i}><Skeleton height={36} /></li>)
-              : actividades.map((a) => (
-                <li key={a.id} className="dash-activity-item">
-                  <span className="dash-activity-icon">{actividadIcon[a.tipo] || '🔔'}</span>
-                  <div className="dash-activity-body">
-                    <span className="dash-activity-text">{a.texto}</span>
-                    <span className="dash-activity-sub">{a.sub}</span>
-                  </div>
-                  <span className="dash-activity-hora">{a.hora}</span>
-                </li>
-              ))}
+          <ul className="dash-list">
+            <li className="dash-list-item">
+              <div className="dash-item-icon green">🛒</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Nueva venta #VTA-2025-001</span>
+                <span className="dash-item-sub">Cliente: Juan Pérez</span>
+              </div>
+              <span className="dash-item-time">06:00 p.m.</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-item-icon blue">📄</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Factura generada #FAC-2025-001</span>
+                <span className="dash-item-sub">Cliente: Empresa ABC</span>
+              </div>
+              <span className="dash-item-time">05:00 p.m.</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-item-icon orange">👤</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Nuevo cliente registrado</span>
+                <span className="dash-item-sub">María Rodríguez</span>
+              </div>
+              <span className="dash-item-time">Ayer</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-item-icon purple">💳</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Pago recibido #PAY-2025-001</span>
+                <span className="dash-item-sub">Cliente: Constructora XYZ</span>
+              </div>
+              <span className="dash-item-time">Ayer</span>
+            </li>
           </ul>
-          <Link to="/ventas" className="dash-link-all">Ver todas las actividades →</Link>
         </div>
 
-        {/* Inventario resumen */}
-        <div className="card">
-          <div className="dash-section-header"><strong>Inventario Resumen</strong></div>
-          {loading ? <Skeleton height={120} /> : inventario ? (
-            <ul className="dash-inv-list">
-              <li><span>📦 Total Productos</span><b>{inventario.total?.toLocaleString()}</b></li>
-              <li><span>✅ Stock Disponible</span><b className="c-success">{inventario.disponible?.toLocaleString()}</b></li>
-              <li><span>⚠️ Stock Bajo</span><b className="c-warning">{inventario.stockBajo?.toLocaleString()}</b></li>
-              <li><span>🔴 Sin Stock</span><b className="c-danger">{inventario.sinStock?.toLocaleString()}</b></li>
-            </ul>
-          ) : null}
-          <Link to="/rrhh-inventario" className="dash-link-all">Ver inventario completo →</Link>
+        {/* Inventario Resumen */}
+        <div className="card dash-summary-card">
+          <div className="dash-card-header">
+            <strong>Inventario Resumen</strong>
+          </div>
+          <ul className="dash-inv-grid-list">
+            <li className="dash-inv-row">
+              <span className="dash-inv-label">📦 Total Productos</span>
+              <strong className="dash-inv-val">1,245</strong>
+            </li>
+            <li className="dash-inv-row">
+              <span className="dash-inv-label">✅ Stock Disponible</span>
+              <strong className="dash-inv-val text-success">890</strong>
+            </li>
+            <li className="dash-inv-row">
+              <span className="dash-inv-label">⚠️ Stock Bajo</span>
+              <strong className="dash-inv-val text-warning">120</strong>
+            </li>
+            <li className="dash-inv-row">
+              <span className="dash-inv-label">🔴 Sin Stock</span>
+              <strong className="dash-inv-val text-danger">35</strong>
+            </li>
+          </ul>
+          <Link to="/rrhh-inventario" className="dash-bottom-link">
+            Ver inventario completo →
+          </Link>
         </div>
 
         {/* Top Productos */}
-        <div className="card">
-          <div className="dash-section-header">
+        <div className="card dash-summary-card">
+          <div className="dash-card-header">
             <strong>Top Productos</strong>
-            <select className="dash-select">
+            <select className="dash-dropdown-select">
               <option>Este mes</option>
-              <option>Mes anterior</option>
             </select>
           </div>
-          <ul className="dash-top-list">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => <li key={i}><Skeleton height={40} /></li>)
-              : topProductos.map((p) => (
-                <li key={p.nombre} className="dash-top-item">
-                  <span className="dash-top-icon">{p.img}</span>
-                  <div className="dash-top-body">
-                    <span className="dash-top-name">{p.nombre}</span>
-                    <span className="dash-top-price">{fmtMoney(p.precio)}</span>
-                  </div>
-                  <span className="dash-top-units">{p.unidades} uds.</span>
-                </li>
-              ))}
+          <ul className="dash-list">
+            <li className="dash-list-item">
+              <div className="dash-prod-thumb">💻</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Laptop Dell Inspiron</span>
+                <span className="dash-item-sub">RD$ 45,000</span>
+              </div>
+              <span className="dash-prod-units">120 uds.</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-prod-thumb">📱</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">iPhone 15 Pro</span>
+                <span className="dash-item-sub">RD$ 65,000</span>
+              </div>
+              <span className="dash-prod-units">85 uds.</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-prod-thumb">🎧</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Auriculares Sony WH-1000XM5</span>
+                <span className="dash-item-sub">RD$ 12,530</span>
+              </div>
+              <span className="dash-prod-units">150 uds.</span>
+            </li>
+            <li className="dash-list-item">
+              <div className="dash-prod-thumb">🖥️</div>
+              <div className="dash-item-content">
+                <span className="dash-item-title">Monitor LG 24"</span>
+                <span className="dash-item-sub">RD$ 18,000</span>
+              </div>
+              <span className="dash-prod-units">65 uds.</span>
+            </li>
           </ul>
-          <Link to="/ventas" className="dash-link-all">Ver todos los productos →</Link>
+          <Link to="/ventas" className="dash-bottom-link">
+            Ver todos los productos →
+          </Link>
+        </div>
+
+        {/* Resumen Financiero */}
+        <div className="card dash-summary-card">
+          <div className="dash-card-header">
+            <strong>Resumen Financiero</strong>
+            <select className="dash-dropdown-select">
+              <option>Este mes</option>
+            </select>
+          </div>
+          <div className="dash-fin-rows">
+            <div className="dash-fin-row">
+              <span className="dash-fin-label">Ingresos</span>
+              <div className="dash-fin-values">
+                <strong>RD$ 1,250,000</strong>
+                <span className="dash-pct-tag success">↑ 12.5%</span>
+              </div>
+            </div>
+            <div className="dash-fin-row">
+              <span className="dash-fin-label">Gastos</span>
+              <div className="dash-fin-values">
+                <strong>RD$ 850,000</strong>
+                <span className="dash-pct-tag danger">↓ 5.2%</span>
+              </div>
+            </div>
+            <div className="dash-fin-row">
+              <span className="dash-fin-label">Utilidad Neta</span>
+              <div className="dash-fin-values">
+                <strong>RD$ 400,000</strong>
+                <span className="dash-pct-tag success">↑ 18.7%</span>
+              </div>
+            </div>
+            <div className="dash-fin-row">
+              <span className="dash-fin-label">Margen de Beneficio</span>
+              <div className="dash-fin-values">
+                <strong>32%</strong>
+                <span className="dash-pct-tag success">↑ 6.2%</span>
+              </div>
+            </div>
+          </div>
+          <Link to="/reportes" className="dash-bottom-link">
+            Ver reporte financiero →
+          </Link>
         </div>
       </div>
 
-      {/* ── Fila inferior ── */}
-      <div className="dash-bottom-row">
-
-        {/* Resumen financiero */}
-        <div className="card dash-financiero">
-          <div className="dash-section-header"><strong>Resumen Financiero</strong></div>
-          {loading ? <Skeleton height={80} /> : financiero ? (
-            <div className="dash-fin-grid">
+      {/* ── Fila Inferior (Integraciones & Acciones Rápidas) ── */}
+      <div className="dash-bottom-grid">
+        {/* Integraciones */}
+        <div className="card dash-bottom-card">
+          <div className="dash-card-header">
+            <strong>Integraciones</strong>
+          </div>
+          <div className="dash-int-grid">
+            <div className="dash-int-box">
+              <span className="dash-int-logo">💬</span>
               <div>
-                <label>Ingresos</label>
-                <big>{fmtMoney(financiero.ingresos?.value)}</big>
-                <span className="c-success">▲ {pct(financiero.ingresos?.value, financiero.ingresos?.prev)}%</span>
-              </div>
-              <div>
-                <label>Gastos</label>
-                <big>{fmtMoney(financiero.gastos?.value)}</big>
-                <span className="c-danger">▲ {pct(financiero.gastos?.value, financiero.gastos?.prev)}%</span>
-              </div>
-              <div>
-                <label>Utilidad Neta</label>
-                <big>{fmtMoney(financiero.utilidad?.value)}</big>
-                <span className="c-success">▲ {pct(financiero.utilidad?.value, financiero.utilidad?.prev)}%</span>
-              </div>
-              <div>
-                <label>Margen de Beneficio</label>
-                <big>{financiero.margen?.value}%</big>
-                <span className="c-success">▲ {pct(financiero.margen?.value, financiero.margen?.prev)}%</span>
+                <strong className="dash-int-title">WhatsApp</strong>
+                <span className="dash-int-status green">Conectado</span>
               </div>
             </div>
-          ) : null}
-          <div style={{ marginTop: 16, textAlign: 'right' }}>
-            <Link to="/reportes" className="btn btn-primary">Ver reporte financiero</Link>
+            <div className="dash-int-box">
+              <span className="dash-int-logo">✉️</span>
+              <div>
+                <strong className="dash-int-title">Email</strong>
+                <span className="dash-int-status green">Conectado</span>
+              </div>
+            </div>
+            <div className="dash-int-box">
+              <span className="dash-int-logo">⚙️</span>
+              <div>
+                <strong className="dash-int-title">n8n</strong>
+                <span className="dash-int-status green">Conectado</span>
+              </div>
+            </div>
+            <div className="dash-int-box">
+              <span className="dash-int-logo">👥</span>
+              <div>
+                <strong className="dash-int-title">CRM</strong>
+                <span className="dash-int-status green">Conectado</span>
+              </div>
+            </div>
           </div>
+          <Link to="/plugin-manager" className="dash-bottom-link text-center">
+            Ver todas las integraciones →
+          </Link>
         </div>
 
-        {/* Acciones rápidas */}
-        <div className="card dash-acciones">
-          <div className="dash-section-header"><strong>Acciones Rápidas</strong></div>
-          <div className="dash-acciones-grid">
-            <Link to="/ventas"          className="dash-accion-btn">🛒<span>Nueva Venta</span></Link>
-            <Link to="/crm"             className="dash-accion-btn">👤<span>Nuevo Cliente</span></Link>
-            <Link to="/compras"         className="dash-accion-btn">🏷️<span>Nueva Compra</span></Link>
-            <Link to="/finanzas"        className="dash-accion-btn">💰<span>Nuevo Gasto</span></Link>
-            <Link to="/reportes"        className="dash-accion-btn">📊<span>Reporte de Ventas</span></Link>
-            <Link to="/rrhh-inventario" className="dash-accion-btn c-warning">⚠️<span>Inventario Bajo</span></Link>
+        {/* Acciones Rápidas */}
+        <div className="card dash-bottom-card">
+          <div className="dash-card-header">
+            <strong>Acciones Rápidas</strong>
           </div>
-        </div>
-
-        {/* Integraciones */}
-        <div className="card dash-integraciones">
-          <div className="dash-section-header"><strong>Integraciones</strong></div>
-          <div className="dash-int-grid">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={60} />)
-              : integraciones.map((int) => (
-                <div key={int.nombre} className="dash-int-item">
-                  <span className="dash-int-icon">{int.icon}</span>
-                  <span className="dash-int-name">{int.nombre}</span>
-                  <span className="dash-int-status" style={{ color: int.color }}>{int.status}</span>
-                </div>
-              ))}
+          <div className="dash-quick-grid">
+            <Link to="/ventas" className="dash-quick-card blue">
+              <span className="dash-quick-icon">🛒</span>
+              <span>Nueva Venta</span>
+            </Link>
+            <Link to="/crm" className="dash-quick-card green">
+              <span className="dash-quick-icon">👤</span>
+              <span>Nuevo Cliente</span>
+            </Link>
+            <Link to="/compras" className="dash-quick-card orange">
+              <span className="dash-quick-icon">🛍️</span>
+              <span>Nueva Compra</span>
+            </Link>
+            <Link to="/finanzas" className="dash-quick-card pink">
+              <span className="dash-quick-icon">💰</span>
+              <span>Nuevo Gasto</span>
+            </Link>
+            <Link to="/reportes" className="dash-quick-card purple">
+              <span className="dash-quick-icon">📊</span>
+              <span>Reporte de Ventas</span>
+            </Link>
+            <Link to="/rrhh-inventario" className="dash-quick-card amber">
+              <span className="dash-quick-icon">⚠️</span>
+              <span>Inventario Bajo</span>
+            </Link>
           </div>
-          <Link to="/plugin-manager" className="dash-link-all">Ver todas las integraciones →</Link>
+          <span className="dash-sub-note">
+            Personaliza tus accesos rápidos en ajustes →
+          </span>
         </div>
       </div>
     </div>
   )
 }
+
