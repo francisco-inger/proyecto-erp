@@ -576,5 +576,52 @@ export const finanzasService = {
     finanzasService.saveData(nextData)
     return nextData
   },
+
+  deleteComprobante: async (id) => {
+    const data = await finanzasService.getData()
+    const itemToDelete = data.comprobantes.find((c) => c.id === id)
+    if (!itemToDelete) return data
+
+    // Revertir el saldo de la cuenta
+    const updatedCuentas = data.cuentas.map((c) => {
+      if (c.nombre === itemToDelete.cuenta) {
+        if (itemToDelete.tipo === 'Ingreso') return { ...c, saldo: c.saldo - itemToDelete.monto }
+        if (itemToDelete.tipo === 'Gasto') return { ...c, saldo: c.saldo + itemToDelete.monto }
+        if (itemToDelete.tipo === 'Transferencia') return { ...c, saldo: c.saldo + itemToDelete.monto }
+      }
+      if (itemToDelete.tipo === 'Transferencia' && c.nombre === itemToDelete.cuentaDestino) {
+        return { ...c, saldo: c.saldo - itemToDelete.monto }
+      }
+      return c
+    })
+
+    const updatedComprobantes = data.comprobantes.filter((c) => c.id !== id)
+
+    const nextData = calculateFinanceMetrics(
+      updatedCuentas,
+      updatedComprobantes,
+      data.presupuestos,
+      data.conciliaciones
+    )
+    finanzasService.saveData(nextData)
+    return nextData
+  },
+
+  cambiarEstadoComprobante: async (id, nuevoEstado) => {
+    const data = await finanzasService.getData()
+    const updatedComprobantes = data.comprobantes.map((c) => {
+      if (c.id === id) return { ...c, estado: nuevoEstado }
+      return c
+    })
+
+    const nextData = calculateFinanceMetrics(
+      data.cuentas,
+      updatedComprobantes,
+      data.presupuestos,
+      data.conciliaciones
+    )
+    finanzasService.saveData(nextData)
+    return nextData
+  },
 }
 

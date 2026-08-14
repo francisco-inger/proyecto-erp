@@ -720,6 +720,66 @@
   color: #0f172a;
 }
 
+/* Popover Menu de Acciones */
+.fn-action-popover-menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  min-width: 190px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fnFadeIn 120ms ease-out;
+}
+
+@keyframes fnFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fn-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: all 120ms ease;
+}
+
+.fn-popover-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.fn-popover-item.item-danger {
+  color: #dc2626;
+}
+
+.fn-popover-item.item-danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.fn-popover-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0;
+}
+
 /* ── Pagination Footer ── */
 .fn-table-footer {
   display: flex;

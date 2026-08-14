@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 
-export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComprobante }) {
+export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComprobante, onEliminar, onCambiarEstado }) {
   const [activeTab, setActiveTab] = useState('Comprobantes Recientes')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('Todos')
   const [currentPage, setCurrentPage] = useState(1)
+  const [openActionId, setOpenActionId] = useState(null)
+  const menuRef = useRef(null)
   const pageSize = 5
 
   const tabs = [
@@ -13,6 +15,17 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
     'Gastos Recientes',
     'Transferencias',
   ]
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenActionId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Filtrado de datos por Tab, Búsqueda y Estado
   const filteredData = useMemo(() => {
@@ -28,10 +41,10 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
       // Filtro por Búsqueda (Número, Descripción, Creador, Cuenta)
       if (searchTerm.trim() !== '') {
         const query = searchTerm.toLowerCase()
-        const matchNumero = item.numero.toLowerCase().includes(query)
-        const matchDesc = item.descripcion.toLowerCase().includes(query)
-        const matchCreador = item.creadoPor.toLowerCase().includes(query)
-        const matchCuenta = item.cuenta.toLowerCase().includes(query)
+        const matchNumero = item.numero?.toLowerCase().includes(query)
+        const matchDesc = item.descripcion?.toLowerCase().includes(query)
+        const matchCreador = item.creadoPor?.toLowerCase().includes(query)
+        const matchCuenta = item.cuenta?.toLowerCase().includes(query)
         if (!matchNumero && !matchDesc && !matchCreador && !matchCuenta) return false
       }
 
@@ -40,7 +53,7 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
   }, [comprobantes, activeTab, filterEstado, searchTerm])
 
   // Paginación
-  const totalPages = Math.ceil(filteredData.length / pageSize) || 1
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize))
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredData.slice(start, start + pageSize)
@@ -137,9 +150,20 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
           </div>
 
           <div className="fn-filter-dropdown-wrap">
-            <button className="fn-tool-btn">
-              <span>⚡</span> Filtros
-            </button>
+            <select
+              className="fn-period-select"
+              value={filterEstado}
+              onChange={(e) => {
+                setFilterEstado(e.target.value)
+                setCurrentPage(1)
+              }}
+              style={{ padding: '6px 10px' }}
+            >
+              <option value="Todos">Todos los Estados</option>
+              <option value="Aprobado">✓ Aprobados</option>
+              <option value="Pendiente">⏳ Pendientes</option>
+              <option value="Completado">✓ Completados</option>
+            </select>
           </div>
 
           <button className="fn-tool-btn" onClick={handleExportCSV}>
@@ -161,7 +185,7 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
               <th>Monto</th>
               <th>Estado</th>
               <th>Creado por</th>
-              <th style={{ textAlign: 'center' }}>Acciones</th>
+              <th style={{ textAlign: 'center', width: 90 }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -215,20 +239,82 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
 
                   <td className="fn-td-creador">{row.creadoPor}</td>
 
-                  <td className="fn-td-acciones">
+                  <td className="fn-td-acciones" style={{ position: 'relative' }}>
+                    {/* Botón Ver Detalle */}
                     <button
                       className="fn-action-icon-btn"
-                      title="Ver detalle"
+                      title="Ver detalle del comprobante"
                       onClick={() => onVerDetalle?.(row)}
                     >
                       👁️
                     </button>
+
+                    {/* Botón de Menú de Opciones (⋮) */}
                     <button
                       className="fn-action-icon-btn"
-                      title="Más opciones"
+                      title="Opciones del comprobante"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenActionId(openActionId === row.id ? null : row.id)
+                      }}
                     >
                       ⋮
                     </button>
+
+                    {/* Popover / Menú Desplegable de Acciones */}
+                    {openActionId === row.id && (
+                      <div
+                        ref={menuRef}
+                        className="fn-action-popover-menu"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          className="fn-popover-item"
+                          onClick={() => {
+                            onVerDetalle?.(row)
+                            setOpenActionId(null)
+                          }}
+                        >
+                          <span>👁️</span> Ver Detalle Completo
+                        </button>
+
+                        <button
+                          className="fn-popover-item"
+                          onClick={() => {
+                            window.print()
+                            setOpenActionId(null)
+                          }}
+                        >
+                          <span>🖨️</span> Imprimir Recibo
+                        </button>
+
+                        {row.estado === 'Pendiente' && (
+                          <button
+                            className="fn-popover-item"
+                            onClick={() => {
+                              onCambiarEstado?.(row.id, 'Aprobado')
+                              setOpenActionId(null)
+                            }}
+                          >
+                            <span>✓</span> Aprobar Comprobante
+                          </button>
+                        )}
+
+                        <div className="fn-popover-divider" />
+
+                        <button
+                          className="fn-popover-item item-danger"
+                          onClick={() => {
+                            if (window.confirm(`¿Estás seguro de eliminar el comprobante ${row.numero}?`)) {
+                              onEliminar?.(row.id)
+                            }
+                            setOpenActionId(null)
+                          }}
+                        >
+                          <span>🗑️</span> Eliminar Comprobante
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
@@ -249,6 +335,7 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
             className="fn-page-nav-btn"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            title="Página anterior"
           >
             ‹
           </button>
@@ -267,6 +354,7 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
             className="fn-page-nav-btn"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            title="Página siguiente"
           >
             ›
           </button>
@@ -275,3 +363,4 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
     </div>
   )
 }
+

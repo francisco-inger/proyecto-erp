@@ -45,8 +45,13 @@ export function FinanzasHome() {
     setData(updated)
   }
 
-  const handleConciliar = async (cuentaNombre) => {
-    const updated = await finanzasService.conciliarCuenta(cuentaNombre)
+  const handleEliminarComprobante = async (id) => {
+    const updated = await finanzasService.deleteComprobante(id)
+    setData(updated)
+  }
+
+  const handleCambiarEstadoComprobante = async (id, nuevoEstado) => {
+    const updated = await finanzasService.cambiarEstadoComprobante(id, nuevoEstado)
     setData(updated)
   }
 
@@ -98,6 +103,8 @@ export function FinanzasHome() {
             comprobantes={data.comprobantes}
             onVerDetalle={(item) => setComprobanteSeleccionado(item)}
             onNuevoComprobante={() => setIsModalOpen(true)}
+            onEliminar={handleEliminarComprobante}
+            onCambiarEstado={handleCambiarEstadoComprobante}
           />
         </>
       )}
@@ -115,6 +122,8 @@ export function FinanzasHome() {
           comprobantes={data.comprobantes}
           onVerDetalle={(item) => setComprobanteSeleccionado(item)}
           onNuevoComprobante={() => setIsModalOpen(true)}
+          onEliminar={handleEliminarComprobante}
+          onCambiarEstado={handleCambiarEstadoComprobante}
         />
       )}
 
