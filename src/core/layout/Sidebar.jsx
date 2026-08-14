@@ -151,18 +151,21 @@ export function Sidebar() {
                   {isOpen && (
                     <div className="sidebar-submenu">
                       {hasSubmenu.map((sub) => {
+                        const activeTabNormalized = (currentTab || '').trim().toLowerCase()
+                        const subTabNormalized = (sub.tab || sub.label || '').trim().toLowerCase()
                         const isSubActive = isParentActive && (
-                          currentTab === sub.tab ||
-                          currentTab === sub.label ||
-                          (sub.tab === 'Categorías' && currentTab === 'Categorias') ||
-                          (sub.tab === 'Ajustes' && currentTab === 'Ajustes de Stock')
+                          activeTabNormalized === subTabNormalized ||
+                          (subTabNormalized === 'categorías' && activeTabNormalized === 'categorias') ||
+                          (subTabNormalized === 'ajustes' && activeTabNormalized === 'ajustes de stock')
                         )
 
                         return (
                           <div
                             key={sub.label}
                             className={`sidebar-sublink ${isSubActive ? 'active' : ''}`}
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
                               navigate(`${mod.path}?tab=${encodeURIComponent(sub.tab)}`)
                             }}
                           >

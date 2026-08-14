@@ -20,7 +20,8 @@ export function FinanzasHome() {
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null)
   const [searchParams] = useSearchParams()
 
-  const activeTab = searchParams.get('tab') || 'Resumen'
+  const rawTab = searchParams.get('tab') || 'Resumen'
+  const activeTabLower = rawTab.trim().toLowerCase()
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +46,11 @@ export function FinanzasHome() {
     setData(updated)
   }
 
+  const handleConciliar = async (cuentaNombre) => {
+    const updated = await finanzasService.conciliarCuenta(cuentaNombre)
+    setData(updated)
+  }
+
   const handleEliminarComprobante = async (id) => {
     const updated = await finanzasService.deleteComprobante(id)
     setData(updated)
@@ -57,13 +63,16 @@ export function FinanzasHome() {
 
   if (!data) return null
 
+  // Capitalizar para el título
+  const activeTabTitle = rawTab.charAt(0).toUpperCase() + rawTab.slice(1)
+
   return (
     <div className="fn-container">
       {/* Encabezado Superior */}
       <div className="fn-header-row">
         <div className="fn-title-group">
           <h2 className="fn-title">
-            <span>🪙</span> Finanzas — {activeTab}
+            <span>🪙</span> Finanzas — {activeTabTitle}
             <span
               className="fn-title-info-icon"
               title="Módulo de gestión contable, presupuestaria y tesorería empresarial"
@@ -87,7 +96,7 @@ export function FinanzasHome() {
       </div>
 
       {/* RENDERIZADO POR SUBMÓDULO SEGÚN EL TAB ACTIVO */}
-      {activeTab === 'Resumen' && (
+      {(activeTabLower === 'resumen' || !rawTab) && (
         <>
           {/* Tarjetas KPI */}
           <KpiCards kpis={data.kpis} />
@@ -109,7 +118,7 @@ export function FinanzasHome() {
         </>
       )}
 
-      {activeTab === 'Cuentas' && (
+      {activeTabLower === 'cuentas' && (
         <CuentasTab
           cuentas={data.cuentas}
           movimientos={data.comprobantes}
@@ -117,7 +126,7 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Comprobantes' && (
+      {activeTabLower === 'comprobantes' && (
         <ComprobantesTable
           comprobantes={data.comprobantes}
           onVerDetalle={(item) => setComprobanteSeleccionado(item)}
@@ -127,7 +136,7 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Ingresos' && (
+      {activeTabLower === 'ingresos' && (
         <IngresosGastosTab
           tipo="Ingreso"
           items={data.comprobantes}
@@ -136,7 +145,7 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Gastos' && (
+      {activeTabLower === 'gastos' && (
         <IngresosGastosTab
           tipo="Gasto"
           items={data.comprobantes}
@@ -145,7 +154,7 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Transferencias' && (
+      {activeTabLower === 'transferencias' && (
         <TransferenciasTab
           comprobantes={data.comprobantes}
           cuentas={data.cuentas}
@@ -153,14 +162,14 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Conciliaciones' && (
+      {activeTabLower === 'conciliaciones' && (
         <ConciliacionesTab
           conciliaciones={data.conciliaciones}
           onConciliar={handleConciliar}
         />
       )}
 
-      {activeTab === 'Reportes' && (
+      {activeTabLower === 'reportes' && (
         <ReportesFinancierosTab
           kpis={data.kpis}
           categorias={data.categoriasGastos}
@@ -169,7 +178,7 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTab === 'Presupuesto' && (
+      {activeTabLower === 'presupuesto' && (
         <PresupuestoTab
           presupuestos={data.presupuestos}
           onNuevoPresupuesto={handleNuevoPresupuesto}
