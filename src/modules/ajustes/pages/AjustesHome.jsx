@@ -1,8 +1,6 @@
-/*
-  AjustesHome.jsx — Módulo de Ajustes (appes.erp)
-  Fidelidad exacta a la maqueta de referencia con navegación por pestañas y configuración interactiva.
-*/
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { SeguridadView } from '../components/SeguridadView'
 import './AjustesHome.css'
 
 const TABS = [
@@ -363,10 +361,18 @@ const SETTINGS_SECTIONS = [
 ]
 
 export function AjustesHome() {
-  const [activeTab, setActiveTab] = useState('General')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'General')
   const [search, setSearch] = useState('')
   const [activeModal, setActiveModal] = useState(null)
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    if (tabFromUrl && TABS.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [tabFromUrl])
 
   const showToast = (msg) => {
     setToast(msg)
@@ -412,8 +418,8 @@ export function AjustesHome() {
         <div className="ajustes-header-left">
           <div className="ajustes-icon-box">⚙️</div>
           <div>
-            <h1 className="ajustes-title">Ajustes</h1>
-            <p className="ajustes-subtitle">Configura y personaliza tu sistema ERP.</p>
+            <h1 className="ajustes-title">Ajustes & Seguridad</h1>
+            <p className="ajustes-subtitle">Configura y personaliza tu sistema ERP y administra la seguridad y accesos.</p>
           </div>
         </div>
 
@@ -441,6 +447,7 @@ export function AjustesHome() {
             className={`ajustes-tab-btn ${activeTab === tab && !search ? 'active' : ''}`}
             onClick={() => {
               setActiveTab(tab)
+              setSearchParams({ tab })
               setSearch('')
             }}
           >
@@ -449,41 +456,48 @@ export function AjustesHome() {
         ))}
       </div>
 
-      {/* ── Secciones de Ajustes ── */}
-      <div className="ajustes-sections">
-        {filteredSections.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
-            <p style={{ fontSize: 16 }}>No se encontraron configuraciones para "{search}"</p>
-          </div>
-        ) : (
-          filteredSections.map((section) => (
-            <div key={section.category} className="ajustes-section-block">
-              <h2 className="ajustes-section-title">{section.category}</h2>
-              <div className="ajustes-cards-grid">
-                {section.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="ajustes-card"
-                    onClick={() => setActiveModal(item)}
-                  >
-                    <div
-                      className="ajustes-card-icon-wrap"
-                      style={{ background: item.iconBg }}
-                    >
-                      {item.icon}
-                    </div>
-                    <div className="ajustes-card-content">
-                      <h3 className="ajustes-card-name">{item.name}</h3>
-                      <p className="ajustes-card-desc">{item.desc}</p>
-                    </div>
-                    <span className="ajustes-card-arrow">›</span>
-                  </div>
-                ))}
-              </div>
+      {/* RENDERIZADO ESPECIAL PARA SEGURIDAD Y USUARIOS/ROLES */}
+      {(activeTab === 'Seguridad' || activeTab === 'Usuarios y Roles') && !search ? (
+        <div style={{ marginTop: 20 }}>
+          <SeguridadView onShowToast={showToast} />
+        </div>
+      ) : (
+        /* ── Secciones de Ajustes ── */
+        <div className="ajustes-sections">
+          {filteredSections.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
+              <p style={{ fontSize: 16 }}>No se encontraron configuraciones para "{search}"</p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            filteredSections.map((section) => (
+              <div key={section.category} className="ajustes-section-block">
+                <h2 className="ajustes-section-title">{section.category}</h2>
+                <div className="ajustes-cards-grid">
+                  {section.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="ajustes-card"
+                      onClick={() => setActiveModal(item)}
+                    >
+                      <div
+                        className="ajustes-card-icon-wrap"
+                        style={{ background: item.iconBg }}
+                      >
+                        {item.icon}
+                      </div>
+                      <div className="ajustes-card-content">
+                        <h3 className="ajustes-card-name">{item.name}</h3>
+                        <p className="ajustes-card-desc">{item.desc}</p>
+                      </div>
+                      <span className="ajustes-card-arrow">›</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* ── Modal de Configuración Interactiva ── */}
       {activeModal && (
