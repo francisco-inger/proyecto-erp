@@ -288,17 +288,38 @@ export function Dashboard() {
 
   return (
     <div className="dash-container">
-      {/* ── Encabezado ── */}
-      <div className="dash-header-row">
-        <div>
-          <h1 className="dash-main-title">Dashboard</h1>
-          <p className="dash-main-subtitle">Resumen general de tu empresa</p>
+      {/* ── Encabezado & Hero Banner Ejecutivo ── */}
+      <div style={{
+        background: '#FFFFFF',
+        borderRadius: 16,
+        border: '1px solid #E2E8F0',
+        padding: '24px 28px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 20,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{ zIndex: 2, maxWidth: 650 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#EFF6FF', color: '#2563EB', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
+            <span>🏢</span> PLATAFORMA EMPRESARIAL APPEX ERP
+          </div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+            Panel Ejecutivo & Control Operativo
+          </h1>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+            Monitoreo en tiempo real de finanzas, ventas, inventario multialmacén y cumplimiento tributario ante la DGII.
+          </p>
         </div>
-        <div className="dash-header-controls">
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, zIndex: 2 }}>
           <div className="dash-date-btn">
             📅 <span>01 - 31 May, 2025</span> ▾
           </div>
-          <button className="dash-filter-btn">
+          <button className="dash-filter-btn" onClick={() => alert('Filtros ejecutivos aplicados')}>
             ⚡ Filtros
           </button>
         </div>

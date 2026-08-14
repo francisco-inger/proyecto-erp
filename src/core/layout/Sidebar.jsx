@@ -108,11 +108,20 @@ export function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-top">
         <div className="sidebar-brand-container">
-          <div className="sidebar-brand-logo">
-            <span className="sidebar-brand-name">appes.erp</span>
-          </div>
-          <div className="sidebar-brand-tag">
-            ERP Inteligente y Productivo
+          <div className="sidebar-brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/src/assets/branding/logo_appex.jpg"
+              alt="APPEX ERP Logo"
+              style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'contain', background: '#F8FAFC', border: '1px solid #E2E8F0' }}
+            />
+            <div>
+              <span className="sidebar-brand-name" style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>
+                APPEX<span style={{ color: '#2563EB' }}>.ERP</span>
+              </span>
+              <span className="sidebar-brand-tag" style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
+                Enterprise Suite 2026
+              </span>
+            </div>
           </div>
         </div>
 

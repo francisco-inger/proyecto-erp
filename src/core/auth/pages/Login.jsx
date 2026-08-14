@@ -97,21 +97,13 @@ export function Login() {
     <div className="auth-shell">
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="9" fill="url(#gradLogo)"/>
-              <path d="M7 16L16 7L25 16L16 25L7 16Z" stroke="white" strokeWidth="2.2" strokeLinejoin="round" fill="rgba(255,255,255,0.15)"/>
-              <circle cx="16" cy="16" r="3.5" fill="white" />
-              <defs>
-                <linearGradient id="gradLogo" x1="0" y1="0" x2="32" y2="32">
-                  <stop offset="0%" stopColor="#3B82F6"/>
-                  <stop offset="100%" stopColor="#1D4ED8"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
+          <img
+            src="/src/assets/branding/logo_appex.jpg"
+            alt="APPEX Logo"
+            style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'contain', background: '#FFFFFF', padding: 2, boxShadow: '0 4px 14px rgba(37,99,235,0.3)' }}
+          />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span className="auth-logo-text">appes<span>.erp</span></span>
+            <span className="auth-logo-text">APPEX<span>.ERP</span></span>
             <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sistema Integral de Gestión</span>
           </div>
         </div>
