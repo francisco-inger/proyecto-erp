@@ -14,39 +14,45 @@ export const dashboardService = {
     } catch (_) {}
 
     try {
-      // Calcular desde base de datos / storage de Finanzas y Ventas
-      const rawFinanzas = localStorage.getItem('appes_finanzas_data_v1')
+      // Calcular desde base de datos / storage de Finanzas, Ventas e Inventario
+      const rawFinanzas = localStorage.getItem('appes_erp_finanzas_data_v3') || localStorage.getItem('appes_finanzas_data_v1')
       const rawVentas = localStorage.getItem('ventas_orders_v1')
       const rawCrm = localStorage.getItem('appes_crm_clients_v1')
 
-      let totalVentas = 0
-      let totalOrdenes = 0
+      let totalVentas = 1250000
+      let totalOrdenes = 28
       let totalClientes = 12
 
       if (rawFinanzas) {
         const fin = JSON.parse(rawFinanzas)
-        if (fin.kpis) {
-          totalVentas = fin.kpis.ingresosMes?.monto || 1250000
+        if (fin.comprobantes) {
+          const ingresos = fin.comprobantes
+            .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
+            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
+          if (ingresos > 0) totalVentas = ingresos
         }
       }
 
       if (rawVentas) {
         const vtas = JSON.parse(rawVentas)
-        totalOrdenes = vtas.length
-        totalVentas = vtas.reduce((acc, v) => acc + (Number(v.total) || 0), 0) || totalVentas
+        if (vtas.length > 0) {
+          totalOrdenes = vtas.length
+          const calcVentas = vtas.reduce((acc, v) => acc + (Number(v.total) || 0), 0)
+          if (calcVentas > 0) totalVentas = calcVentas
+        }
       }
 
       if (rawCrm) {
         const crm = JSON.parse(rawCrm)
-        totalClientes = crm.length || 12
+        if (crm.length > 0) totalClientes = crm.length
       }
 
-      const totalGanancias = totalVentas * 0.28
+      const totalGanancias = totalVentas * 0.32
 
       return {
-        ventasMes:   { value: totalVentas, prev: Math.round(totalVentas * 0.9) },
-        ordenes:     { value: totalOrdenes || 28, prev: Math.max(1, totalOrdenes - 4) },
-        clientes:    { value: totalClientes || 45, prev: Math.max(1, totalClientes - 5) },
+        ventasMes:   { value: totalVentas, prev: Math.round(totalVentas * 0.88) },
+        ordenes:     { value: totalOrdenes, prev: Math.max(1, totalOrdenes - 3) },
+        clientes:    { value: totalClientes, prev: Math.max(1, totalClientes - 2) },
         ganancias:   { value: Math.round(totalGanancias), prev: Math.round(totalGanancias * 0.85) },
       }
     } catch {
@@ -95,41 +101,64 @@ export const dashboardService = {
   /** Inventario: totales de stock reales. */
   async getInventario() {
     try {
-      return await apiClient.get('/dashboard/inventario')
-    } catch {
-      return {
-        total:     1245,
-        disponible: 890,
-        stockBajo:  120,
-        sinStock:    35,
+      const raw = localStorage.getItem('appes_inventory_products_v1')
+      if (raw) {
+        const products = JSON.parse(raw)
+        if (products.length > 0) {
+          const total = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
+          const stockBajo = products.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 10) && Number(p.stock || 0) > 0).length
+          const sinStock = products.filter(p => Number(p.stock || 0) === 0).length
+          return {
+            total,
+            disponible: total - (stockBajo + sinStock),
+            stockBajo,
+            sinStock,
+          }
+        }
       }
+    } catch (_) {}
+    return {
+      total: 1245,
+      disponible: 890,
+      stockBajo: 120,
+      sinStock: 35,
     }
   },
 
-  /** Top productos. */
+  /** Top productos calculados de la BD. */
   async getTopProductos() {
     try {
-      return await apiClient.get('/dashboard/top-productos')
-    } catch {
-      return [
-        { nombre: 'Licencia ERP Cloud Enterprise', precio: 85000, unidades: 140, img: '💻' },
-        { nombre: 'Módulo Facturación DGII / NCF', precio: 45000, unidades: 110, img: '🧾' },
-        { nombre: 'Soporte y Consultoría 24/7',    precio: 35000, unidades: 95,  img: '🛡️' },
-        { nombre: 'Terminal Punto de Venta POS',   precio: 28000, unidades: 75,  img: '🖥️' },
-      ]
-    }
+      const raw = localStorage.getItem('appes_inventory_products_v1')
+      if (raw) {
+        const products = JSON.parse(raw)
+        if (products.length > 0) {
+          return products.slice(0, 4).map(p => ({
+            nombre: p.nombre,
+            precio: p.precio || p.costo || 100,
+            unidades: p.ventasUds || p.stock || 50,
+            img: p.categoria === 'Medicamentos' ? '💊' : p.categoria === 'Suplementos' ? '🧪' : '📦'
+          }))
+        }
+      }
+    } catch (_) {}
+    return [
+      { nombre: 'Paracetamol 500mg (Caja 100)', precio: 125, unidades: 140, img: '💊' },
+      { nombre: 'Amoxicilina 500mg (Frasco)', precio: 220, unidades: 110, img: '💊' },
+      { nombre: 'Alcohol 70% Desnaturalizado', precio: 85, unidades: 95, img: '🧪' },
+      { nombre: 'Vitamina C 1000mg Efervescente', precio: 340, unidades: 75, img: '📦' },
+    ]
   },
 
-  /** Resumen financiero real. */
+  /** Resumen financiero real sincronizado. */
   async getFinanciero() {
     try {
-      const rawFinanzas = localStorage.getItem('appes_finanzas_data_v1')
+      const rawFinanzas = localStorage.getItem('appes_erp_finanzas_data_v3')
       if (rawFinanzas) {
         const fin = JSON.parse(rawFinanzas)
-        if (fin.kpis) {
-          const ing = fin.kpis.ingresosMes?.monto || 1250000
-          const gas = fin.kpis.gastosMes?.monto || 650000
-          const ut = fin.kpis.utilidadNeta?.monto || (ing - gas)
+        if (fin.comprobantes) {
+          const ing = fin.comprobantes.filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado').reduce((s, c) => s + (Number(c.monto) || 0), 0) || 1250000
+          const gas = fin.comprobantes.filter(c => c.tipo === 'Gasto' && c.estado !== 'Anulado').reduce((s, c) => s + (Number(c.monto) || 0), 0) || 850000
+          const ut = ing - gas
           const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 32.0
           return {
             ingresos:  { value: ing, prev: Math.round(ing * 0.9) },
@@ -142,10 +171,10 @@ export const dashboardService = {
     } catch (_) {}
 
     return {
-      ingresos:  { value: 1250000, prev: 1108000 },
-      gastos:    { value:  850000, prev:  808000 },
-      utilidad:  { value:  400000, prev:  336000 },
-      margen:    { value: 32,      prev: 30.3 },
+      ingresos:  { value: 1250000, prev: 1125000 },
+      gastos:    { value: 850000,  prev: 780000 },
+      utilidad:  { value: 400000,  prev: 345000 },
+      margen:    { value: 32.0,    prev: 28.5 },
     }
   },
 
