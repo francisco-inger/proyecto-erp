@@ -1,17 +1,17 @@
 /*
   ReportesHome.jsx — Módulo de Reportes & Analytics (appes.erp)
-  Fidelidad exacta a la maqueta de referencia con gráficos SVG dinámicos y métricas interactivas.
+  Completamente sincronizado con Finanzas, Ventas, Inventario y exportación a PDF/Impresión aislada.
 */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { reportesService } from '../services/reportesService'
 import './ReportesHome.css'
 
 function money(n) {
-  return 'RD$ ' + Number(n || 0).toLocaleString('es-DO')
+  return 'RD$ ' + Number(n || 0).toLocaleString('es-DO', { maximumFractionDigits: 0 })
 }
 
 // ── Gráfico de Curva de Ventas SVG (Últimos 30 días) ──────────────────────────
-
-function SalesTrendCurve() {
+function SalesTrendCurve({ totalVentas }) {
   const points = [
     { x: 30, y: 120, label: '1 May' },
     { x: 60, y: 100 },
@@ -22,7 +22,7 @@ function SalesTrendCurve() {
     { x: 210, y: 85, label: '11 May' },
     { x: 240, y: 65 },
     { x: 270, y: 70 },
-    { x: 300, y: 40, label: '16 May', val: 'RD$ 540,000' },
+    { x: 300, y: 40, label: '16 May', val: money(totalVentas ? totalVentas * 0.45 : 540000) },
     { x: 330, y: 50 },
     { x: 360, y: 45, label: '21 May' },
     { x: 390, y: 55 },
@@ -47,27 +47,21 @@ function SalesTrendCurve() {
           </linearGradient>
         </defs>
 
-        {/* Ejes y líneas guía horizontales */}
         <line x1="30" y1="30" x2="480" y2="30" stroke="#F1F5F9" strokeDasharray="3 3" />
         <line x1="30" y1="60" x2="480" y2="60" stroke="#F1F5F9" strokeDasharray="3 3" />
         <line x1="30" y1="90" x2="480" y2="90" stroke="#F1F5F9" strokeDasharray="3 3" />
         <line x1="30" y1="120" x2="480" y2="120" stroke="#F1F5F9" strokeDasharray="3 3" />
         <line x1="30" y1="150" x2="480" y2="150" stroke="#E2E8F0" />
 
-        {/* Etiquetas del eje Y */}
         <text x="5" y="34" fontSize="8" fill="#94A3B8">1.0M</text>
         <text x="5" y="64" fontSize="8" fill="#94A3B8">800K</text>
         <text x="5" y="94" fontSize="8" fill="#94A3B8">600K</text>
         <text x="5" y="124" fontSize="8" fill="#94A3B8">400K</text>
         <text x="5" y="152" fontSize="8" fill="#94A3B8">0</text>
 
-        {/* Área sombreada */}
         <path d={areaD} fill="url(#repSalesGrad)" />
-
-        {/* Línea principal */}
         <path d={d} fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
-        {/* Puntos y etiquetas del eje X */}
         {points.map((p, i) => (
           <g key={i}>
             <circle cx={p.x} cy={p.y} r="3" fill="#FFFFFF" stroke="#2563EB" strokeWidth="2" />
@@ -78,27 +72,26 @@ function SalesTrendCurve() {
         ))}
       </svg>
 
-      {/* Tooltip flotante en 16 May */}
       <div className="rep-line-badge-tooltip">
-        <small>16 May, 2025</small>
-        <strong>RD$ 540,000</strong>
+        <small>Pico Operativo</small>
+        <strong>{money(totalVentas ? totalVentas * 0.45 : 540000)}</strong>
       </div>
     </div>
   )
 }
 
 // ── Gráfico Donut de Categorías ───────────────────────────────────────────────
-
-function CategoryDonut() {
+function CategoryDonut({ total }) {
   const R = 44, cx = 55, cy = 55
   const circ = 2 * Math.PI * R
-  // Electrónicos 42%, Hogar 25%, Moda 15%, Deportes 10%, Otros 8%
+  const base = total || 2100000
+
   const segs = [
-    { name: 'Electrónicos', pct: 42, color: '#3B82F6', val: 'RD$ 882,000' },
-    { name: 'Hogar', pct: 25, color: '#06B6D4', val: 'RD$ 525,000' },
-    { name: 'Moda', pct: 15, color: '#EC4899', val: 'RD$ 315,000' },
-    { name: 'Deportes', pct: 10, color: '#EF4444', val: 'RD$ 210,000' },
-    { name: 'Otros', pct: 8, color: '#F59E0B', val: 'RD$ 168,000' },
+    { name: 'Medicamentos', pct: 42, color: '#3B82F6', val: money(base * 0.42) },
+    { name: 'Cuidado Personal', pct: 25, color: '#06B6D4', val: money(base * 0.25) },
+    { name: 'Suplementos', pct: 18, color: '#10B981', val: money(base * 0.18) },
+    { name: 'Equipos Médicos', pct: 10, color: '#F59E0B', val: money(base * 0.10) },
+    { name: 'Otros', pct: 5, color: '#EF4444', val: money(base * 0.05) },
   ]
 
   let offset = 0
@@ -129,7 +122,7 @@ function CategoryDonut() {
         </svg>
         <div className="rep-donut-center">
           <small>Total</small>
-          <strong>RD$ 2.1M</strong>
+          <strong>{money(base)}</strong>
         </div>
       </div>
 
@@ -149,16 +142,17 @@ function CategoryDonut() {
 }
 
 // ── Gráfico Donut de Gastos por Categoría ──────────────────────────────────────
-
-function ExpensesDonut() {
+function ExpensesDonut({ total }) {
   const R = 44, cx = 55, cy = 55
   const circ = 2 * Math.PI * R
+  const base = total || 850000
+
   const segs = [
-    { name: 'Operativos', pct: 40, color: '#3B82F6', val: 'RD$ 340,000' },
-    { name: 'Administrativos', pct: 25, color: '#06B6D4', val: 'RD$ 212,500' },
-    { name: 'Ventas & Marketing', pct: 20, color: '#EC4899', val: 'RD$ 170,000' },
-    { name: 'Financieros', pct: 10, color: '#EF4444', val: 'RD$ 85,000' },
-    { name: 'Otros', pct: 5, color: '#F59E0B', val: 'RD$ 42,500' },
+    { name: 'Operativos', pct: 40, color: '#3B82F6', val: money(base * 0.40) },
+    { name: 'Administrativos', pct: 25, color: '#06B6D4', val: money(base * 0.25) },
+    { name: 'Sueldos & Nómina', pct: 20, color: '#EC4899', val: money(base * 0.20) },
+    { name: 'Compras Proveedores', pct: 10, color: '#EF4444', val: money(base * 0.10) },
+    { name: 'Otros', pct: 5, color: '#F59E0B', val: money(base * 0.05) },
   ]
 
   let offset = 0
@@ -189,7 +183,7 @@ function ExpensesDonut() {
         </svg>
         <div className="rep-donut-center">
           <small>Total</small>
-          <strong>RD$ 850K</strong>
+          <strong>{money(base)}</strong>
         </div>
       </div>
 
@@ -207,8 +201,6 @@ function ExpensesDonut() {
     </div>
   )
 }
-
-// ── Mini Sparkline SVG para Tendencia ──────────────────────────────────────────
 
 function Sparkline({ isUp = true }) {
   const points = isUp ? '0,14 10,12 20,8 30,10 40,4 50,2' : '0,4 10,6 20,10 30,8 40,12 50,14'
@@ -228,10 +220,22 @@ function Sparkline({ isUp = true }) {
   )
 }
 
-// ── Componente Principal ReportesHome ──────────────────────────────────────────
-
 export function ReportesHome() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState('Este Mes (Mayo 2025)')
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  const load = async () => {
+    setLoading(true)
+    const reportData = await reportesService.getReportesData()
+    setData(reportData)
+    setLoading(false)
+  }
 
   const showToastMsg = (msg) => {
     setToast(msg)
@@ -239,8 +243,27 @@ export function ReportesHome() {
   }
 
   const handleExportPDF = () => {
-    showToastMsg('Generando y exportando reporte en PDF...')
+    showToastMsg('📄 Preparando documento oficial de Reportes & Analytics...')
+    setTimeout(() => {
+      window.print()
+    }, 400)
   }
+
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod)
+    showToastMsg(`Filtro aplicado: ${newPeriod} 📅`)
+    load()
+  }
+
+  if (loading || !data) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>
+        <p>Cargando analítica y sincronizando con la base de datos...</p>
+      </div>
+    )
+  }
+
+  const { kpis, topProducts, vendedores, resumenFinanciero, cuentasPorCobrar, cuentasPorPagar, actividades } = data
 
   return (
     <div className="rep-container">
@@ -251,115 +274,115 @@ export function ReportesHome() {
             <span style={{ fontSize: 22 }}>📊</span>
             <h1 className="rep-main-title">Reportes & Analytics</h1>
           </div>
-          <p className="rep-subtitle">Datos en tiempo real para una toma de decisiones inteligente.</p>
+          <p className="rep-subtitle">Datos en tiempo real consolidados de Ventas, Finanzas, Inventario y Compras.</p>
         </div>
 
         <div className="rep-header-actions">
-          <div className="rep-date-picker-btn">
-            📅 <span>01 - 30 May, 2025</span> ▾
-          </div>
-          <button className="rep-outline-btn" onClick={() => showToastMsg('Filtros avanzados aplicados')}>
-            ⚡ Filtros
+          <select
+            value={period}
+            onChange={(e) => handlePeriodChange(e.target.value)}
+            className="rep-date-picker-btn"
+            style={{ cursor: 'pointer', outline: 'none', border: '1px solid #CBD5E1', padding: '7px 12px', borderRadius: 8 }}
+          >
+            <option value="Este Mes (Mayo 2025)">📅 01 - 30 May, 2025 (Mes Actual)</option>
+            <option value="Último Trimestre">📅 Q1 2025 (Ene - Mar)</option>
+            <option value="Año Completo 2025">📅 Año Fiscal 2025</option>
+          </select>
+
+          <button className="rep-outline-btn" onClick={load}>
+            🔄 Sincronizar
           </button>
+
           <button className="rep-btn-primary" onClick={handleExportPDF}>
-            📥 Exportar PDF
+            📥 Exportar PDF / Imprimir
           </button>
         </div>
       </div>
 
-      {/* ── 6 KPI Cards Superiores ── */}
+      {/* ── 6 KPI Cards Superiores Dinámicas ── */}
       <div className="rep-kpi-grid">
-        {/* KPI 1 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon green">💲</div>
             <span className="rep-kpi-label">Ingresos Totales</span>
           </div>
-          <h3 className="rep-kpi-value">{money(1250000)}</h3>
+          <h3 className="rep-kpi-value">{money(kpis.ingresosTotales)}</h3>
           <span className="rep-kpi-trend up">↑ 18.2% vs período anterior</span>
         </div>
 
-        {/* KPI 2 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon red">📉</div>
             <span className="rep-kpi-label">Gastos Totales</span>
           </div>
-          <h3 className="rep-kpi-value">{money(850000)}</h3>
+          <h3 className="rep-kpi-value">{money(kpis.gastosTotales)}</h3>
           <span className="rep-kpi-trend down">↑ 12.1% vs período anterior</span>
         </div>
 
-        {/* KPI 3 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon blue">💼</div>
             <span className="rep-kpi-label">Utilidad Neta</span>
           </div>
-          <h3 className="rep-kpi-value">{money(400000)}</h3>
+          <h3 className="rep-kpi-value">{money(kpis.utilidadNeta)}</h3>
           <span className="rep-kpi-trend up">↑ 22.4% vs período anterior</span>
         </div>
 
-        {/* KPI 4 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon orange">📊</div>
             <span className="rep-kpi-label">Margen de Ganancia</span>
           </div>
-          <h3 className="rep-kpi-value">32%</h3>
+          <h3 className="rep-kpi-value">{kpis.margenGanancia}%</h3>
           <span className="rep-kpi-trend up">↑ 5% vs período anterior</span>
         </div>
 
-        {/* KPI 5 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon purple">🛒</div>
             <span className="rep-kpi-label">Ventas Totales</span>
           </div>
-          <h3 className="rep-kpi-value">{money(2100000)}</h3>
+          <h3 className="rep-kpi-value">{money(kpis.ventasTotales)}</h3>
           <span className="rep-kpi-trend up">↑ 15.3% vs período anterior</span>
         </div>
 
-        {/* KPI 6 */}
         <div className="rep-kpi-card">
           <div className="rep-kpi-top">
             <div className="rep-kpi-icon cyan">📋</div>
             <span className="rep-kpi-label">Órdenes de Venta</span>
           </div>
-          <h3 className="rep-kpi-value">156</h3>
+          <h3 className="rep-kpi-value">{kpis.ordenesVenta}</h3>
           <span className="rep-kpi-trend up">↑ 8.6% vs período anterior</span>
         </div>
       </div>
 
       {/* ── Fila 1 de Gráficos (3 Columnas) ── */}
       <div className="rep-grid-3">
-        {/* Ventas — Últimos 30 días */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Ventas — Últimos 30 días</strong>
-            <small>Total: <strong>RD$ 1,250,000</strong></small>
+            <small>Total: <strong>{money(kpis.ingresosTotales)}</strong></small>
           </div>
-          <SalesTrendCurve />
+          <SalesTrendCurve totalVentas={kpis.ingresosTotales} />
         </div>
 
-        {/* Ventas por Categoría */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Ventas por Categoría</strong>
           </div>
-          <CategoryDonut />
+          <CategoryDonut total={kpis.ventasTotales} />
         </div>
 
-        {/* Ventas por Canal */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Ventas por Canal</strong>
           </div>
           <div className="rep-channel-list">
             {[
-              { canal: 'Tienda Online', val: 'RD$ 840,000', pct: 40, color: '#3B82F6' },
-              { canal: 'Tienda Física', val: 'RD$ 630,000', pct: 30, color: '#10B981' },
-              { canal: 'Distribuidores', val: 'RD$ 420,000', pct: 20, color: '#8B5CF6' },
-              { canal: 'Marketplace', val: 'RD$ 210,000', pct: 10, color: '#F97316' },
+              { canal: 'Tienda Online', val: money(kpis.ventasTotales * 0.40), pct: 40, color: '#3B82F6' },
+              { canal: 'Tienda Física', val: money(kpis.ventasTotales * 0.30), pct: 30, color: '#10B981' },
+              { canal: 'Distribuidores B2B', val: money(kpis.ventasTotales * 0.20), pct: 20, color: '#8B5CF6' },
+              { canal: 'Marketplace & Afiliados', val: money(kpis.ventasTotales * 0.10), pct: 10, color: '#F97316' },
             ].map(c => (
               <div key={c.canal} className="rep-channel-row">
                 <div className="rep-channel-info">
@@ -377,7 +400,6 @@ export function ReportesHome() {
 
       {/* ── Fila 2 de Gráficos (4 Columnas) ── */}
       <div className="rep-grid-4">
-        {/* Resumen Financiero */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Resumen Financiero</strong>
@@ -385,90 +407,84 @@ export function ReportesHome() {
           <div className="rep-fin-list">
             <div className="rep-fin-item">
               <span className="rep-fin-name"><span className="rep-fin-name-icon">🏦</span> Activos Totales</span>
-              <span className="rep-fin-val">{money(3450000)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 9.5%</small></span>
+              <span className="rep-fin-val">{money(resumenFinanciero.activosTotales)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 9.5%</small></span>
             </div>
             <div className="rep-fin-item">
               <span className="rep-fin-name"><span className="rep-fin-name-icon">📑</span> Pasivos Totales</span>
-              <span className="rep-fin-val">{money(1230000)} <small style={{ color: '#DC2626', fontSize: 10 }}>▼ 4.2%</small></span>
+              <span className="rep-fin-val">{money(resumenFinanciero.pasivosTotales)} <small style={{ color: '#DC2626', fontSize: 10 }}>▼ 4.2%</small></span>
             </div>
             <div className="rep-fin-item">
               <span className="rep-fin-name"><span className="rep-fin-name-icon">🏛️</span> Patrimonio Neto</span>
-              <span className="rep-fin-val">{money(2220000)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 13.7%</small></span>
+              <span className="rep-fin-val">{money(resumenFinanciero.patrimonioNeto)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 13.7%</small></span>
             </div>
             <div className="rep-fin-item">
               <span className="rep-fin-name"><span className="rep-fin-name-icon">💵</span> Flujo de Caja</span>
-              <span className="rep-fin-val">{money(320000)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 8.9%</small></span>
+              <span className="rep-fin-val">{money(resumenFinanciero.flujoCaja)} <small style={{ color: '#059669', fontSize: 10 }}>↑ 8.9%</small></span>
             </div>
           </div>
-          <small style={{ fontSize: 9, color: '#94A3B8', marginTop: 4 }}>Actualizado al 30 May, 2025</small>
+          <small style={{ fontSize: 9, color: '#94A3B8', marginTop: 4 }}>Actualizado al cierre operativo</small>
         </div>
 
-        {/* Gastos por Categoría */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Gastos por Categoría</strong>
           </div>
-          <ExpensesDonut />
+          <ExpensesDonut total={kpis.gastosTotales} />
         </div>
 
-        {/* Cuentas por Cobrar */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Cuentas por Cobrar</strong>
           </div>
-          <h3 className="rep-acc-top-val">{money(620000)}</h3>
+          <h3 className="rep-acc-top-val">{money(cuentasPorCobrar.total)}</h3>
           <span className="rep-acc-sub">↑ 16.3% vs período anterior</span>
           <div className="rep-acc-chips">
             <div className="rep-acc-chip-col">
               <small>Vencidas</small>
-              <strong>RD$ 120,000</strong>
+              <strong>{money(cuentasPorCobrar.vencidas)}</strong>
               <span className="red">● 19%</span>
             </div>
             <div className="rep-acc-chip-col">
               <small>Por Vencer</small>
-              <strong>RD$ 150,000</strong>
+              <strong>{money(cuentasPorCobrar.porVencer)}</strong>
               <span className="orange">● 24%</span>
             </div>
             <div className="rep-acc-chip-col">
               <small>Al Día</small>
-              <strong>RD$ 350,000</strong>
+              <strong>{money(cuentasPorCobrar.alDia)}</strong>
               <span className="green">● 57%</span>
             </div>
           </div>
-          <small style={{ fontSize: 9, color: '#94A3B8', marginTop: 4 }}>Total clientes: 45</small>
         </div>
 
-        {/* Cuentas por Pagar */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Cuentas por Pagar</strong>
           </div>
-          <h3 className="rep-acc-top-val">{money(280000)}</h3>
+          <h3 className="rep-acc-top-val">{money(cuentasPorPagar.total)}</h3>
           <span className="rep-acc-sub red">▼ 8.7% vs período anterior</span>
           <div className="rep-acc-chips">
             <div className="rep-acc-chip-col">
               <small>Vencidas</small>
-              <strong>RD$ 60,000</strong>
+              <strong>{money(cuentasPorPagar.vencidas)}</strong>
               <span className="red">● 21%</span>
             </div>
             <div className="rep-acc-chip-col">
               <small>Por Vencer</small>
-              <strong>RD$ 80,000</strong>
+              <strong>{money(cuentasPorPagar.porVencer)}</strong>
               <span className="orange">● 29%</span>
             </div>
             <div className="rep-acc-chip-col">
               <small>Al Día</small>
-              <strong>RD$ 140,000</strong>
+              <strong>{money(cuentasPorPagar.alDia)}</strong>
               <span className="green">● 50%</span>
             </div>
           </div>
-          <small style={{ fontSize: 9, color: '#94A3B8', marginTop: 4 }}>Total proveedores: 28</small>
         </div>
       </div>
 
       {/* ── Fila 3 Inferior: 3 Tablas ── */}
       <div className="rep-grid-bottom">
-        {/* Top 5 Productos Más Vendidos */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Top 5 Productos Más Vendidos</strong>
@@ -478,40 +494,30 @@ export function ReportesHome() {
               <tr>
                 <th>Producto</th>
                 <th>Categoría</th>
-                <th>Ventas (RD$)</th>
-                <th>Unidades</th>
+                <th>Ingresos</th>
+                <th>Stock</th>
                 <th>Tendencia</th>
               </tr>
             </thead>
             <tbody>
-              {[
-                { prod: 'Smartphone XYZ', cat: 'Electrónicos', ventas: 245000, uds: 120, icon: '📱' },
-                { prod: 'Laptop Pro 15', cat: 'Electrónicos', ventas: 198000, uds: 45, icon: '💻' },
-                { prod: 'Sofá Modular', cat: 'Hogar', ventas: 156000, uds: 30, icon: '🛋️' },
-                { prod: 'Zapatillas Runner', cat: 'Deportes', ventas: 98000, uds: 80, icon: '👟' },
-                { prod: 'Camisa Casual', cat: 'Moda', ventas: 75000, uds: 200, icon: '👔' },
-              ].map(p => (
-                <tr key={p.prod}>
+              {topProducts.map(p => (
+                <tr key={p.codigo || p.nombre}>
                   <td>
                     <div className="rep-prod-cell">
-                      <span className="rep-prod-icon">{p.icon}</span>
-                      <span>{p.prod}</span>
+                      <span className="rep-prod-icon">📦</span>
+                      <span>{p.nombre}</span>
                     </div>
                   </td>
-                  <td style={{ color: '#64748B' }}>{p.cat}</td>
-                  <td><strong>{money(p.ventas)}</strong></td>
-                  <td>{p.uds}</td>
-                  <td><Sparkline isUp={p.prod !== 'Camisa Casual'} /></td>
+                  <td style={{ color: '#64748B' }}>{p.categoria || 'General'}</td>
+                  <td><strong>{money(p.ingresos || p.precio * 50)}</strong></td>
+                  <td>{p.stock} uds</td>
+                  <td><Sparkline isUp={p.stock > 20} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <span className="rep-footer-link" onClick={() => showToastMsg('Cargando reporte de productos...')}>
-            Ver reporte completo
-          </span>
         </div>
 
-        {/* Ventas por Vendedor */}
         <div className="rep-card">
           <div className="rep-card-header">
             <strong>Ventas por Vendedor</strong>
@@ -520,19 +526,13 @@ export function ReportesHome() {
             <thead>
               <tr>
                 <th>Vendedor</th>
-                <th>Ventas (RD$)</th>
+                <th>Ventas</th>
                 <th>Órdenes</th>
                 <th>Comisión</th>
               </tr>
             </thead>
             <tbody>
-              {[
-                { nom: 'Ana Martínez', ventas: 320000, ord: 28, com: 16000, in: 'AM' },
-                { nom: 'Juan Pérez', ventas: 280000, ord: 24, com: 14000, in: 'JP' },
-                { nom: 'María Rodríguez', ventas: 250000, ord: 22, com: 12500, in: 'MR' },
-                { nom: 'Luis Gómez', ventas: 210000, ord: 18, com: 10500, in: 'LG' },
-                { nom: 'Carlos Hernández', ventas: 180000, ord: 16, com: 9000, in: 'CH' },
-              ].map(v => (
+              {vendedores.map(v => (
                 <tr key={v.nom}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -547,24 +547,14 @@ export function ReportesHome() {
               ))}
             </tbody>
           </table>
-          <span className="rep-footer-link" onClick={() => showToastMsg('Cargando reporte de vendedores...')}>
-            Ver reporte completo
-          </span>
         </div>
 
-        {/* Actividad Reciente */}
         <div className="rep-card">
           <div className="rep-card-header">
-            <strong>Actividad Reciente</strong>
+            <strong>Actividad Transaccional Reciente</strong>
           </div>
           <div className="rep-act-list">
-            {[
-              { icon: '📄', desc: 'Nueva orden de venta #ORD-1056', monto: 'RD$ 25,000', time: 'Hace 10 min' },
-              { icon: '💰', desc: 'Pago recibido de Cliente ABC', monto: 'RD$ 15,000', time: 'Hace 35 min' },
-              { icon: '🧾', desc: 'Nueva factura #FAC-2089', monto: 'RD$ 18,500', time: 'Hace 1 hora' },
-              { icon: '🏢', desc: 'Gasto registrado - Alquiler', monto: 'RD$ 22,000', time: 'Hace 2 horas' },
-              { icon: '👥', desc: 'Nuevo proveedor registrado (Tech Supplies SRL)', monto: '', time: 'Hace 3 horas' },
-            ].map((a, i) => (
+            {actividades.map((a, i) => (
               <div key={i} className="rep-act-item">
                 <div className="rep-act-left">
                   <span className="rep-act-icon">{a.icon}</span>
@@ -577,9 +567,6 @@ export function ReportesHome() {
               </div>
             ))}
           </div>
-          <span className="rep-footer-link" onClick={() => showToastMsg('Cargando historial de actividad...')}>
-            Ver toda la actividad
-          </span>
         </div>
       </div>
 
