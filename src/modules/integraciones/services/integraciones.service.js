@@ -185,11 +185,26 @@ export const integracionesService = {
 
   // Disparar acción real de integración (Ej: Enviar WhatsApp, enviar Email, validar DGII)
   executeTrigger: async (integracion, trigger, customDest, customMsg) => {
-    await new Promise(r => setTimeout(r, 900))
+    await new Promise(r => setTimeout(r, 600))
     const latencia = Math.floor(Math.random() * 60 + 30)
 
     const destinoFinal = customDest || trigger.sampleDest
     const payloadFinal = customMsg || trigger.payload
+
+    // Si es WhatsApp, abrir la API real de WhatsApp (wa.me) para enviar el mensaje directamente al teléfono
+    if (integracion.id === 'int-whatsapp' || integracion.nombre.toLowerCase().includes('whatsapp')) {
+      const cleanPhone = destinoFinal.replace(/[^0-9]/g, '')
+      if (cleanPhone) {
+        const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(payloadFinal)}`
+        window.open(waUrl, '_blank')
+      }
+    }
+
+    // Si es Email, abrir cliente de correo transaccional mailto
+    if (integracion.id === 'int-email' && destinoFinal.includes('@')) {
+      const mailUrl = `mailto:${destinoFinal}?subject=${encodeURIComponent(trigger.label)}&body=${encodeURIComponent(payloadFinal)}`
+      window.open(mailUrl, '_blank')
+    }
 
     const nuevoEvt = {
       id: `evt-${Date.now()}`,
@@ -197,7 +212,7 @@ export const integracionesService = {
       integracion: integracion.nombre,
       evento: trigger.label,
       destino: destinoFinal,
-      estado: `Ejecutado con Éxito (${latencia}ms - 200 OK)`,
+      estado: `Transmitido al Cliente (${latencia}ms - 200 OK)`,
       responseData: JSON.stringify({
         status: 'SUCCESS',
         service: integracion.nombre,
