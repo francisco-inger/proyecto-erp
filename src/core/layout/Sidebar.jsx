@@ -194,15 +194,8 @@ export function Sidebar() {
             )
           })}
           <NavLink
-            to="/ajustes?tab=Seguridad"
-            className={({ isActive }) => `sidebar-link${location.pathname === '/ajustes' && (searchParams.get('tab') === 'Seguridad' || searchParams.get('tab') === 'Usuarios y Roles') ? ' active' : ''}`}
-          >
-            <span className="sidebar-icon">🛡️</span> Seguridad & Roles
-          </NavLink>
-
-          <NavLink
             to="/ajustes"
-            className={({ isActive }) => `sidebar-link${location.pathname === '/ajustes' && !searchParams.get('tab')?.includes('Seguridad') && !searchParams.get('tab')?.includes('Usuarios') ? ' active' : ''}`}
+            className={({ isActive }) => `sidebar-link${location.pathname === '/ajustes' ? ' active' : ''}`}
           >
             <span className="sidebar-icon">⚙️</span> Ajustes
           </NavLink>
