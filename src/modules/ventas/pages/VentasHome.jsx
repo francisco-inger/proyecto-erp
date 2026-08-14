@@ -1,6 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { ventasService } from '../services/ventas.service'
 import './VentasHome.css'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const STATUS = [
   'Todos',
@@ -650,13 +652,34 @@ export function VentasHome() {
       .trim()
   }
 
-  function csvValue(value) {
-    return `"${String(value ?? '')
-      .replaceAll('"', '""')
-      .replace(/\r?\n|\r/g, ' ')}"`
+  function formatExportDate(value) {
+    if (!value) return ''
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return cleanText(value)
+    }
+
+    return new Intl.DateTimeFormat('es-DO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date)
   }
 
-  function exportCsv(data = null) {
+  function formatExportMoney(value) {
+    const amount = Number(value || 0)
+
+    return new Intl.NumberFormat('es-DO', {
+      style: 'currency',
+      currency: 'DOP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  }
+
+  function exportPdf(data = null) {
     const exportData = Array.isArray(data) ? data : filtered
 
     if (!exportData.length) {
@@ -664,58 +687,199 @@ export function VentasHome() {
       return
     }
 
-    const header = [
-      'ID',
-      'Pedido',
-      'Cliente',
-      'Fecha',
-      'Estado',
-      'Total',
-      'Observaciones',
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    })
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    const totalVentas = exportData.reduce(
+      (sum, order) => sum + Number(order.total || 0),
+      0
+    )
+
+    const pendientes = exportData.filter(
+      order => order.estado === 'Pendiente'
+    ).length
+
+    const confirmados = exportData.filter(
+      order => order.estado === 'Confirmado'
+    ).length
+
+    const enviados = exportData.filter(
+      order => order.estado === 'Enviado'
+    ).length
+
+    const entregados = exportData.filter(
+      order => order.estado === 'Entregado'
+    ).length
+
+    const cancelados = exportData.filter(
+      order => order.estado === 'Cancelado'
+    ).length
+
+    const generatedAt = new Intl.DateTimeFormat('es-DO', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    }).format(new Date())
+
+    // Encabezado
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(20)
+    doc.text('ELY TECH STORE', 14, 18)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.text('Tecnología para Empresas', 14, 24)
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(16)
+    doc.text('REPORTE DE PEDIDOS DE VENTAS', 14, 36)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Generado: ${generatedAt}`, 14, 42)
+
+    // Línea separadora
+    doc.setLineWidth(0.4)
+    doc.line(14, 46, pageWidth - 14, 46)
+
+    // Resumen
+    const summaryY = 55
+    const boxWidth = (pageWidth - 28 - 16) / 5
+    const boxHeight = 22
+
+    const summary = [
+      ['Pedidos', exportData.length],
+      ['Total ventas', formatExportMoney(totalVentas)],
+      ['Pendientes', pendientes],
+      ['Confirmados', confirmados],
+      ['Entregados', entregados],
     ]
 
+    summary.forEach((item, index) => {
+      const x = 14 + index * (boxWidth + 4)
+
+      doc.setDrawColor(220, 224, 230)
+      doc.setFillColor(248, 249, 251)
+      doc.roundedRect(x, summaryY, boxWidth, boxHeight, 2, 2, 'FD')
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.text(item[0], x + 4, summaryY + 7)
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text(String(item[1]), x + 4, summaryY + 15)
+    })
+
+    // Tabla
     const rows = exportData.map(order => [
-      order.id,
+      String(order.id ?? ''),
       cleanText(order.numero),
       cleanText(order.cliente),
-      formatDate(order.fecha),
+      formatExportDate(order.fecha),
       cleanText(order.estado),
-      Number(order.total || 0).toFixed(2),
+      formatExportMoney(order.total),
       cleanText(order.observaciones),
     ])
 
-    const csv = [
-      header.map(csvValue).join(','),
-      ...rows.map(row =>
-        row.map(csvValue).join(',')
-      ),
-    ].join('\r\n')
+    autoTable(doc, {
+      startY: 84,
+      head: [[
+        'ID',
+        'PEDIDO',
+        'CLIENTE',
+        'FECHA',
+        'ESTADO',
+        'TOTAL',
+        'OBSERVACIONES',
+      ]],
+      body: rows,
+      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        cellPadding: 3,
+        valign: 'middle',
+        overflow: 'linebreak',
+      },
+      headStyles: {
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center',
+        fillColor: [31, 41, 55],
+        textColor: [255, 255, 255],
+      },
+      columnStyles: {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 28, halign: 'center' },
+        4: { cellWidth: 30, halign: 'center' },
+        5: { cellWidth: 32, halign: 'right' },
+        6: { cellWidth: 'auto' },
+      },
+      didParseCell: function (data) {
+        if (data.section === 'body' && data.column.index === 4) {
+          data.cell.styles.fontStyle = 'bold'
+        }
 
-    const blob = new Blob(
-      ['\uFEFF' + csv],
-      {
-        type: 'text/csv;charset=utf-8;',
-      }
-    )
+        if (data.section === 'body' && data.column.index === 5) {
+          data.cell.styles.fontStyle = 'bold'
+        }
+      },
+      didDrawPage: function () {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
 
-    const url = URL.createObjectURL(blob)
+        doc.text(
+          'ELY TECH STORE · Reporte de pedidos',
+          14,
+          pageHeight - 8
+        )
 
-    const a = document.createElement('a')
+        doc.text(
+          `Página ${doc.internal.getNumberOfPages()}`,
+          pageWidth - 14,
+          pageHeight - 8,
+          { align: 'right' }
+        )
+      },
+      margin: {
+        left: 14,
+        right: 14,
+        bottom: 14,
+      },
+    })
 
-    a.href = url
+    // Resumen final
+    const finalY =
+      typeof doc.lastAutoTable?.finalY === 'number'
+        ? doc.lastAutoTable.finalY + 10
+        : pageHeight - 25
 
-    a.download =
-      `Pedidos_Ventas_${new Date()
-        .toLocaleDateString('es-DO')
-        .replaceAll('/', '-')}.csv`
+    if (finalY < pageHeight - 15) {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.text(
+        `Resumen de estados: Pendientes ${pendientes} · Confirmados ${confirmados} · Enviados ${enviados} · Entregados ${entregados} · Cancelados ${cancelados}`,
+        14,
+        finalY
+      )
+    }
 
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    const filenameDate = new Intl.DateTimeFormat('es-DO')
+      .format(new Date())
+      .replaceAll('/', '-')
 
-    URL.revokeObjectURL(url)
+    doc.save(`Reporte_Pedidos_${filenameDate}.pdf`)
 
     setShowExport(false)
+    setError('')
   }
   async function importCsv(file) {
     if (!file) return
@@ -874,9 +1038,9 @@ export function VentasHome() {
             Importar
           </button>
 
-          <button type="button" className="ov-btn" onClick={exportCsv}>
+          <button type="button" className="ov-btn" onClick={() => exportPdf()}>
             <DownloadIcon />
-            Exportar
+            Exportar PDF
           </button>
         </div>
 
@@ -1569,6 +1733,9 @@ export function VentasHome() {
 }
 
 export default VentasHome
+
+
+
 
 
 
