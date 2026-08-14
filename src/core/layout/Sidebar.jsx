@@ -70,24 +70,9 @@ export function Sidebar() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const [openSubmenus, setOpenSubmenus] = useState({
-    'rrhh-inventario': true,
-    finanzas: true,
-  })
+  // Submenús cerrados por defecto al iniciar sesión (despliegue 100% manual)
+  const [openSubmenus, setOpenSubmenus] = useState({})
   const [showPlanModal, setShowPlanModal] = useState(false)
-
-  // Auto-expandir submenú si la ruta activa coincide
-  useEffect(() => {
-    if (location.pathname.includes('inventario') || location.pathname.includes('rrhh-inventario')) {
-      setOpenSubmenus((prev) => ({ ...prev, 'rrhh-inventario': true }))
-    }
-    if (location.pathname === '/rrhh' || location.pathname.startsWith('/rrhh?')) {
-      setOpenSubmenus((prev) => ({ ...prev, rrhh: true }))
-    }
-    if (location.pathname === '/finanzas' || location.pathname.startsWith('/finanzas?')) {
-      setOpenSubmenus((prev) => ({ ...prev, finanzas: true }))
-    }
-  }, [location.pathname])
 
   const all = getEnabledModules().filter((m) => canAccess(user?.role, m.requiredRole))
   const modules = [...all].sort((a, b) => {
@@ -142,8 +127,10 @@ export function Sidebar() {
                     className={`sidebar-link sidebar-parent-link ${isParentActive ? 'active-parent' : ''}`}
                     onClick={() => {
                       const defaultTab = mod.id === 'rrhh' ? 'Resumen RRHH' : 'Resumen'
-                      if (!isParentActive) navigate(`${mod.path}?tab=${encodeURIComponent(defaultTab)}`)
-                      setOpenSubmenus((prev) => ({ ...prev, [mod.id]: true }))
+                      if (!isParentActive) {
+                        navigate(`${mod.path}?tab=${encodeURIComponent(defaultTab)}`)
+                      }
+                      setOpenSubmenus((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }))
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
