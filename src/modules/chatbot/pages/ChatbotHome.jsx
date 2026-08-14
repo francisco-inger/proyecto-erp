@@ -289,10 +289,10 @@ export function ChatbotHome() {
           </div>
 
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-            Asistente IA, Consultas de Negocio & Servicios
+            Asistente IA de Gestión ERP & Consultas del Sistema
           </h1>
           <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.45, maxWidth: 600 }}>
-            Pregunta libremente sobre nuestros servicios empresariales o consulta métricas y reportes en tiempo real extraídos directamente de la base de datos de tu empresa.
+            Consulta métricas en tiempo real, facturación DGII (e-CF), compras, inventario, finanzas, CRM y resuelve cualquier duda sobre el funcionamiento del sistema empresarial.
           </p>
 
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -388,7 +388,7 @@ export function ChatbotHome() {
                   ¡Hola! Bienvenido a APPEX Enterprise Suite.
                 </h3>
                 <p style={{ margin: '0 0 12px', fontSize: 13, color: '#475569', lineHeight: 1.5 }}>
-                  Soy tu <strong>Asistente Virtual Inteligente</strong>. Estoy disponible 24/7 para responder cualquier pregunta, asesorarte sobre nuestras soluciones corporativas y consultar en tiempo real las ventas, inventario, finanzas y clientes de tu empresa.
+                  Soy tu <strong>Asistente Oficial de Gestión Empresarial</strong>. Estoy disponible 24/7 para responder dudas sobre el funcionamiento del sistema, guiarte en el uso de los módulos y consultar en tiempo real las ventas, compras, inventario, finanzas y clientes de tu empresa.
                 </p>
 
                 <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 12 }}>
