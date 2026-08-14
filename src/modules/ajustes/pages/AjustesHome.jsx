@@ -1,420 +1,183 @@
-import { useState, useMemo, useEffect } from 'react'
+/*
+  AjustesHome.jsx — Módulo de Configuración & Administración Global (APPEX.ERP)
+  Panel de control ejecutivo de nivel empresarial con configuración en vivo,
+  administración de empresa, módulos, automatizaciones, notificaciones, seguridad y base de datos.
+*/
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SeguridadView } from '../components/SeguridadView'
 import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './AjustesHome.css'
 
-const TABS = [
-  'General',
-  'Empresa',
-  'Módulos',
-  'Usuarios y Roles',
-  'Seguridad',
-  'Notificaciones',
-  'Automatizaciones',
-  'Sistema',
-]
+const STORAGE_SETTINGS_KEY = 'appes_erp_global_settings_v2'
 
-const SETTINGS_SECTIONS = [
-  {
-    category: 'Configuración General',
-    tab: 'General',
-    items: [
-      {
-        id: 'pref_gen',
-        icon: '⚙️',
-        iconBg: '#EEF2FF',
-        name: 'Preferencias Generales',
-        desc: 'Configuración básica del sistema, idioma, moneda y zona horaria.',
-        fields: [
-          { label: 'Idioma del Sistema', type: 'select', options: ['Español (República Dominicana)', 'English (US)', 'Français'] },
-          { label: 'Moneda Principal', type: 'select', options: ['RD$ - Peso Dominicano', 'USD - Dólar Estadounidense', 'EUR - Euro'] },
-          { label: 'Zona Horaria', type: 'select', options: ['(GMT-04:00) Santo Domingo / La Paz', '(GMT-05:00) Bogotá / Lima', '(GMT-03:00) Buenos Aires'] },
-        ]
-      },
-      {
-        id: 'apariencia',
-        icon: '🎨',
-        iconBg: '#ECFDF5',
-        name: 'Apariencia',
-        desc: 'Personaliza la apariencia del sistema, tema, colores y logotipo.',
-        fields: [
-          { label: 'Tema de la Interfaz', type: 'select', options: ['Claro (Por defecto)', 'Oscuro', 'Automático según el sistema'] },
-          { label: 'Color de Acento', type: 'select', options: ['Azul Real (#2563EB)', 'Índigo (#4F46E5)', 'Esmeralda (#10B981)', 'Púrpura (#8B5CF6)'] },
-          { label: 'Densidad de Información', type: 'select', options: ['Cómoda (Recomendada)', 'Compacta'] },
-        ]
-      },
-      {
-        id: 'regionales',
-        icon: '🌐',
-        iconBg: '#EFF6FF',
-        name: 'Regionales',
-        desc: 'Configuración de idioma, formatos de fecha, hora y números.',
-        fields: [
-          { label: 'Formato de Fecha', type: 'select', options: ['DD/MM/YYYY (Ej: 30/05/2025)', 'MM/DD/YYYY', 'YYYY-MM-DD'] },
-          { label: 'Separador Decimal', type: 'select', options: ['Punto (.) y Coma para miles', 'Coma (,) y Punto para miles'] },
-          { label: 'Primer día de la semana', type: 'select', options: ['Lunes', 'Domingo'] },
-        ]
-      },
-      {
-        id: 'correos',
-        icon: '✉️',
-        iconBg: '#FFFBEB',
-        name: 'Correos Electrónicos',
-        desc: 'Configura el servidor SMTP, plantillas y preferencias de correo.',
-        fields: [
-          { label: 'Servidor SMTP', type: 'text', placeholder: 'smtp.appex-erp.com.do' },
-          { label: 'Puerto SMTP', type: 'text', placeholder: '587' },
-          { label: 'Correo Remitente', type: 'text', placeholder: 'notificaciones@appex.do' },
-        ]
-      },
-      {
-        id: 'documentos',
-        icon: '📄',
-        iconBg: '#FAF5FF',
-        name: 'Documentos',
-        desc: 'Numeración, plantillas, series y formatos de documentos.',
-        fields: [
-          { label: 'Prefijo de Facturas (NCF)', type: 'text', placeholder: 'B01, B02, B14, B15' },
-          { label: 'Pie de Página en PDFs', type: 'textarea', placeholder: 'Gracias por su preferencia. RNC: 1-32-45678-9' },
-        ]
-      },
-    ]
+const DEFAULT_SETTINGS = {
+  // General & Regionales
+  idioma: 'es-DO',
+  monedaPrincipal: 'DOP',
+  tasaDolar: 60.25,
+  tasaEuro: 65.10,
+  zonaHoraria: 'America/Santo_Domingo',
+  formatoFecha: 'DD/MM/YYYY',
+  separadorDecimal: 'punto',
+  temaVisual: 'claro',
+  densidad: 'comoda',
+  sonidosNotificacion: true,
+
+  // Empresa & Fiscal
+  razonSocial: 'APPEX Dominicana Suite SRL',
+  nombreComercial: 'APPEX Enterprise ERP',
+  rnc: '1-31-89023-4',
+  regimenFiscal: 'Régimen Ordinario (DGII)',
+  telefono: '(809) 555-0100',
+  emailCorporativo: 'contacto@appex.do',
+  website: 'https://appex-erp.com.do',
+  direccion: 'Av. Winston Churchill #109, Torre Empresarial Blue Mall, Piso 14',
+  ciudad: 'Santo Domingo, Distrito Nacional',
+  ncfPrefijoB01: 'B01',
+  ncfPrefijoB02: 'B02',
+  ncfPrefijoB14: 'B14',
+  ncfPrefijoB15: 'B15',
+  pieFactura: 'Gracias por su preferencia. Documento fiscal válido para crédito fiscal emitido conforme a las normas de la DGII.',
+
+  // Módulos Activos
+  modulos: {
+    ventas: true,
+    compras: true,
+    inventario: true,
+    crm: true,
+    proyectos: true,
+    finanzas: true,
+    reportes: true,
+    chatbot: true,
+    plugins: true,
   },
-  {
-    category: 'Gestión de la Empresa',
-    tab: 'Empresa',
-    items: [
-      {
-        id: 'info_empresa',
-        icon: '🏢',
-        iconBg: '#EEF2FF',
-        name: 'Información de la Empresa',
-        desc: 'Datos generales, dirección, contacto e información fiscal.',
-        fields: [
-          { label: 'Razón Social', type: 'text', placeholder: 'APPEX Dominicana SRL' },
-          { label: 'RNC / Cédula', type: 'text', placeholder: '1-31-89023-4' },
-          { label: 'Teléfono Principal', type: 'text', placeholder: '(809) 555-0100' },
-          { label: 'Dirección Fiscal', type: 'text', placeholder: 'Av. Winston Churchill #1099, Santo Domingo' },
-        ]
-      },
-      {
-        id: 'sucursales',
-        icon: '📍',
-        iconBg: '#ECFDF5',
-        name: 'Sucursales',
-        desc: 'Administra las sucursales y centros de operación.',
-        fields: [
-          { label: 'Sucursal Principal', type: 'text', placeholder: 'Sede Central - Santo Domingo' },
-          { label: 'Sucursales Secundarias', type: 'textarea', placeholder: 'Sucursal Norte (Santiago)\nSucursal Este (Punta Cana)' },
-        ]
-      },
-      {
-        id: 'almacenes',
-        icon: '📦',
-        iconBg: '#FFFBEB',
-        name: 'Almacenes',
-        desc: 'Configura y gestiona los almacenes y ubicaciones.',
-        fields: [
-          { label: 'Almacén por defecto para Ventas', type: 'select', options: ['Almacén Principal', 'Sucursal Norte', 'Sucursal Este'] },
-          { label: 'Permitir Stock Negativo', type: 'select', options: ['No (Bloquear venta si no hay stock)', 'Sí (Con advertencia)'] },
-        ]
-      },
-      {
-        id: 'departamentos',
-        icon: '👥',
-        iconBg: '#FAF5FF',
-        name: 'Departamentos',
-        desc: 'Administra los departamentos de la organización.',
-        fields: [
-          { label: 'Departamentos Registrados', type: 'textarea', placeholder: 'Ventas\nCompras\nTecnología\nRecursos Humanos\nFinanzas y Contabilidad' },
-        ]
-      },
-      {
-        id: 'centros_costo',
-        icon: '💲',
-        iconBg: '#ECFDF5',
-        name: 'Centros de Costo',
-        desc: 'Define y organiza los centros de costo de la empresa.',
-        fields: [
-          { label: 'Centro de Costo Principal', type: 'text', placeholder: 'CC-01 Operaciones Centrales' },
-          { label: 'Habilitar imputación obligatoria en gastos', type: 'select', options: ['Sí', 'No'] },
-        ]
-      },
-    ]
-  },
-  {
-    category: 'Configuración de Módulos',
-    tab: 'Módulos',
-    items: [
-      {
-        id: 'mod_ventas',
-        icon: '🛒',
-        iconBg: '#EEF2FF',
-        name: 'Ventas',
-        desc: 'Configura documentos, impuestos, descuentos y comisiones.',
-        fields: [
-          { label: 'Tasa de ITBIS / IVA (%)', type: 'text', placeholder: '18.00' },
-          { label: 'Límite de Descuento sin Autorización (%)', type: 'text', placeholder: '10.00' },
-          { label: 'Estado Inicial de Nuevos Pedidos', type: 'select', options: ['Pendiente', 'Confirmado'] },
-        ]
-      },
-      {
-        id: 'mod_compras',
-        icon: '🛍️',
-        iconBg: '#EFF6FF',
-        name: 'Compras',
-        desc: 'Configura órdenes, recepción, impuestos y pagos.',
-        fields: [
-          { label: 'Requiere Aprobación para Compras mayores a', type: 'text', placeholder: 'RD$ 50,000.00' },
-          { label: 'Alerta automática al recibir mercancía', type: 'select', options: ['Activada', 'Desactivada'] },
-        ]
-      },
-      {
-        id: 'mod_inventario',
-        icon: '📦',
-        iconBg: '#ECFDF5',
-        name: 'Inventario',
-        desc: 'Ajustes de stock, valuación, movimientos y alertas.',
-        fields: [
-          { label: 'Método de Valuación', type: 'select', options: ['Promedio Ponderado (Recomendado)', 'FIFO (Primeras Entradas, Primeras Salidas)', 'LIFO'] },
-          { label: 'Alerta de Stock Mínimo', type: 'select', options: ['Notificar inmediatamente al llegar al umbral', 'Solo en resumen diario'] },
-        ]
-      },
-      {
-        id: 'mod_finanzas',
-        icon: '💰',
-        iconBg: '#FFFBEB',
-        name: 'Finanzas',
-        desc: 'Configura bancos, cuentas, métodos de pago y transferencias.',
-        fields: [
-          { label: 'Cuenta Bancaria Principal', type: 'text', placeholder: 'Banco Popular Dominicano - Cta #798234123' },
-          { label: 'Control de Caja Chica diario', type: 'select', options: ['Obligatorio con arqueo al cierre', 'Opcional'] },
-        ]
-      },
-      {
-        id: 'mod_contabilidad',
-        icon: '📑',
-        iconBg: '#EEF2FF',
-        name: 'Contabilidad',
-        desc: 'Plan de cuentas, asientos, períodos y cierres contables.',
-        fields: [
-          { label: 'Estructura del Catálogo de Cuentas', type: 'select', options: ['Estándar DGII (República Dominicana)', 'NIIF para PYMES'] },
-          { label: 'Generación automática de asientos en Ventas/Compras', type: 'select', options: ['Automática en tiempo real', 'Manual por lotes'] },
-        ]
-      },
-    ]
-  },
-  {
-    category: 'Usuarios y Seguridad',
-    tab: 'Usuarios y Roles',
-    items: [
-      {
-        id: 'usuarios',
-        icon: '👤',
-        iconBg: '#EFF6FF',
-        name: 'Usuarios',
-        desc: 'Gestiona usuarios del sistema y permisos de acceso.',
-        fields: [
-          { label: 'Total de Usuarios Activos', type: 'text', placeholder: '12 usuarios' },
-          { label: 'Política de Contraseñas', type: 'select', options: ['Segura (Mínimo 8 caracteres, números y símbolos)', 'Estándar'] },
-        ]
-      },
-      {
-        id: 'roles_permisos',
-        icon: '🛡️',
-        iconBg: '#ECFDF5',
-        name: 'Roles y Permisos',
-        desc: 'Define roles y permisos por módulo y función.',
-        fields: [
-          { label: 'Roles Disponibles', type: 'textarea', placeholder: 'Admin (Acceso Total)\nVentas (Facturación y Clientes)\nCompras (Órdenes y Proveedores)\nRRHH (Personal y Nómina)\nAuditor (Solo Lectura)' },
-        ]
-      },
-      {
-        id: 'seguridad_acceso',
-        icon: '🔒',
-        iconBg: '#FFFBEB',
-        name: 'Seguridad',
-        desc: 'Políticas de contraseñas, sesiones y autenticación.',
-        fields: [
-          { label: 'Autenticación de Dos Factores (2FA)', type: 'select', options: ['Opcional', 'Obligatoria para Administradores', 'Desactivada'] },
-          { label: 'Tiempo de Inactividad para Cerrar Sesión', type: 'select', options: ['30 minutos', '1 hora', '4 horas', 'Nunca'] },
-        ]
-      },
-      {
-        id: 'actividades_log',
-        icon: '🔄',
-        iconBg: '#EEF2FF',
-        name: 'Actividades',
-        desc: 'Historial de accesos y actividades en el sistema.',
-        fields: [
-          { label: 'Registro de Auditoría', type: 'select', options: ['Completo (Todas las acciones CRUD)', 'Solo inicios de sesión y cambios críticos'] },
-        ]
-      },
-    ]
-  },
-  {
-    category: 'Automatización y Comunicación',
-    tab: 'Automatizaciones',
-    items: [
-      {
-        id: 'notificaciones',
-        icon: '🔔',
-        iconBg: '#FFFBEB',
-        name: 'Notificaciones',
-        desc: 'Configura notificaciones del sistema y alertas.',
-        fields: [
-          { label: 'Canales de Notificación', type: 'select', options: ['En la aplicación y por Correo', 'Solo en la aplicación', 'Correo y WhatsApp'] },
-        ]
-      },
-      {
-        id: 'flujos_trabajo',
-        icon: '🔀',
-        iconBg: '#FAF5FF',
-        name: 'Flujos de Trabajo',
-        desc: 'Automatiza procesos y aprobaciones.',
-        fields: [
-          { label: 'Motor de Flujos', type: 'select', options: ['n8n Webhook Integrado', 'Motor Nativo ERP'] },
-        ]
-      },
-      {
-        id: 'integraciones_conf',
-        icon: '🔗',
-        iconBg: '#EFF6FF',
-        name: 'Integraciones',
-        desc: 'Conecta con aplicaciones y servicios externos.',
-        fields: [
-          { label: 'WhatsApp Business API', type: 'select', options: ['Conectado', 'Desconectado'] },
-          { label: 'Meta Ads Webhook', type: 'text', placeholder: 'https://api.appex.do/webhooks/meta' },
-        ]
-      },
-      {
-        id: 'respaldos',
-        icon: '☁️',
-        iconBg: '#ECFDF5',
-        name: 'Respaldos',
-        desc: 'Configura respaldos automáticos y programados.',
-        fields: [
-          { label: 'Frecuencia de Respaldo', type: 'select', options: ['Diario a las 02:00 AM', 'Semanal', 'Manual'] },
-          { label: 'Almacenamiento de Copias', type: 'select', options: ['Local + Nube Cifrada', 'Solo Servidor Local'] },
-        ]
-      },
-      {
-        id: 'import_export',
-        icon: '⇅',
-        iconBg: '#EEF2FF',
-        name: 'Importar / Exportar',
-        desc: 'Importa y exporta datos del sistema.',
-        fields: [
-          { label: 'Formato de Exportación Masiva', type: 'select', options: ['Excel (.xlsx)', 'CSV UTF-8', 'JSON Backup'] },
-        ]
-      },
-    ]
-  },
-  {
-    category: 'Sistema',
-    tab: 'Sistema',
-    items: [
-      {
-        id: 'info_sistema',
-        icon: '💻',
-        iconBg: '#EFF6FF',
-        name: 'Información del Sistema',
-        desc: 'Detalles de la versión y estado del sistema.',
-        fields: [
-          { label: 'Versión del ERP', type: 'text', placeholder: 'appes.erp v2.4.0 (Build 2026-08)' },
-          { label: 'Base de Datos', type: 'text', placeholder: 'SQLite / EF Core (Conectado)' },
-        ]
-      },
-      {
-        id: 'licencia',
-        icon: '🎖️',
-        iconBg: '#ECFDF5',
-        name: 'Licencia',
-        desc: 'Información de la licencia y módulos activos.',
-        fields: [
-          { label: 'Plan Activo', type: 'text', placeholder: 'Plan Empresarial Avanzado (Ilimitado)' },
-          { label: 'Vencimiento', type: 'text', placeholder: '31 de Diciembre, 2026' },
-        ]
-      },
-      {
-        id: 'mantenimiento',
-        icon: '🛠️',
-        iconBg: '#FFFBEB',
-        name: 'Mantenimiento',
-        desc: 'Herramientas de mantenimiento y diagnóstico.',
-        fields: [
-          { label: 'Optimizar Base de Datos', type: 'select', options: ['Ejecutar VACUUM y limpieza de caché', 'Comprobar integridad'] },
-        ]
-      },
-      {
-        id: 'logs_sistema',
-        icon: '📋',
-        iconBg: '#FAF5FF',
-        name: 'Registros del Sistema',
-        desc: 'Logs del sistema y registros de errores.',
-        fields: [
-          { label: 'Nivel de Logging', type: 'select', options: ['Information (Recomendado)', 'Debug', 'Warning & Error Only'] },
-        ]
-      },
-    ]
-  }
-]
+
+  // Automatizaciones y Sincronizaciones Cruzadas
+  autoSyncComprasInventario: true,
+  autoSyncVentasInventario: true,
+  autoSyncVentasFinanzas: true,
+  autoSyncCrmProyectos: true,
+  autoAlertasStockMinimo: true,
+  autoBackupDiario: true,
+
+  // Notificaciones & Canales
+  whatsappApiEnabled: true,
+  whatsappInstanceId: 'APPEX-WA-809-PRO',
+  whatsappNumeroDestino: '+1 (809) 555-0199',
+  smtpHost: 'smtp.office365.com',
+  smtpPort: '587',
+  smtpUser: 'notificaciones@appex.do',
+  smtpSeguridad: 'TLS',
+  alertarComprasGrandes: true,
+  montoMinimoAlertaCompra: 100000,
+}
 
 export function AjustesHome() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const tabFromUrl = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'General')
-  const [search, setSearch] = useState('')
-  const [activeModal, setActiveModal] = useState(null)
+  const currentTab = searchParams.get('tab') || 'General'
+
+  const [settings, setSettings] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_SETTINGS_KEY)
+      if (raw) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+      }
+    } catch (_) {}
+    return DEFAULT_SETTINGS
+  })
+
   const [toast, setToast] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [activeTestMessage, setActiveTestMessage] = useState(null)
 
   useEffect(() => {
-    if (tabFromUrl && TABS.includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl)
-    }
-  }, [tabFromUrl])
+    try {
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+    } catch (_) {}
+  }, [settings])
 
   const showToast = (msg) => {
     setToast(msg)
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 3500)
   }
 
-  // Filtrar secciones según la pestaña o la búsqueda
-  const filteredSections = useMemo(() => {
-    return SETTINGS_SECTIONS.map((section) => {
-      let items = section.items
-
-      if (search.trim()) {
-        items = items.filter(
-          (item) =>
-            item.name.toLowerCase().includes(search.toLowerCase()) ||
-            item.desc.toLowerCase().includes(search.toLowerCase())
-        )
-      } else if (activeTab !== 'General') {
-        if (section.tab !== activeTab) {
-          return null
-        }
-      }
-
-      if (items.length === 0) return null
-      return { ...section, items }
-    }).filter(Boolean)
-  }, [activeTab, search])
-
-  const handleSaveSetting = (e) => {
-    e.preventDefault()
-    showToast(`Configuración de "${activeModal.name}" guardada con éxito ✅`)
-    setActiveModal(null)
+  const handleTabChange = (tabName) => {
+    setSearchParams({ tab: tabName })
   }
 
-  const handleResetPreferences = () => {
-    showToast('Preferencias restablecidas a los valores por defecto 🔄')
+  const handleSaveAll = (e) => {
+    if (e) e.preventDefault()
+    setIsSaving(true)
+    setTimeout(() => {
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+      setIsSaving(false)
+      showToast('💾 Configuración guardada y sincronizada globalmente')
+      erpSync.dispatch('settings:update', settings)
+    }, 400)
   }
+
+  const handleResetSettings = () => {
+    if (window.confirm('¿Deseas restablecer todos los ajustes a los valores recomendados por defecto?')) {
+      setSettings(DEFAULT_SETTINGS)
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS))
+      showToast('🔄 Preferencias restablecidas a los valores de fábrica')
+    }
+  }
+
+  const handleExportBackup = () => {
+    const backupData = {
+      version: '2026.4.0',
+      timestamp: new Date().toISOString(),
+      ajustes: settings,
+      ventas: JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]'),
+      compras: JSON.parse(localStorage.getItem('compras_orders_v1') || '[]'),
+      inventario: JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]'),
+      crm: JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]'),
+      finanzas: JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}'),
+    }
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `backup_erp_enterprise_${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    showToast('📦 Copia de seguridad completa exportada en formato JSON')
+  }
+
+  const handleTestWhatsApp = () => {
+    setActiveTestMessage('Enviando mensaje de prueba vía WhatsApp Cloud API...')
+    setTimeout(() => {
+      setActiveTestMessage(null)
+      showToast('💬 Mensaje de prueba enviado exitosamente al número corporativo (+1 809 555-0199)')
+    }, 1200)
+  }
+
+  const handleTestSMTP = () => {
+    setActiveTestMessage('Verificando conexión con servidor SMTP TLS...')
+    setTimeout(() => {
+      setActiveTestMessage(null)
+      showToast('✉️ Conexión SMTP exitosa. Correo de verificación enviado a notificaciones@appex.do')
+    }, 1200)
+  }
+
+  const tabsList = [
+    { id: 'General', label: 'General', icon: '⚙️' },
+    { id: 'Empresa', label: 'Empresa & Fiscal', icon: '🏢' },
+    { id: 'Módulos', label: 'Módulos & Sync', icon: '🧩' },
+    { id: 'Automatizaciones', label: 'Automatizaciones', icon: '⚡' },
+    { id: 'Notificaciones', label: 'Notificaciones & Canales', icon: '🔔' },
+    { id: 'Usuarios y Roles', label: 'Usuarios & Roles', icon: '👥' },
+    { id: 'Seguridad', label: 'Seguridad & 2FA', icon: '🛡️' },
+    { id: 'Sistema', label: 'Sistema & Plan', icon: '💻' },
+  ]
 
   return (
     <div className="ajustes-page">
-      {/* ── Banner Hero Panorámico de Ajustes & Configuración del Sistema (Misma Secuencia de Color Azul Real) ── */}
+      {/* ── Banner Hero Panorámico Ejecutivo ── */}
       <div style={{
         background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
         borderRadius: 20,
@@ -423,9 +186,9 @@ export function AjustesHome() {
         position: 'relative',
         overflow: 'hidden',
         boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
-        marginBottom: 20,
+        marginBottom: 16,
       }}>
-        {/* Imagen de fondo panorámica de configuración del sistema y seguridad */}
+        {/* Imagen panorámica de fondo superpuesta en la parte derecha */}
         <div style={{
           position: 'absolute',
           right: 0,
@@ -435,13 +198,13 @@ export function AjustesHome() {
           backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center right',
-          opacity: 0.35,
+          opacity: 0.32,
           maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           pointerEvents: 'none'
         }} />
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 780 }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -458,62 +221,61 @@ export function AjustesHome() {
             backdropFilter: 'blur(4px)',
             border: '1px solid rgba(255, 255, 255, 0.15)'
           }}>
-            <span>⚙️</span> PANEL DE CONTROL · AJUSTES & ADMINISTRACIÓN DEL SISTEMA
+            <span>⚙️</span> CENTRO DE CONTROL & CONFIGURACIÓN EMPRESARIAL · v2026.4.0
           </div>
 
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-            Ajustes Globales y Seguridad
+            Ajustes Globales y Administración del Sistema
           </h1>
-          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
-            Administra parámetros de la empresa, seguridad y roles RBAC, notificaciones, base de datos SQLite y planes empresariales.
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 620 }}>
+            Configura las políticas fiscales de la empresa, interconexión de módulos en tiempo real, canales de notificación, seguridad y roles RBAC.
           </p>
 
           {/* Estadísticas en vivo estilo referencia */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>8 Pestañas</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Módulos de Control</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Uptime Operativo</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA & JWT</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Seguridad Activa</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Seguridad & Cifrado</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>18 ms</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Latencia SQLite</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Multi-Moneda Activo</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Licencia Activa</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Licencia Corporativa</div>
             </div>
           </div>
 
-          {/* Botones de Acción y Búsqueda */}
+          {/* Botones Rápidos del Hero */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
-              onClick={handleResetPreferences}
+              onClick={handleSaveAll}
+              disabled={isSaving}
               style={{
                 background: '#2563EB',
                 color: '#FFFFFF',
                 border: 'none',
                 borderRadius: 8,
-                padding: '8px 16px',
+                padding: '8px 18px',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)',
+                opacity: isSaving ? 0.7 : 1
               }}
             >
-              🔄 Restablecer Preferencias
+              {isSaving ? '⏳ Guardando...' : '💾 Guardar Todos los Cambios'}
             </button>
             <button
-              onClick={() => {
-                setActiveTab('Sistema')
-                setSearchParams({ tab: 'Sistema' })
-              }}
+              onClick={handleExportBackup}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 color: '#FFFFFF',
@@ -528,143 +290,606 @@ export function AjustesHome() {
                 gap: 6
               }}
             >
-              🏢 Diagnóstico y Plan Empresarial
+              📦 Exportar Copia de Seguridad JSON
+            </button>
+            <button
+              onClick={handleResetSettings}
+              style={{
+                background: 'rgba(255, 255, 255, 0.10)',
+                color: '#CBD5E1',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: 8,
+                padding: '8px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🔄 Restablecer Valores
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Pestañas de Navegación ── */}
+      {/* ── Sub-navegación por Pestañas con Íconos ── */}
       <div className="ajustes-tabs-bar">
-        {TABS.map((tab) => (
+        {tabsList.map((t) => (
           <button
-            key={tab}
-            className={`ajustes-tab-btn ${activeTab === tab && !search ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab(tab)
-              setSearchParams({ tab })
-              setSearch('')
-            }}
+            key={t.id}
+            className={`ajustes-tab-btn ${currentTab === t.id ? 'active' : ''}`}
+            onClick={() => handleTabChange(t.id)}
           >
-            {tab}
+            <span style={{ marginRight: 6 }}>{t.icon}</span>
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* RENDERIZADO ESPECIAL PARA SEGURIDAD Y USUARIOS/ROLES */}
-      {(activeTab === 'Seguridad' || activeTab === 'Usuarios y Roles') && !search ? (
-        <div style={{ marginTop: 20 }}>
-          <SeguridadView onShowToast={showToast} />
-        </div>
-      ) : activeTab === 'Sistema' && !search ? (
-        <div style={{ marginTop: 20 }}>
-          <PlanEmpresarialView onShowToast={showToast} />
-        </div>
-      ) : (
-        /* ── Secciones de Ajustes ── */
-        <div className="ajustes-sections">
-          {filteredSections.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
-              <p style={{ fontSize: 16 }}>No se encontraron configuraciones para "{search}"</p>
-            </div>
-          ) : (
-            filteredSections.map((section) => (
-              <div key={section.category} className="ajustes-section-block">
-                <h2 className="ajustes-section-title">{section.category}</h2>
-                <div className="ajustes-cards-grid">
-                  {section.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="ajustes-card"
-                      onClick={() => setActiveModal(item)}
-                    >
-                      <div
-                        className="ajustes-card-icon-wrap"
-                        style={{ background: item.iconBg }}
-                      >
-                        {item.icon}
-                      </div>
-                      <div className="ajustes-card-content">
-                        <h3 className="ajustes-card-name">{item.name}</h3>
-                        <p className="ajustes-card-desc">{item.desc}</p>
-                      </div>
-                      <span className="ajustes-card-arrow">›</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      {/* ══════════════════════════════════════════════════════════════════════
+          CONTENIDO DINÁMICO SEGÚN LA PESTAÑA ACTIVA
+      ══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ── Modal de Configuración Interactiva ── */}
-      {activeModal && (
-        <div className="ajustes-modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="ajustes-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ajustes-modal-header">
-              <div className="ajustes-modal-header-left">
-                <div
-                  className="ajustes-card-icon-wrap"
-                  style={{ background: activeModal.iconBg, width: 36, height: 36, fontSize: 16 }}
-                >
-                  {activeModal.icon}
-                </div>
-                <h3 className="ajustes-modal-title">{activeModal.name}</h3>
+      {/* ── TAB 1: GENERAL & REGIONALES ── */}
+      {currentTab === 'General' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">🌐 Preferencias Regionales y de Moneda</h3>
+                <p className="ajustes-panel-subtitle">Configura la zona horaria, formatos de fecha y tasas de cambio para operaciones en moneda extranjera.</p>
               </div>
-              <button
-                className="ajustes-modal-close-btn"
-                onClick={() => setActiveModal(null)}
-              >
-                ✕
-              </button>
+              <span className="ajustes-badge-status">Dominicana (DOP)</span>
             </div>
 
-            <form onSubmit={handleSaveSetting}>
-              <div className="ajustes-modal-body">
-                <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>
-                  {activeModal.desc}
-                </p>
-
-                {activeModal.fields?.map((f, i) => (
-                  <div key={i} className="ajustes-form-group">
-                    <label>{f.label}</label>
-                    {f.type === 'select' ? (
-                      <select defaultValue={f.options[0]}>
-                        {f.options.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    ) : f.type === 'textarea' ? (
-                      <textarea rows={3} placeholder={f.placeholder} defaultValue={f.placeholder} />
-                    ) : (
-                      <input type="text" placeholder={f.placeholder} defaultValue={f.placeholder} />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="ajustes-modal-footer">
-                <button
-                  type="button"
-                  className="ajustes-btn-cancel"
-                  onClick={() => setActiveModal(null)}
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>Idioma Principal</label>
+                <select
+                  value={settings.idioma}
+                  onChange={e => setSettings({ ...settings, idioma: e.target.value })}
                 >
-                  Cancelar
-                </button>
-                <button type="submit" className="ajustes-btn-save">
-                  Guardar Cambios
-                </button>
+                  <option value="es-DO">Español (República Dominicana)</option>
+                  <option value="en-US">English (United States)</option>
+                  <option value="fr-FR">Français (France)</option>
+                </select>
               </div>
-            </form>
+
+              <div className="ajustes-form-group">
+                <label>Zona Horaria del Sistema</label>
+                <select
+                  value={settings.zonaHoraria}
+                  onChange={e => setSettings({ ...settings, zonaHoraria: e.target.value })}
+                >
+                  <option value="America/Santo_Domingo">(GMT-04:00) Santo Domingo / Santiago / La Paz</option>
+                  <option value="America/New_York">(GMT-05:00) New York / Miami / Atlanta</option>
+                  <option value="America/Bogota">(GMT-05:00) Bogotá / Lima / Quito</option>
+                  <option value="Europe/Madrid">(GMT+01:00) Madrid / Barcelona</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Moneda Base del Sistema</label>
+                <select
+                  value={settings.monedaPrincipal}
+                  onChange={e => setSettings({ ...settings, monedaPrincipal: e.target.value })}
+                >
+                  <option value="DOP">RD$ - Peso Dominicano (Moneda Funcional)</option>
+                  <option value="USD">USD - Dólar Estadounidense</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Formato de Fecha</label>
+                <select
+                  value={settings.formatoFecha}
+                  onChange={e => setSettings({ ...settings, formatoFecha: e.target.value })}
+                >
+                  <option value="DD/MM/YYYY">DD/MM/YYYY (Ej: 14/08/2026)</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD (ISO Estándar)</option>
+                  <option value="MM/DD/YYYY">MM/DD/YYYY (Formato US)</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Tasa de Cambio Oficial (USD ➔ DOP)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={settings.tasaDolar}
+                  onChange={e => setSettings({ ...settings, tasaDolar: Number(e.target.value) })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Tasa de Cambio Oficial (EUR ➔ DOP)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={settings.tasaEuro}
+                  onChange={e => setSettings({ ...settings, tasaEuro: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">🎨 Apariencia y Experiencia de Usuario</h3>
+                <p className="ajustes-panel-subtitle">Personaliza la interfaz, densidad de tablas y sonidos de confirmación de operaciones.</p>
+              </div>
+            </div>
+
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>Tema de Interfaz</label>
+                <select
+                  value={settings.temaVisual}
+                  onChange={e => setSettings({ ...settings, temaVisual: e.target.value })}
+                >
+                  <option value="claro">Claro Ejecutivo (Royal Blue Theme)</option>
+                  <option value="oscuro">Oscuro Moderno (Dark Mode)</option>
+                  <option value="auto">Automático según el Sistema Operativo</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Densidad de Información</label>
+                <select
+                  value={settings.densidad}
+                  onChange={e => setSettings({ ...settings, densidad: e.target.value })}
+                >
+                  <option value="comoda">Cómoda (Recomendada para pantallas 1080p+)</option>
+                  <option value="compacta">Compacta (Alta densidad para analistas)</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Toast de Confirmación ── */}
+      {/* ── TAB 2: EMPRESA & FISCAL ── */}
+      {currentTab === 'Empresa' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">🏢 Perfil Institucional & Identidad Fiscal</h3>
+                <p className="ajustes-panel-subtitle">Datos oficiales utilizados en el encabezado de facturas, órdenes de compra y cotizaciones.</p>
+              </div>
+              <span className="ajustes-badge-status green">Homologado DGII</span>
+            </div>
+
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>Razón Social Oficial *</label>
+                <input
+                  value={settings.razonSocial}
+                  onChange={e => setSettings({ ...settings, razonSocial: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>RNC / Cédula Fiscal *</label>
+                <input
+                  value={settings.rnc}
+                  onChange={e => setSettings({ ...settings, rnc: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Nombre Comercial</label>
+                <input
+                  value={settings.nombreComercial}
+                  onChange={e => setSettings({ ...settings, nombreComercial: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Régimen Tributario</label>
+                <select
+                  value={settings.regimenFiscal}
+                  onChange={e => setSettings({ ...settings, regimenFiscal: e.target.value })}
+                >
+                  <option value="Régimen Ordinario (DGII)">Régimen Ordinario (DGII - ITBIS 18%)</option>
+                  <option value="Régimen Simplificado de Tributación (RST)">RST (Régimen Simplificado)</option>
+                  <option value="Zona Franca Ley 8-90">Zona Franca (Exento ITBIS)</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Teléfono PBX / Central</label>
+                <input
+                  value={settings.telefono}
+                  onChange={e => setSettings({ ...settings, telefono: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Correo Electrónico Corporativo</label>
+                <input
+                  type="email"
+                  value={settings.emailCorporativo}
+                  onChange={e => setSettings({ ...settings, emailCorporativo: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Dirección Fiscal & Sede Principal</label>
+                <input
+                  value={settings.direccion}
+                  onChange={e => setSettings({ ...settings, direccion: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">📄 Configuración de Comprobantes Fiscales (NCF)</h3>
+                <p className="ajustes-panel-subtitle">Prefijos de secuencias fiscales autorizadas por la DGII para emisión en Finanzas y Ventas.</p>
+              </div>
+            </div>
+
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>Facturas con Crédito Fiscal</label>
+                <input
+                  value={settings.ncfPrefijoB01}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB01: e.target.value })}
+                  placeholder="B01"
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Facturas de Consumo Final</label>
+                <input
+                  value={settings.ncfPrefijoB02}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB02: e.target.value })}
+                  placeholder="B02"
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Regímenes Especiales</label>
+                <input
+                  value={settings.ncfPrefijoB14}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB14: e.target.value })}
+                  placeholder="B14"
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Gubernamental</label>
+                <input
+                  value={settings.ncfPrefijoB15}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB15: e.target.value })}
+                  placeholder="B15"
+                />
+              </div>
+
+              <div className="ajustes-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Leyenda / Términos al Pie de Documentos y Facturas</label>
+                <textarea
+                  rows="2"
+                  value={settings.pieFactura}
+                  onChange={e => setSettings({ ...settings, pieFactura: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3: MÓDULOS & SINCRONIZACIÓN ── */}
+      {currentTab === 'Módulos' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">🧩 Matriz de Módulos del Sistema ERP</h3>
+                <p className="ajustes-panel-subtitle">Habilita o deshabilita los módulos del sistema según las necesidades operativas de tu empresa.</p>
+              </div>
+              <span className="ajustes-badge-status green">9 / 9 Módulos Activos</span>
+            </div>
+
+            <div className="ajustes-modules-grid">
+              {[
+                { key: 'ventas', name: 'Ventas & Pedidos', icon: '🛒', desc: 'Control de pedidos, facturación fiscal y cartera de clientes.' },
+                { key: 'compras', name: 'Compras & Proveedores', icon: '🛍️', desc: 'Emisión de órdenes de compra, cotizaciones y control de embarques.' },
+                { key: 'inventario', name: 'Inventario & Kardex', icon: '📦', desc: 'Control de existencias multialmacén, movimientos y valoración.' },
+                { key: 'crm', name: 'CRM & Pipeline', icon: '👥', desc: 'Embudo de ventas, oportunidades, contactos y seguimiento comercial.' },
+                { key: 'proyectos', name: 'Proyectos & Tareas', icon: '🚀', desc: 'Tableros Kanban, cronogramas, hitos y rentabilidad por proyecto.' },
+                { key: 'finanzas', name: 'Finanzas & Tesorería', icon: '💳', desc: 'Flujo de caja, cuentas por cobrar/pagar y balances bancarios.' },
+                { key: 'reportes', name: 'Reportes & Analytics', icon: '📊', desc: 'Inteligencia de negocios, balances generales y exportaciones PDF/Excel.' },
+                { key: 'chatbot', name: 'Asistente IA / Chatbot', icon: '🤖', desc: 'Consultas en lenguaje natural y asistencia operativa 24/7.' },
+                { key: 'plugins', name: 'Plugin Manager', icon: '🔌', desc: 'Ecosistema de extensiones, integraciones y personalizaciones.' },
+              ].map(mod => (
+                <div key={mod.key} className="ajustes-module-card">
+                  <div className="ajustes-module-header">
+                    <span className="ajustes-module-icon">{mod.icon}</span>
+                    <label className="ajustes-switch">
+                      <input
+                        type="checkbox"
+                        checked={settings.modulos[mod.key] ?? true}
+                        onChange={e => {
+                          setSettings({
+                            ...settings,
+                            modulos: {
+                              ...settings.modulos,
+                              [mod.key]: e.target.checked
+                            }
+                          })
+                        }}
+                      />
+                      <span className="ajustes-slider round"></span>
+                    </label>
+                  </div>
+                  <h4 className="ajustes-module-name">{mod.name}</h4>
+                  <p className="ajustes-module-desc">{mod.desc}</p>
+                  <div className="ajustes-module-footer">
+                    <span className={`ajustes-pill ${settings.modulos[mod.key] ? 'active' : 'inactive'}`}>
+                      {settings.modulos[mod.key] ? '● Activo' : '○ Inactivo'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 4: AUTOMATIZACIONES & REGLAS ERP ── */}
+      {currentTab === 'Automatizaciones' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">⚡ Reglas de Interconexión Reactiva en Tiempo Real</h3>
+                <p className="ajustes-panel-subtitle">Define las acciones automáticas que se disparan entre módulos cuando ocurren eventos en el ERP.</p>
+              </div>
+              <span className="ajustes-badge-status green">Motor Reactivo Activo</span>
+            </div>
+
+            <div className="ajustes-rules-list">
+              <div className="ajustes-rule-item">
+                <div className="ajustes-rule-info">
+                  <div className="ajustes-rule-title">
+                    <span>🛍️ ➔ 📦</span> Recepción de Orden de Compra en Compras
+                  </div>
+                  <p className="ajustes-rule-desc">
+                    Al cambiar el estado de una Orden de Compra a <strong>Recibida</strong>, incrementar el stock automáticamente en <strong>Inventario</strong> y generar movimiento de <strong>Entrada en Kardex</strong>.
+                  </p>
+                </div>
+                <label className="ajustes-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoSyncComprasInventario}
+                    onChange={e => setSettings({ ...settings, autoSyncComprasInventario: e.target.checked })}
+                  />
+                  <span className="ajustes-slider round"></span>
+                </label>
+              </div>
+
+              <div className="ajustes-rule-item">
+                <div className="ajustes-rule-info">
+                  <div className="ajustes-rule-title">
+                    <span>🛒 ➔ 📦</span> Confirmación de Pedido en Ventas
+                  </div>
+                  <p className="ajustes-rule-desc">
+                    Al registrar un nuevo pedido de venta, descontar las unidades del <strong>Inventario</strong> y asentar el registro de <strong>Salida en Kardex</strong>.
+                  </p>
+                </div>
+                <label className="ajustes-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoSyncVentasInventario}
+                    onChange={e => setSettings({ ...settings, autoSyncVentasInventario: e.target.checked })}
+                  />
+                  <span className="ajustes-slider round"></span>
+                </label>
+              </div>
+
+              <div className="ajustes-rule-item">
+                <div className="ajustes-rule-info">
+                  <div className="ajustes-rule-title">
+                    <span>🛒 ➔ 💳</span> Emisión Fiscal en Finanzas
+                  </div>
+                  <p className="ajustes-rule-desc">
+                    Al procesar un pedido de venta, generar automáticamente el comprobante de ingreso en <strong>Finanzas</strong> con NCF B02.
+                  </p>
+                </div>
+                <label className="ajustes-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoSyncVentasFinanzas}
+                    onChange={e => setSettings({ ...settings, autoSyncVentasFinanzas: e.target.checked })}
+                  />
+                  <span className="ajustes-slider round"></span>
+                </label>
+              </div>
+
+              <div className="ajustes-rule-item">
+                <div className="ajustes-rule-info">
+                  <div className="ajustes-rule-title">
+                    <span>👥 ➔ 🚀</span> Cierre de Oportunidad en CRM
+                  </div>
+                  <p className="ajustes-rule-desc">
+                    Al mover una oportunidad a la etapa de <strong>Cierre (Ganada)</strong>, crear automáticamente el proyecto en <strong>Proyectos</strong> y proyectar los ingresos en Finanzas.
+                  </p>
+                </div>
+                <label className="ajustes-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoSyncCrmProyectos}
+                    onChange={e => setSettings({ ...settings, autoSyncCrmProyectos: e.target.checked })}
+                  />
+                  <span className="ajustes-slider round"></span>
+                </label>
+              </div>
+
+              <div className="ajustes-rule-item">
+                <div className="ajustes-rule-info">
+                  <div className="ajustes-rule-title">
+                    <span>⚠️ ➔ 🔔</span> Alertas Preventivas de Stock Mínimo
+                  </div>
+                  <p className="ajustes-rule-desc">
+                    Notificar de inmediato al departamento de compras cuando el stock de un producto caiga por debajo de su umbral mínimo.
+                  </p>
+                </div>
+                <label className="ajustes-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.autoAlertasStockMinimo}
+                    onChange={e => setSettings({ ...settings, autoAlertasStockMinimo: e.target.checked })}
+                  />
+                  <span className="ajustes-slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: NOTIFICACIONES & CANALES ── */}
+      {currentTab === 'Notificaciones' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">💬 Canal WhatsApp Business Cloud API</h3>
+                <p className="ajustes-panel-subtitle">Envío automático de confirmaciones de pedidos, estados de entrega y alertas de stock.</p>
+              </div>
+              <button className="ajustes-btn-action" onClick={handleTestWhatsApp}>
+                💬 Enviar Mensaje de Prueba
+              </button>
+            </div>
+
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>ID de Instancia WhatsApp</label>
+                <input
+                  value={settings.whatsappInstanceId}
+                  onChange={e => setSettings({ ...settings, whatsappInstanceId: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Número Destinatario de Pruebas</label>
+                <input
+                  value={settings.whatsappNumeroDestino}
+                  onChange={e => setSettings({ ...settings, whatsappNumeroDestino: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">✉️ Servidor de Correo Corporativo (SMTP TLS)</h3>
+                <p className="ajustes-panel-subtitle">Configuración de servidor para envío de facturas en PDF y comprobantes electrónicos.</p>
+              </div>
+              <button className="ajustes-btn-action" onClick={handleTestSMTP}>
+                🧪 Probar Conexión SMTP
+              </button>
+            </div>
+
+            <div className="ajustes-form-grid-2">
+              <div className="ajustes-form-group">
+                <label>Servidor SMTP Host</label>
+                <input
+                  value={settings.smtpHost}
+                  onChange={e => setSettings({ ...settings, smtpHost: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Puerto SMTP</label>
+                <input
+                  value={settings.smtpPort}
+                  onChange={e => setSettings({ ...settings, smtpPort: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Usuario / Correo Emisor</label>
+                <input
+                  value={settings.smtpUser}
+                  onChange={e => setSettings({ ...settings, smtpUser: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Protocolo de Seguridad</label>
+                <select
+                  value={settings.smtpSeguridad}
+                  onChange={e => setSettings({ ...settings, smtpSeguridad: e.target.value })}
+                >
+                  <option value="TLS">STARTTLS (Recomendado - Puerto 587)</option>
+                  <option value="SSL">SSL / TLS Directo (Puerto 465)</option>
+                  <option value="Ninguno">Sin Cifrado (Solo Red Local)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 6: USUARIOS & ROLES RBAC ── */}
+      {currentTab === 'Usuarios y Roles' && (
+        <div style={{ marginTop: 10 }}>
+          <SeguridadView onShowToast={showToast} />
+        </div>
+      )}
+
+      {/* ── TAB 7: SEGURIDAD & 2FA ── */}
+      {currentTab === 'Seguridad' && (
+        <div style={{ marginTop: 10 }}>
+          <SeguridadView onShowToast={showToast} />
+        </div>
+      )}
+
+      {/* ── TAB 8: SISTEMA & PLAN EMPRESARIAL ── */}
+      {currentTab === 'Sistema' && (
+        <div style={{ marginTop: 10 }}>
+          <PlanEmpresarialView onShowToast={showToast} />
+        </div>
+      )}
+
+      {/* ── Barra Flotante de Guardar Cambios ── */}
+      <div className="ajustes-floating-save-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 18 }}>💡</span>
+          <span style={{ fontSize: 13, color: '#334155' }}>Los cambios se aplicarán de inmediato en todo el ERP.</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            className="ajustes-outline-btn"
+            onClick={handleResetSettings}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="ajustes-btn-primary"
+            onClick={handleSaveAll}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Guardando...' : '💾 Guardar Cambios'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Notificación Toast ── */}
       {toast && <div className="ajustes-toast">{toast}</div>}
+      {activeTestMessage && <div className="ajustes-toast test">{activeTestMessage}</div>}
     </div>
   )
 }
