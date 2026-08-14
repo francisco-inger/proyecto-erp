@@ -209,6 +209,7 @@ button, input, select {
   font-size: 14px;
   transition: all 120ms ease;
   text-decoration: none;
+  position: relative;
 }
 .sidebar-link:hover {
   background: var(--color-surface-alt);
@@ -221,6 +222,90 @@ button, input, select {
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(43, 56, 159, 0.25);
 }
+
+/* Enlace padre con submenú */
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-parent-link {
+  cursor: pointer;
+}
+
+.sidebar-parent-link.active-parent {
+  color: #2563EB;
+  font-weight: 700;
+  background: #F8FAFC;
+}
+.sidebar-parent-link.active-parent::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  background: #2563EB;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-chevron-btn {
+  background: none;
+  border: none;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.sidebar-chevron-btn:hover {
+  color: #2563EB;
+  background: #E2E8F0;
+}
+
+/* Submenú */
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 36px;
+  padding-right: 8px;
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.sidebar-sublink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.sidebar-sublink:hover {
+  color: #2563EB;
+  background: var(--color-surface-alt);
+}
+.sidebar-sublink.active {
+  background: #EFF6FF;
+  color: #2563EB;
+  font-weight: 700;
+}
+
+.sidebar-sub-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #DCFCE7;
+  color: #16A34A;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
 .sidebar-icon {
   font-size: 16px;
   display: inline-flex;
@@ -232,6 +317,7 @@ button, input, select {
   cursor: pointer;
   opacity: 0.7;
 }
+
 
 /* Tarjeta inferior Plan Empresarial */
 .sidebar-plan-card {

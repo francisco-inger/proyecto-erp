@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { canAccess } from '../rbac/permissions'
 import { getEnabledModules } from '../moduleRegistry'
@@ -20,20 +21,65 @@ const MODULE_ICONS = {
 const MODULE_NAMES = {
   'rrhh-inventario': 'Inventario',
   'plugin-manager': 'Plugins',
-  chatbot: 'Asistente IA',
+  chatbot: 'AI Chatbot',
+  crm: 'Clientes (CRM)',
+  reportes: 'Reportes & Analytics',
 }
 
-const MODULE_ORDER = ['ventas','compras','rrhh-inventario','crm','finanzas','proyectos','reportes','chatbot','integraciones','plugin-manager']
+const SUBMENUS = {
+  'rrhh-inventario': [
+    { label: 'Resumen', tab: 'Resumen' },
+    { label: 'Productos', tab: 'Productos' },
+    { label: 'Categorias', tab: 'Categorías' },
+    { label: 'Almacenes', tab: 'Almacenes' },
+    { label: 'Movimientos', tab: 'Movimientos' },
+    { label: 'Ajustes de Stock', tab: 'Ajustes' },
+    { label: 'Kardex', tab: 'Kardex' },
+  ],
+  rrhh: [
+    { label: 'Resumen RRHH', tab: 'Resumen RRHH', badge: 'Nuevo' },
+    { label: 'Empleados', tab: 'Empleados' },
+    { label: 'Asistencia', tab: 'Asistencia' },
+    { label: 'Nómina', tab: 'Nómina' },
+    { label: 'Vacaciones', tab: 'Vacaciones' },
+    { label: 'Desempeño', tab: 'Desempeño' },
+    { label: 'Reclutamiento', tab: 'Reclutamiento' },
+  ],
+}
+
+const MODULE_ORDER = ['ventas','compras','rrhh-inventario','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager']
 
 export function Sidebar() {
   const { user } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  const [openSubmenus, setOpenSubmenus] = useState({
+    'rrhh-inventario': true,
+  })
+
+  // Auto-expandir submenú si la ruta activa coincide
+  useEffect(() => {
+    if (location.pathname.includes('inventario') || location.pathname.includes('rrhh-inventario')) {
+      setOpenSubmenus((prev) => ({ ...prev, 'rrhh-inventario': true }))
+    }
+  }, [location.pathname])
+
   const all = getEnabledModules().filter((m) => canAccess(user?.role, m.requiredRole))
-  /* Ordena los módulos según MODULE_ORDER; los que no están en la lista van al final */
   const modules = [...all].sort((a, b) => {
     const ia = MODULE_ORDER.indexOf(a.id)
     const ib = MODULE_ORDER.indexOf(b.id)
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
   })
+
+  const currentTab = searchParams.get('tab') || 'Resumen'
+
+  const toggleSubmenu = (modId, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setOpenSubmenus((prev) => ({ ...prev, [modId]: !prev[modId] }))
+  }
 
   return (
     <aside className="sidebar">
@@ -43,7 +89,7 @@ export function Sidebar() {
             <span className="sidebar-brand-name">appes.erp</span>
           </div>
           <div className="sidebar-brand-tag">
-            ERP Inteligente y Modular
+            ERP Inteligente y Productivo
           </div>
         </div>
 
@@ -52,17 +98,76 @@ export function Sidebar() {
             <span className="sidebar-icon">🏠</span> Dashboard
           </NavLink>
 
-          {modules.map((mod) => (
-            <NavLink
-              key={mod.id}
-              to={mod.path}
-              className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-            >
-              <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
-              <span>{MODULE_NAMES[mod.id] ?? mod.name}</span>
-            </NavLink>
-          ))}
-          
+          {modules.map((mod) => {
+            const hasSubmenu = SUBMENUS[mod.id]
+            const isParentActive = location.pathname === mod.path
+            const isOpen = openSubmenus[mod.id]
+
+            if (hasSubmenu) {
+              return (
+                <div key={mod.id} className="sidebar-group">
+                  <div
+                    className={`sidebar-link sidebar-parent-link ${isParentActive ? 'active-parent' : ''}`}
+                    onClick={() => {
+                      if (!isParentActive) navigate(`${mod.path}?tab=Resumen`)
+                      setOpenSubmenus((prev) => ({ ...prev, [mod.id]: true }))
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                      <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
+                      <span className="sidebar-mod-name">{MODULE_NAMES[mod.id] ?? mod.name}</span>
+                    </div>
+                    <button
+                      className="sidebar-chevron-btn"
+                      onClick={(e) => toggleSubmenu(mod.id, e)}
+                      title={isOpen ? 'Colapsar' : 'Expandir'}
+                    >
+                      {isOpen ? '⌃' : '⌄'}
+                    </button>
+                  </div>
+
+                  {/* Submenú desplegable */}
+                  {isOpen && (
+                    <div className="sidebar-submenu">
+                      {hasSubmenu.map((sub) => {
+                        const isSubActive = isParentActive && (
+                          currentTab === sub.tab ||
+                          currentTab === sub.label ||
+                          (sub.tab === 'Categorías' && currentTab === 'Categorias') ||
+                          (sub.tab === 'Ajustes' && currentTab === 'Ajustes de Stock')
+                        )
+
+                        return (
+                          <div
+                            key={sub.label}
+                            className={`sidebar-sublink ${isSubActive ? 'active' : ''}`}
+                            onClick={() => {
+                              navigate(`${mod.path}?tab=${encodeURIComponent(sub.tab)}`)
+                            }}
+                          >
+                            <span>{sub.label}</span>
+                            {sub.badge && <span className="sidebar-sub-badge">{sub.badge}</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            return (
+              <NavLink
+                key={mod.id}
+                to={mod.path}
+                className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+              >
+                <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
+                <span>{MODULE_NAMES[mod.id] ?? mod.name}</span>
+              </NavLink>
+            )
+          })}
+
           <div className="sidebar-link inactive-link">
             <span className="sidebar-icon">⚙️</span> Ajustes
           </div>
@@ -96,5 +201,6 @@ export function Sidebar() {
     </aside>
   )
 }
+
 
 
