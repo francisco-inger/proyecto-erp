@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
+import { ReciboImprimibleModal } from './ReciboImprimibleModal'
 
 export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComprobante, onEliminar, onCambiarEstado }) {
   const [activeTab, setActiveTab] = useState('Comprobantes Recientes')
@@ -6,6 +7,7 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
   const [filterEstado, setFilterEstado] = useState('Todos')
   const [currentPage, setCurrentPage] = useState(1)
   const [openActionId, setOpenActionId] = useState(null)
+  const [imprimirComprobante, setImprimirComprobante] = useState(null)
   const menuRef = useRef(null)
   const pageSize = 5
 
@@ -59,28 +61,36 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
     return filteredData.slice(start, start + pageSize)
   }, [filteredData, currentPage, pageSize])
 
-  // Exportar a CSV
+  // Exportar a CSV con BOM UTF-8 para compatibilidad con Excel
   const handleExportCSV = () => {
-    const headers = ['# Comprobante', 'Tipo', 'Fecha', 'Descripción', 'Cuenta', 'Monto', 'Estado', 'Creado por']
-    const rows = filteredData.map((c) => [
-      c.numero,
-      c.tipo,
-      c.fecha,
-      `"${c.descripcion}"`,
-      `"${c.cuenta}"`,
-      c.monto,
-      c.estado,
-      c.creadoPor,
+    const dataToExport = filteredData.length > 0 ? filteredData : (comprobantes || [])
+    if (dataToExport.length === 0) {
+      alert('No hay comprobantes para exportar.')
+      return
+    }
+
+    const headers = ['# Comprobante', 'Tipo', 'Fecha', 'Descripcion', 'Cuenta', 'Monto (RD$)', 'Estado', 'Creado por']
+    const rows = dataToExport.map((c) => [
+      `"${c.numero || ''}"`,
+      `"${c.tipo || ''}"`,
+      `"${c.fecha || ''}"`,
+      `"${(c.descripcion || '').replace(/"/g, '""')}"`,
+      `"${(c.cuenta || '').replace(/"/g, '""')}"`,
+      c.monto || 0,
+      `"${c.estado || ''}"`,
+      `"${c.creadoPor || ''}"`,
     ])
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n')
-    const encodedUri = encodeURI(csvContent)
+    const csvString = '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n')
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `comprobantes_${activeTab.toLowerCase().replace(/ /g, '_')}.csv`)
+    link.href = url
+    link.setAttribute('download', `comprobantes_${activeTab.toLowerCase().replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const getTipoBadgeClass = (tipo) => {
@@ -281,11 +291,11 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
                         <button
                           className="fn-popover-item"
                           onClick={() => {
-                            window.print()
+                            setImprimirComprobante(row)
                             setOpenActionId(null)
                           }}
                         >
-                          <span>🖨️</span> Imprimir Recibo
+                          <span>🖨️</span> Imprimir Recibo Oficial
                         </button>
 
                         {row.estado === 'Pendiente' && (
@@ -360,6 +370,12 @@ export function ComprobantesTable({ comprobantes, onVerDetalle, onNuevoComproban
           </button>
         </div>
       </div>
+
+      {/* Modal de Impresión de Recibo Oficial */}
+      <ReciboImprimibleModal
+        comprobante={imprimirComprobante}
+        onClose={() => setImprimirComprobante(null)}
+      />
     </div>
   )
 }
