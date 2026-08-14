@@ -23,27 +23,30 @@ export function FinanzasHome() {
   const activeTab = searchParams.get('tab') || 'Resumen'
 
   useEffect(() => {
-    const initial = finanzasService.getData()
-    setData(initial)
-  }, [])
+    const load = async () => {
+      const initial = await finanzasService.getData()
+      setData(initial)
+    }
+    load()
+  }, [searchParams])
 
-  const handleSaveComprobante = (nuevo) => {
-    const updated = finanzasService.addComprobante(nuevo)
+  const handleSaveComprobante = async (nuevo) => {
+    const updated = await finanzasService.addComprobante(nuevo)
     setData(updated)
   }
 
-  const handleNuevaCuenta = (nueva) => {
-    const updated = finanzasService.addCuenta(nueva)
+  const handleNuevaCuenta = async (nueva) => {
+    const updated = await finanzasService.addCuenta(nueva)
     setData(updated)
   }
 
-  const handleNuevoPresupuesto = (nuevo) => {
-    const updated = finanzasService.addPresupuesto(nuevo)
+  const handleNuevoPresupuesto = async (nuevo) => {
+    const updated = await finanzasService.addPresupuesto(nuevo)
     setData(updated)
   }
 
-  const handleConciliar = (cuentaNombre) => {
-    const updated = finanzasService.conciliarCuenta(cuentaNombre)
+  const handleConciliar = async (cuentaNombre) => {
+    const updated = await finanzasService.conciliarCuenta(cuentaNombre)
     setData(updated)
   }
 
