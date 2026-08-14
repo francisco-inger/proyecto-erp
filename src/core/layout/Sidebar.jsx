@@ -193,12 +193,6 @@ export function Sidebar() {
               </NavLink>
             )
           })}
-          <NavLink
-            to="/ajustes"
-            className={({ isActive }) => `sidebar-link${location.pathname === '/ajustes' ? ' active' : ''}`}
-          >
-            <span className="sidebar-icon">⚙️</span> Ajustes
-          </NavLink>
         </nav>
       </div>
 
