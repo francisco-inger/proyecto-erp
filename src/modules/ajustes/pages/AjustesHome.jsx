@@ -1,7 +1,6 @@
 /*
   AjustesHome.jsx — Módulo de Configuración & Administración Global (APPEX.ERP)
-  Panel de control ejecutivo de nivel empresarial con configuración en vivo,
-  administración de empresa, módulos, automatizaciones, notificaciones, seguridad y base de datos.
+  Panel de control ejecutivo de nivel empresarial con configuración integrada en cada tarjeta.
 */
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -113,7 +112,7 @@ export function AjustesHome() {
     setTimeout(() => {
       localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
       setIsSaving(false)
-      showToast('💾 Configuración guardada y sincronizada globalmente')
+      showToast('💾 Cambios guardados y sincronizados en todo el sistema')
       erpSync.dispatch('settings:update', settings)
     }, 400)
   }
@@ -152,7 +151,7 @@ export function AjustesHome() {
     setActiveTestMessage('Enviando mensaje de prueba vía WhatsApp Cloud API...')
     setTimeout(() => {
       setActiveTestMessage(null)
-      showToast('💬 Mensaje de prueba enviado exitosamente al número corporativo (+1 809 555-0199)')
+      showToast('💬 Mensaje de prueba enviado al número corporativo (+1 809 555-0199)')
     }, 1200)
   }
 
@@ -160,7 +159,7 @@ export function AjustesHome() {
     setActiveTestMessage('Verificando conexión con servidor SMTP TLS...')
     setTimeout(() => {
       setActiveTestMessage(null)
-      showToast('✉️ Conexión SMTP exitosa. Correo de verificación enviado a notificaciones@appex.do')
+      showToast('✉️ Conexión SMTP exitosa. Correo de prueba enviado a notificaciones@appex.do')
     }, 1200)
   }
 
@@ -180,13 +179,13 @@ export function AjustesHome() {
       {/* ── Banner Hero Panorámico Ejecutivo ── */}
       <div style={{
         background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
-        borderRadius: 20,
-        padding: '28px 32px',
+        borderRadius: 18,
+        padding: '26px 30px',
         color: '#FFFFFF',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
-        marginBottom: 16,
+        boxShadow: '0 8px 20px -4px rgba(30, 58, 138, 0.28)',
+        marginBottom: 12,
       }}>
         {/* Imagen panorámica de fondo superpuesta en la parte derecha */}
         <div style={{
@@ -224,29 +223,29 @@ export function AjustesHome() {
             <span>⚙️</span> CENTRO DE CONTROL & CONFIGURACIÓN EMPRESARIAL · v2026.4.0
           </div>
 
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
             Ajustes Globales y Administración del Sistema
           </h1>
-          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 620 }}>
+          <p style={{ margin: '6px 0 18px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 620 }}>
             Configura las políticas fiscales de la empresa, interconexión de módulos en tiempo real, canales de notificación, seguridad y roles RBAC.
           </p>
 
           {/* Estadísticas en vivo estilo referencia */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 18 }}>
             <div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Uptime Operativo</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Seguridad & Cifrado</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Multi-Moneda Activo</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Licencia Corporativa</div>
             </div>
           </div>
@@ -254,34 +253,13 @@ export function AjustesHome() {
           {/* Botones Rápidos del Hero */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
-              onClick={handleSaveAll}
-              disabled={isSaving}
-              style={{
-                background: '#2563EB',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: 8,
-                padding: '8px 18px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 2px 8px rgba(37,99,235,0.4)',
-                opacity: isSaving ? 0.7 : 1
-              }}
-            >
-              {isSaving ? '⏳ Guardando...' : '💾 Guardar Todos los Cambios'}
-            </button>
-            <button
               onClick={handleExportBackup}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 color: '#FFFFFF',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: 8,
-                padding: '8px 16px',
+                padding: '7px 14px',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -299,7 +277,7 @@ export function AjustesHome() {
                 color: '#CBD5E1',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: 8,
-                padding: '8px 14px',
+                padding: '7px 14px',
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -414,6 +392,15 @@ export function AjustesHome() {
                 />
               </div>
             </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-outline-btn" onClick={handleResetSettings}>
+                Restablecer
+              </button>
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Preferencias'}
+              </button>
+            </div>
           </div>
 
           <div className="ajustes-card-panel">
@@ -447,6 +434,12 @@ export function AjustesHome() {
                   <option value="compacta">Compacta (Alta densidad para analistas)</option>
                 </select>
               </div>
+            </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Apariencia'}
+              </button>
             </div>
           </div>
         </div>
@@ -582,6 +575,12 @@ export function AjustesHome() {
                 />
               </div>
             </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Datos Fiscales'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -639,6 +638,12 @@ export function AjustesHome() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Estado de Módulos'}
+              </button>
             </div>
           </div>
         </div>
@@ -752,6 +757,12 @@ export function AjustesHome() {
                 </label>
               </div>
             </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Automatizaciones'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -837,55 +848,36 @@ export function AjustesHome() {
                 </select>
               </div>
             </div>
+
+            <div className="ajustes-panel-footer">
+              <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : '💾 Guardar Canales'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── TAB 6: USUARIOS & ROLES RBAC ── */}
       {currentTab === 'Usuarios y Roles' && (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 6 }}>
           <SeguridadView onShowToast={showToast} />
         </div>
       )}
 
       {/* ── TAB 7: SEGURIDAD & 2FA ── */}
       {currentTab === 'Seguridad' && (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 6 }}>
           <SeguridadView onShowToast={showToast} />
         </div>
       )}
 
       {/* ── TAB 8: SISTEMA & PLAN EMPRESARIAL ── */}
       {currentTab === 'Sistema' && (
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 6 }}>
           <PlanEmpresarialView onShowToast={showToast} />
         </div>
       )}
-
-      {/* ── Barra Flotante de Guardar Cambios ── */}
-      <div className="ajustes-floating-save-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 18 }}>💡</span>
-          <span style={{ fontSize: 13, color: '#334155' }}>Los cambios se aplicarán de inmediato en todo el ERP.</span>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            type="button"
-            className="ajustes-outline-btn"
-            onClick={handleResetSettings}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="ajustes-btn-primary"
-            onClick={handleSaveAll}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Guardando...' : '💾 Guardar Cambios'}
-          </button>
-        </div>
-      </div>
 
       {/* ── Notificación Toast ── */}
       {toast && <div className="ajustes-toast">{toast}</div>}
