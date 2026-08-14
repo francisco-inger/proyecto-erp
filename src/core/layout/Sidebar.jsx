@@ -47,6 +47,17 @@ const SUBMENUS = {
     { label: 'Desempeño', tab: 'Desempeño' },
     { label: 'Reclutamiento', tab: 'Reclutamiento' },
   ],
+  finanzas: [
+    { label: 'Resumen', tab: 'Resumen' },
+    { label: 'Cuentas', tab: 'Cuentas' },
+    { label: 'Comprobantes', tab: 'Comprobantes' },
+    { label: 'Ingresos', tab: 'Ingresos' },
+    { label: 'Gastos', tab: 'Gastos' },
+    { label: 'Transferencias', tab: 'Transferencias' },
+    { label: 'Conciliaciones', tab: 'Conciliaciones' },
+    { label: 'Reportes', tab: 'Reportes' },
+    { label: 'Presupuesto', tab: 'Presupuesto' },
+  ],
 }
 
 const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager']
@@ -59,6 +70,7 @@ export function Sidebar() {
 
   const [openSubmenus, setOpenSubmenus] = useState({
     'rrhh-inventario': true,
+    finanzas: true,
   })
 
   // Auto-expandir submenú si la ruta activa coincide
@@ -68,6 +80,9 @@ export function Sidebar() {
     }
     if (location.pathname === '/rrhh' || location.pathname.startsWith('/rrhh?')) {
       setOpenSubmenus((prev) => ({ ...prev, rrhh: true }))
+    }
+    if (location.pathname === '/finanzas' || location.pathname.startsWith('/finanzas?')) {
+      setOpenSubmenus((prev) => ({ ...prev, finanzas: true }))
     }
   }, [location.pathname])
 

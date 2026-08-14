@@ -1,81 +1,162 @@
-import { useState, useEffect } from 'react'
-import { apiClient } from 'core/api/apiClient'
-
-const FALLBACK_MOVIMIENTOS = [
-  { id: 'TXN-001', descripcion: 'Venta #VTA-1001',       tipo: 'Ingreso', monto:  125000, fecha: '2026-08-08' },
-  { id: 'TXN-002', descripcion: 'Pago proveedor OC-001', tipo: 'Gasto',   monto:  -48000, fecha: '2026-08-07' },
-  { id: 'TXN-003', descripcion: 'Suscripción SaaS',      tipo: 'Gasto',   monto:   -5500, fecha: '2026-08-06' },
-  { id: 'TXN-004', descripcion: 'Venta #VTA-1002',       tipo: 'Ingreso', monto:   84500, fecha: '2026-08-05' },
-]
+import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { finanzasService } from '../services/finanzasService'
+import { KpiCards } from '../components/KpiCards'
+import { CashFlowChart } from '../components/CashFlowChart'
+import { ExpensesDonutChart } from '../components/ExpensesDonutChart'
+import { ComprobantesTable } from '../components/ComprobantesTable'
+import { NuevoComprobanteModal } from '../components/NuevoComprobanteModal'
+import './FinanzasHome.css'
 
 export function FinanzasHome() {
-  const [movimientos, setMovimientos] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState(null)
+  const [searchParams] = useSearchParams()
+
+  const activeTab = searchParams.get('tab') || 'Resumen'
 
   useEffect(() => {
-    apiClient.get('/finanzas/movimientos')
-      .then(setMovimientos)
-      .catch(() => setMovimientos(FALLBACK_MOVIMIENTOS))
-      .finally(() => setLoading(false))
+    const initial = finanzasService.getData()
+    setData(initial)
   }, [])
 
-  const ingresos = movimientos.filter(m => m.monto > 0).reduce((a, m) => a + m.monto, 0)
-  const gastos   = movimientos.filter(m => m.monto < 0).reduce((a, m) => a + Math.abs(m.monto), 0)
+  const handleSaveComprobante = (nuevo) => {
+    const updated = finanzasService.addComprobante(nuevo)
+    setData(updated)
+  }
+
+  if (!data) return null
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>💰 Finanzas</h2>
-          <p style={{ margin: 0 }}>Control de ingresos, gastos y flujo de caja.</p>
+    <div className="fn-container">
+      {/* Encabezado Superior */}
+      <div className="fn-header-row">
+        <div className="fn-title-group">
+          <h2 className="fn-title">
+            <span>🪙</span> Finanzas
+            <span
+              className="fn-title-info-icon"
+              title="Módulo de gestión contable, presupuestaria y tesorería empresarial"
+            >
+              ⓘ
+            </span>
+          </h2>
+          <p className="fn-subtitle">
+            Gestiona la contabilidad, ingresos, gastos y flujo financiero.
+          </p>
         </div>
-        <button className="btn btn-primary">+ Nuevo Movimiento</button>
+
+        <div className="fn-header-actions">
+          <button
+            className="fn-btn-primary"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <span>+</span> Nuevo Comprobante
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>Ingresos</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-success)' }}>RD$ {ingresos.toLocaleString()}</div>
-        </div>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>Gastos</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-danger)' }}>RD$ {gastos.toLocaleString()}</div>
-        </div>
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-ink-soft)' }}>Utilidad Neta</div>
-          <div style={{ fontSize: 22, fontWeight: 700 }}>RD$ {(ingresos - gastos).toLocaleString()}</div>
-        </div>
+      {/* Tarjetas KPI de Saldo, Ingresos, Gastos y Resultado */}
+      <KpiCards kpis={data.kpis} />
+
+      {/* Sección de Gráficos Analíticos */}
+      <div className="fn-charts-grid">
+        <CashFlowChart data={data.cashFlowData} />
+        <ExpensesDonutChart categorias={data.categoriasGastos} />
       </div>
 
-      <div className="card">
-        <h3 style={{ marginBottom: 16 }}>Movimientos Recientes</h3>
-        {loading ? <p style={{ color: 'var(--color-ink-faint)' }}>Cargando...</p> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-line)' }}>
-                {['ID', 'Descripción', 'Tipo', 'Monto', 'Fecha'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', color: 'var(--color-ink-soft)', fontWeight: 600 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {movimientos.map(m => (
-                <tr key={m.id} style={{ borderBottom: '1px solid var(--color-line)' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 600 }}>{m.id}</td>
-                  <td style={{ padding: '10px 12px' }}>{m.descripcion}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ color: m.monto > 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600 }}>{m.tipo}</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', fontWeight: 700, color: m.monto > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                    RD$ {Math.abs(m.monto).toLocaleString()}
-                  </td>
-                  <td style={{ padding: '10px 12px', color: 'var(--color-ink-faint)' }}>{m.fecha}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Tabla de Comprobantes, Ingresos, Gastos y Transferencias */}
+      <ComprobantesTable
+        comprobantes={data.comprobantes}
+        onVerDetalle={(item) => setComprobanteSeleccionado(item)}
+        onNuevoComprobante={() => setIsModalOpen(true)}
+      />
+
+      {/* Modal para Crear Comprobante */}
+      <NuevoComprobanteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveComprobante}
+        cuentas={data.cuentas}
+      />
+
+      {/* Modal de Detalle de Comprobante */}
+      {comprobanteSeleccionado && (
+        <div
+          className="fn-modal-overlay"
+          onClick={() => setComprobanteSeleccionado(null)}
+        >
+          <div
+            className="fn-modal-card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 440 }}
+          >
+            <div className="fn-modal-header">
+              <div className="fn-modal-title-group">
+                <span>📄</span>
+                <h3>Detalle de Comprobante</h3>
+              </div>
+              <button
+                className="fn-modal-close-btn"
+                onClick={() => setComprobanteSeleccionado(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Número:</strong>
+                <span style={{ fontWeight: 700, color: '#2563eb' }}>{comprobanteSeleccionado.numero}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Tipo:</strong>
+                <span className={`fn-badge-tipo badge-tipo-${comprobanteSeleccionado.tipo.toLowerCase()}`}>
+                  {comprobanteSeleccionado.tipo}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Fecha:</strong>
+                <span>{comprobanteSeleccionado.fecha}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Descripción:</strong>
+                <span>{comprobanteSeleccionado.descripcion}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Cuenta:</strong>
+                <span>{comprobanteSeleccionado.cuenta}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Monto:</strong>
+                <strong style={{ fontSize: 16, color: comprobanteSeleccionado.tipo === 'Ingreso' ? '#16a34a' : '#dc2626' }}>
+                  RD$ {comprobanteSeleccionado.monto.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Estado:</strong>
+                <span className={`fn-badge-estado badge-estado-${comprobanteSeleccionado.estado.toLowerCase()}`}>
+                  {comprobanteSeleccionado.estado}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong style={{ color: '#64748b' }}>Creado por:</strong>
+                <span>{comprobanteSeleccionado.creadoPor}</span>
+              </div>
+
+              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  className="fn-btn-secondary"
+                  onClick={() => setComprobanteSeleccionado(null)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
