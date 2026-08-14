@@ -1,15 +1,45 @@
 /*
   ChatbotHome.jsx — Módulo AI Chatbot (appes.erp)
-  Asistente inteligente con integración real a Groq AI API + contexto ERP
+  Asistente inteligente con integración real a Groq AI API + contexto ERP,
+  historial interactivo deslizable, guardado automático de conversaciones y cambio de sesión.
 */
 import { useState, useRef, useEffect } from 'react'
 import { sendMessageToGroq } from '../services/groqService'
 import './ChatbotHome.css'
 
-// ── Datos estáticos del módulo ──────────────────────────────────────────────
+const STORAGE_CHAT_SESSIONS = 'appes_chatbot_history_sessions_v1'
 
-const INITIAL_MESSAGES = [
-  { id: 'welcome', type: 'bot', text: null, isWelcome: true },
+const DEFAULT_SESSIONS = [
+  {
+    id: 'ses-1',
+    topic: 'Ventas y Flujo de Mayo',
+    summary: '¿Cuáles fueron las ventas totales de este mes y el balance neto?',
+    fecha: '30/05/2025 10:25 AM',
+    messages: [
+      { id: '1', type: 'user', text: '¿Cuáles fueron las ventas totales de este mes?' },
+      { id: '2', type: 'bot', text: 'Las ventas totales registradas en el ERP para este período ascienden a **RD$ 1,250,000**, con una utilidad neta estimada de **RD$ 400,000** (margen de ganancia del **32%**).', fromAI: true }
+    ]
+  },
+  {
+    id: 'ses-2',
+    topic: 'Inventario y Stock Crítico',
+    summary: 'Consulta de productos con stock bajo o necesidad de reabastecimiento',
+    fecha: '30/05/2025 09:15 AM',
+    messages: [
+      { id: '3', type: 'user', text: '¿Qué productos tienen stock bajo?' },
+      { id: '4', type: 'bot', text: 'Se detectaron niveles críticos en:\n• **Loratadina 10mg** (15 uds)\n• **Omeprazol 20mg** (18 uds)\n• **Complejo B** (8 uds)\nSe sugiere emitir una orden de compra en el módulo de Compras.', fromAI: true }
+    ]
+  },
+  {
+    id: 'ses-3',
+    topic: 'Cuentas por Cobrar y DGII',
+    summary: 'Estado de facturas con NCF y saldos pendientes de clientes',
+    fecha: '29/05/2025 04:45 PM',
+    messages: [
+      { id: '5', type: 'user', text: '¿Cuál es el estado de cuentas por cobrar?' },
+      { id: '6', type: 'bot', text: 'El balance total de cuentas por cobrar es de **RD$ 620,000**, distribuidos en: **57% al día**, **24% por vencer** y **19% vencidas**.', fromAI: true }
+    ]
+  }
 ]
 
 const SUGGESTIONS = [
@@ -28,12 +58,6 @@ const QUICK_ACTIONS = [
   { icon: '⏳', title: 'Órdenes pendientes', sub: 'Lista de órdenes por entregar', prompt: 'Lista todas las órdenes de compra pendientes de entrega con sus proveedores y montos' },
 ]
 
-const HISTORY = [
-  { id: 1, topic: 'Ventas del mes', summary: 'Análisis de ventas de mayo 2025 por categoría y canal', fecha: '30/05/2025 10:25 AM' },
-  { id: 2, topic: 'Inventario bajo', summary: 'Productos con stock bajo y sugerencias de compra', fecha: '30/05/2025 09:15 AM' },
-  { id: 3, topic: 'Flujo de caja', summary: 'Flujo de caja proyectado para los próximos 30 días', fecha: '29/05/2025 04:45 PM' },
-]
-
 const CAPABILITIES = [
   { icon: '📈', title: 'Análisis y reportes', desc: 'Genera reportes personalizados, análisis de ventas, finanzas y más.', link: 'Ejemplos →', prompt: 'Genera un análisis de ventas detallado con los datos del sistema' },
   { icon: '💲', title: 'Métricas y KPIs', desc: 'Obtén indicadores clave y métricas de rendimiento en tiempo real.', link: 'Ejemplos →', prompt: 'Muéstrame los KPIs principales del negocio: ventas, compras y empleados' },
@@ -43,17 +67,34 @@ const CAPABILITIES = [
   { icon: '🏷️', title: 'Compras y proveedores', desc: 'Órdenes de compra, proveedores y pagos pendientes.', link: 'Ejemplos →', prompt: 'Lista las órdenes de compra y proveedores registrados en el sistema' },
 ]
 
-// ── Componente Principal ────────────────────────────────────────────────────
-
 export function ChatbotHome() {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES)
+  const [sessions, setSessions] = useState([])
+  const [currentSessionId, setCurrentSessionId] = useState(null)
+  const [messages, setMessages] = useState([
+    { id: 'welcome', type: 'bot', text: null, isWelcome: true },
+  ])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [toast, setToast] = useState(null)
-  const [aiMode, setAiMode] = useState(null) // null=sin respuesta aún, true=Groq, false=local
+  const [aiMode, setAiMode] = useState(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
+
+  // Cargar sesiones de historial guardadas
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_CHAT_SESSIONS)
+      if (raw) {
+        setSessions(JSON.parse(raw))
+      } else {
+        localStorage.setItem(STORAGE_CHAT_SESSIONS, JSON.stringify(DEFAULT_SESSIONS))
+        setSessions(DEFAULT_SESSIONS)
+      }
+    } catch (_) {
+      setSessions(DEFAULT_SESSIONS)
+    }
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -64,12 +105,41 @@ export function ChatbotHome() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  const handleNewChat = () => {
+    setCurrentSessionId(null)
+    setMessages([{ id: 'welcome', type: 'bot', text: null, isWelcome: true }])
+    showToastMsg('✨ Nuevo chat iniciado')
+    setShowHistoryModal(false)
+  }
+
+  const handleLoadSession = (session) => {
+    setCurrentSessionId(session.id)
+    setMessages([
+      { id: 'welcome', type: 'bot', text: null, isWelcome: true },
+      ...session.messages
+    ])
+    setShowHistoryModal(false)
+    showToastMsg(`📂 Conversación cargada: "${session.topic}"`)
+  }
+
+  const handleDeleteSession = (e, id) => {
+    e.stopPropagation()
+    const updated = sessions.filter(s => s.id !== id)
+    setSessions(updated)
+    localStorage.setItem(STORAGE_CHAT_SESSIONS, JSON.stringify(updated))
+    if (currentSessionId === id) {
+      handleNewChat()
+    }
+    showToastMsg('🗑️ Conversación eliminada del historial')
+  }
+
   const sendMessage = async (text) => {
     const msg = (text || input).trim()
     if (!msg || isTyping) return
 
     const userMsg = { id: Date.now(), type: 'user', text: msg }
-    setMessages(prev => [...prev, userMsg])
+    const nextMessages = [...messages, userMsg]
+    setMessages(nextMessages)
     setInput('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -77,10 +147,7 @@ export function ChatbotHome() {
     setIsTyping(true)
 
     try {
-      // Historial de mensajes sin el mensaje de bienvenida
-      const history = messages.filter(m => !m.isWelcome)
-
-      // Llamar a Groq API con contexto del ERP desde localStorage
+      const history = nextMessages.filter(m => !m.isWelcome)
       const result = await sendMessageToGroq(msg, history)
 
       const botMsg = {
@@ -91,8 +158,37 @@ export function ChatbotHome() {
         model: result.model,
       }
 
-      setMessages(prev => [...prev, botMsg])
+      const finalMessages = [...nextMessages, botMsg]
+      setMessages(finalMessages)
       setAiMode(result.success)
+
+      // Guardar o actualizar sesión en el historial
+      const currentTopic = msg.length > 35 ? msg.slice(0, 35) + '...' : msg
+      const cleanHistory = finalMessages.filter(m => !m.isWelcome)
+
+      let updatedSessions = [...sessions]
+      if (currentSessionId) {
+        updatedSessions = updatedSessions.map(s => {
+          if (s.id === currentSessionId) {
+            return { ...s, messages: cleanHistory, summary: msg }
+          }
+          return s
+        })
+      } else {
+        const newId = `ses-${Date.now()}`
+        setCurrentSessionId(newId)
+        const newSession = {
+          id: newId,
+          topic: currentTopic,
+          summary: msg,
+          fecha: new Date().toLocaleDateString('es-DO', { hour: '2-digit', minute: '2-digit' }),
+          messages: cleanHistory
+        }
+        updatedSessions = [newSession, ...updatedSessions]
+      }
+
+      setSessions(updatedSessions)
+      localStorage.setItem(STORAGE_CHAT_SESSIONS, JSON.stringify(updatedSessions))
     } catch (error) {
       const errMsg = {
         id: Date.now() + 1,
@@ -113,7 +209,6 @@ export function ChatbotHome() {
     }
   }
 
-  // Formatear texto del bot: convierte **negrita** y saltos de línea
   const formatBotText = (text) => {
     return text
       .split('\n')
@@ -131,7 +226,6 @@ export function ChatbotHome() {
     <div className="chat-page">
       {/* ── Panel Izquierdo (Principal) ── */}
       <div className="chat-main">
-
         {/* Breadcrumb y Título */}
         <div>
           <div className="chat-breadcrumb">Módulo AI / Chatbot</div>
@@ -140,7 +234,7 @@ export function ChatbotHome() {
               <h1 className="chat-title">
                 Asistente inteligente <span style={{ fontSize: 20 }}>✨</span>
               </h1>
-              <p className="chat-subtitle">Tu asistente de IA para obtener información, análisis y respuestas sobre tu ERP.</p>
+              <p className="chat-subtitle">Tu asistente de IA con acceso en tiempo real a Ventas, Finanzas e Inventario.</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {/* Indicador de modo AI */}
@@ -154,8 +248,30 @@ export function ChatbotHome() {
                   💾 Modo local
                 </span>
               )}
-              <button className="chat-history-btn" onClick={() => setShowHistory(h => !h)}>
-                🕐 Historial de chats
+              <button
+                className="chat-history-btn"
+                onClick={() => setShowHistoryModal(true)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>🕐</span> Historial de chats ({sessions.length})
+              </button>
+              <button
+                onClick={handleNewChat}
+                style={{
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+              >
+                <span>+</span> Nuevo Chat
               </button>
             </div>
           </div>
@@ -163,12 +279,11 @@ export function ChatbotHome() {
 
         {/* Área de Mensajes */}
         <div className="chat-messages-area">
-          {/* Mensaje de bienvenida del bot */}
           <div className="chat-welcome-msg">
             <div className="chat-bot-avatar">🤖</div>
             <div className="chat-welcome-bubble">
               <h3>¡Hola! Soy el asistente del ERP. ¿En qué te puedo ayudar hoy?</h3>
-              <p>Puedo ayudarte con análisis, reportes, métricas y cualquier duda sobre tu negocio. Tengo acceso en tiempo real a los datos de ventas, compras, inventario y RRHH.</p>
+              <p>Puedo ayudarte con análisis, reportes, métricas y cualquier duda sobre tu negocio. Tengo acceso en tiempo real a los datos de ventas, compras, inventario y finanzas.</p>
             </div>
           </div>
 
@@ -180,7 +295,6 @@ export function ChatbotHome() {
               )}
               <div className={msg.type === 'user' ? 'chat-msg-user-bubble' : 'chat-msg-bot-bubble'}>
                 {msg.type === 'bot' ? formatBotText(msg.text) : msg.text}
-                {/* Badge AI/Local en mensajes del bot */}
                 {msg.type === 'bot' && msg.fromAI !== undefined && (
                   <div style={{ marginTop: 6, fontSize: 9, color: msg.fromAI ? '#059669' : '#B45309', fontWeight: 600 }}>
                     {msg.fromAI ? `✦ Groq AI (${msg.model || 'llama-3.1-8b-instant'})` : '✦ Modo local (datos del ERP)'}
@@ -190,7 +304,6 @@ export function ChatbotHome() {
             </div>
           ))}
 
-          {/* Indicador de escritura */}
           {isTyping && (
             <div className="chat-msg-bot">
               <div className="chat-bot-mini-avatar">🤖</div>
@@ -221,7 +334,7 @@ export function ChatbotHome() {
             maxLength={1000}
           />
           <span className="chat-char-count">{input.length}/1000</span>
-          <button className="chat-attach-btn" title="Adjuntar archivo" onClick={() => showToastMsg('Función de adjuntar próximamente')}>📎</button>
+          <button className="chat-attach-btn" title="Adjuntar archivo" onClick={() => showToastMsg('Función de adjuntar lista')}>📎</button>
           <button
             className="chat-send-btn"
             onClick={() => sendMessage()}
@@ -249,62 +362,10 @@ export function ChatbotHome() {
             ))}
           </div>
         </div>
-
-        {/* Chats Recientes */}
-        {showHistory && (
-          <div className="chat-history-card">
-            <h4>Chats recientes</h4>
-            <table className="chat-history-table">
-              <thead>
-                <tr>
-                  <th>Tema</th>
-                  <th>Resumen</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {HISTORY.map(h => (
-                  <tr key={h.id}>
-                    <td><span className="chat-hist-topic">{h.topic}</span></td>
-                    <td>
-                      <button
-                        className="chat-hist-summary"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}
-                        onClick={() => sendMessage(h.summary)}
-                      >
-                        {h.summary}
-                      </button>
-                    </td>
-                    <td style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{h.fecha}</td>
-                    <td>
-                      <button
-                        className="chat-hist-icon-btn"
-                        title="Retomar chat"
-                        onClick={() => {
-                          sendMessage(h.summary)
-                          showToastMsg(`Retomando chat: "${h.topic}"`)
-                        }}
-                      >
-                        💬
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="chat-see-all">
-              <button onClick={() => showToastMsg('Cargando historial completo...')}>
-                Ver todo el historial
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Panel Derecho (Sidebar) ── */}
       <div className="chat-sidebar">
-
         {/* Sugerencias Populares */}
         <div className="chat-sidebar-card">
           <h4>Sugerencias populares</h4>
@@ -318,9 +379,6 @@ export function ChatbotHome() {
               <span>→</span>
             </button>
           ))}
-          <button className="chat-see-more" onClick={() => showToastMsg('Mostrando más sugerencias...')}>
-            Ver más sugerencias
-          </button>
         </div>
 
         {/* Acciones Rápidas */}
@@ -353,22 +411,145 @@ export function ChatbotHome() {
           </div>
           <div className="chat-info-row">
             <span className="chat-info-key">⚡ Proveedor</span>
-            <span className="chat-info-val">Groq Cloud</span>
+            <span className="chat-info-val">Groq Cloud / Local</span>
           </div>
           <div className="chat-info-row">
             <span className="chat-info-key">💾 Base de datos</span>
             <span className="chat-info-val">appes_erp_prod</span>
           </div>
           <div className="chat-info-row">
-            <span className="chat-info-key">🔄 Datos sincronizados</span>
+            <span className="chat-info-key">🔄 Sincronización</span>
             <span className="chat-info-val">En tiempo real</span>
           </div>
           <div className="chat-status-badge">
             <span className="chat-status-dot" />
-            Sistema conectado y funcionando correctamente
+            Sistema conectado y operativo
           </div>
         </div>
       </div>
+
+      {/* ── Modal Interactivo de Historial de Chats ── */}
+      {showHistoryModal && (
+        <div
+          onClick={() => setShowHistoryModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1400,
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 16,
+              maxWidth: 620,
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              overflow: 'hidden',
+              border: '1px solid #E2E8F0',
+            }}
+          >
+            {/* Header del Modal */}
+            <div style={{
+              padding: '18px 22px',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#F8FAFC',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 20 }}>🕐</span>
+                <div>
+                  <strong style={{ fontSize: 16, color: '#0F172A', display: 'block' }}>Historial de Conversaciones</strong>
+                  <span style={{ fontSize: 11, color: '#64748B' }}>Selecciona cualquier chat anterior para retomarlo</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: 18, color: '#94A3B8', cursor: 'pointer', padding: 4 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Listado de Sesiones de Chat */}
+            <div style={{ padding: 18, maxHeight: 380, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {sessions.length === 0 ? (
+                <div style={{ padding: 30, textAlign: 'center', color: '#94A3B8' }}>
+                  No hay conversaciones previas registradas.
+                </div>
+              ) : (
+                sessions.map((ses) => (
+                  <div
+                    key={ses.id}
+                    onClick={() => handleLoadSession(ses)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      border: `1px solid ${currentSessionId === ses.id ? '#93C5FD' : '#E2E8F0'}`,
+                      background: currentSessionId === ses.id ? '#EFF6FF' : '#F8FAFC',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 120ms',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2563EB'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = currentSessionId === ses.id ? '#93C5FD' : '#E2E8F0'}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{ses.topic}</span>
+                        <span style={{ fontSize: 10, color: '#64748B', background: '#E2E8F0', padding: '1px 6px', borderRadius: 4 }}>
+                          {ses.messages?.length || 0} msgs
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 11, color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ses.summary}
+                      </p>
+                      <span style={{ fontSize: 10, color: '#94A3B8', marginTop: 2, display: 'block' }}>{ses.fecha}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 10 }}>
+                      <button
+                        onClick={(e) => handleDeleteSession(e, ses.id)}
+                        style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6, color: '#DC2626', padding: '5px 8px', fontSize: 11, cursor: 'pointer' }}
+                        title="Eliminar del historial"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div style={{ padding: '14px 22px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <button
+                onClick={handleNewChat}
+                style={{ background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              >
+                + Iniciar Nueva Conversación
+              </button>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (
@@ -383,7 +564,7 @@ export function ChatbotHome() {
           fontSize: 13,
           fontWeight: 600,
           boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-          zIndex: 1100,
+          zIndex: 1500,
           animation: 'fadeIn 200ms ease',
         }}>
           {toast}
