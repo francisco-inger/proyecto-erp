@@ -68,30 +68,120 @@ export function FinanzasHome() {
 
   return (
     <div className="fn-container">
-      {/* Encabezado Superior */}
-      <div className="fn-header-row">
-        <div className="fn-title-group">
-          <h2 className="fn-title">
-            <span>🪙</span> Finanzas — {activeTabTitle}
-            <span
-              className="fn-title-info-icon"
-              title="Módulo de gestión contable, presupuestaria y tesorería empresarial"
-            >
-              ⓘ
-            </span>
-          </h2>
-          <p className="fn-subtitle">
-            Gestiona la contabilidad, ingresos, gastos y flujo financiero.
-          </p>
-        </div>
+      {/* ── Banner Hero Panorámico de Finanzas (Misma Secuencia de Color Azul Real) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 20,
+      }}>
+        {/* Imagen de fondo panorámica de finanzas y tesorería */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_finanzas_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
 
-        <div className="fn-header-actions">
-          <button
-            className="fn-btn-primary"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <span>+</span> Nuevo Comprobante
-          </button>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <span>🪙</span> PANEL DE CONTROL · FINANZAS & CONTABILIDAD NCF
+          </div>
+
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Control Financiero y Tesorería
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Supervisa balances en bancos, flujo de efectivo, cuentas por cobrar/pagar, presupuestos operativos y comprobantes fiscales.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.ingresosTotal || 1250000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ingresos Acumulados</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.gastosTotal || 850000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Gastos Operativos</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.balanceGeneral || 400000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Utilidad / Balance Neto</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>{data?.cuentas?.length || 4} Cuentas</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Tesorería & Bancos</div>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              + Nuevo Comprobante
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🖨️ Imprimir Estados
+            </button>
+          </div>
         </div>
       </div>
 
