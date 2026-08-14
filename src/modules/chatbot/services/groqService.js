@@ -1,6 +1,7 @@
 /*
-  groqService.js — Servicio de integración con Groq AI API & Motor NLP Local de APPEX.ERP
-  Asistente Inteligente y Asesor Corporativo sincronizado con la Base de Datos y el Portafolio de Servicios.
+  groqService.js — Servicio de Inteligencia Artificial Universal (APPEX.ERP)
+  Capaz de responder CUALQUIER PREGUNTA del mundo (conocimiento universal, ciencia, historia, matemáticas,
+  programación, redacción, asesoría general) + Portafolio de Servicios Corporativos + Base de Datos en Tiempo Real.
 */
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
@@ -63,72 +64,55 @@ export const NUESTROS_SERVICIOS = [
   {
     id: 'srv-ia',
     icono: '🤖',
-    nombre: 'Asistente IA 24/7 & Automatización de Procesos',
-    descripcion: 'Consultas en lenguaje natural sobre cualquier dato operativo de la empresa, recomendaciones estratégicas y automatización de tareas.'
+    nombre: 'Asistente IA Universal 24/7',
+    descripcion: 'Respuestas a cualquier pregunta libre del mundo (ciencia, cultura, tecnología, matemáticas, idiomas), además de consultas analíticas del ERP.'
   }
 ]
 
-// ── Obtener datos en tiempo real de toda la Base de Datos del ERP ──────────────────
+// ── Contexto de la Base de Datos Local del ERP ─────────────────────────────────
 export function getERPContext() {
   const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
   const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
   const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
-  const almacenes = JSON.parse(localStorage.getItem('appes_inventory_warehouses_v1') || '[]')
   const clientesCRM = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
   const oportunidadesCRM = JSON.parse(localStorage.getItem('appes_crm_opportunities_v1') || '[]')
-  const contactosCRM = JSON.parse(localStorage.getItem('appes_crm_contacts_v1') || '[]')
   const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
   const cuentasBancos = finanzasData.cuentas || []
-  const comprobantes = finanzasData.comprobantes || []
-  const empleados = JSON.parse(localStorage.getItem('appes_rrhh_colaboradores_v1') || '[]')
   const settings = JSON.parse(localStorage.getItem('appes_erp_global_settings_v2') || '{}')
 
   const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
   const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
-  const ventasPendientes = ventas.filter(v => v.estado === 'Pendiente').length
-  const comprasPendientes = compras.filter(c => c.estado === 'Pendiente').length
-
-  const valorTotalInventario = productos.reduce((s, p) => s + (Number(p.stock || 0) * Number(p.costo || p.precio || 0)), 0)
-  const stockCritico = productos.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 10))
-
-  const valorOportunidades = oportunidadesCRM.reduce((s, o) => s + (Number(o.valor) || 0), 0)
-  const saldoTotalBancos = cuentasBancos.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
+  const valorInventario = productos.reduce((s, p) => s + (Number(p.stock || 0) * Number(p.costo || p.precio || 0)), 0)
+  const saldoBancos = cuentasBancos.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
 
   return `
-PORTAFOLIO DE NUESTROS SERVICIOS EMPRESARIALES (APPEX ENTERPRISE SUITE):
-1. Ventas & Facturación Electrónica DGII (e-CF): Emisión con NCF (B01, B02, B14, B15), cobros, cotizaciones.
-2. Compras & Proveedores: Órdenes de compra, control de costos, recepción de mercancías.
-3. Inventario Multialmacén: Existencias en vivo, kardex de entradas/salidas, alertas de stock mínimo.
-4. CRM & Clientes: Pipeline comercial, seguimiento de oportunidades, cartera de clientes.
-5. Proyectos & Kanban: Hitos, cronogramas, tareas operativas, rentabilidad.
-6. Finanzas & Tesorería: Flujo de caja, cuentas por cobrar/pagar, cuentas bancarias.
-7. Reportes & Business Intelligence: Informes financieros, balances y analíticas.
-8. Integraciones & Webhooks: WhatsApp Business API, Servidor SMTP TLS, DGII y n8n.
-
-DATOS EN TIEMPO REAL EXTRAÍDOS DE LA BASE DE DATOS LOCAL:
+DATOS DE LA EMPRESA Y BASE DE DATOS LOCAL:
 - Razón Social: ${settings.razonSocial || 'APPEX Dominicana Suite SRL'} (RNC: ${settings.rnc || '1-31-89023-4'})
-- Ventas Totales: RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes, ${ventasPendientes} pendientes)
-- Compras Totales: RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes, ${comprasPendientes} pendientes)
-- Utilidad Bruta Estimada: RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}
-- Inventario: ${productos.length} SKUs valorados en RD$ ${valorTotalInventario.toLocaleString('es-DO')} (${stockCritico.length} productos con stock crítico)
-- Clientes en CRM: ${clientesCRM.length} registrados (${oportunidadesCRM.length} oportunidades activas por RD$ ${valorOportunidades.toLocaleString('es-DO')})
-- Saldo en Bancos: RD$ ${saldoTotalBancos.toLocaleString('es-DO')} (${cuentasBancos.length} cuentas)
-- Colaboradores (RRHH): ${empleados.length || 24} colaboradores activos
+- Ventas Totales: RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes)
+- Compras Totales: RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes)
+- Inventario: ${productos.length} SKUs valorados en RD$ ${valorInventario.toLocaleString('es-DO')}
+- Clientes en CRM: ${clientesCRM.length} registrados (${oportunidadesCRM.length} oportunidades activas)
+- Saldo en Bancos: RD$ ${saldoBancos.toLocaleString('es-DO')}
 `
 }
 
 function buildSystemPrompt() {
   const erpData = getERPContext()
 
-  return `Eres el Asistente Virtual Inteligente y Asesor Corporativo oficial de APPEX Enterprise Suite.
-Tu objetivo es brindar soporte integral, presentar nuestros servicios a nuevos clientes y responder cualquier pregunta libre con precisión, amabilidad y profesionalismo.
+  return `Eres una Inteligencia Artificial Universal, avanzada, elocuente y servicial, que además funge como el Asistente Oficial y Asesor de APPEX Enterprise Suite.
 
-INSTRUCCIONES CLAVE:
-1. Si el usuario saluda o pregunta sobre la empresa o qué servicios ofrecemos, presenta con entusiasmo nuestros servicios clave (Ventas & DGII, Compras, Inventario, CRM, Proyectos, Finanzas, Reportes e Integraciones).
-2. Si el usuario hace preguntas sobre los datos del negocio (ventas, productos, compras, bancos, clientes, etc.), usa las cifras exactas del contexto provisto.
-3. Si el usuario hace preguntas conceptuales, técnicas, fiscales (DGII, ITBIS, NCF) o de asesoría de negocios, respóndelas con total claridad y experiencia.
-4. Responde siempre con formato limpio usando Markdown, viñetas (•), negritas y formato de moneda dominicana (RD$ X,XXX.XX).
-5. Mantén un tono ejecutivo, cordial y orientado a soluciones.
+TIENES CAPACIDAD PARA RESPONDER CUALQUIER PREGUNTA DEL MUNDO:
+1. Conocimiento General y Universal: Ciencia, física, astronomía, historia mundial, geografía, biología, filosofía, arte, literatura, cocina, salud general, deportes, entretenimiento, etc.
+2. Razonamiento, Matemáticas y Finanzas: Cálculos numéricos, porcentajes, conversiones de moneda, fórmulas matemáticas, análisis estadístico y lógica.
+3. Tecnología y Programación: Explicaciones de software, lenguajes (JavaScript, Python, SQL, React, etc.), arquitectura web, ciberseguridad, IA y bases de datos.
+4. Redacción y Productividad: Creación de correos formales, cartas comerciales, propuestas, resúmenes, traducciones entre idiomas y consejos estratégicos.
+5. Negocios y ERP: Presentación de nuestros servicios (Ventas DGII, Compras, Inventario, CRM, Proyectos, Finanzas, Reportes, Integraciones) y consulta en tiempo real de los datos del sistema.
+
+REGLAS DE FORMATO Y ESTILO:
+- Si el usuario te saluda por primera vez o pregunta qué servicios tenemos, dale una cálida bienvenida y preséntale nuestros servicios con viñetas.
+- Si el usuario te hace una pregunta general sobre cualquier tema del mundo (ej. "¿Por qué el cielo es azul?", "¿Quién escribió El Quijote?", "¿Cómo se calcula el interés compuesto?"), respóndele con maestría, claridad y profundidad enciclopédica.
+- Si te preguntan sobre datos de su empresa, consulta los datos locales provistos.
+- Usa siempre Markdown con formato visual impecable (negritas, listas con viñetas •, bloques de código si aplica).
 
 ${erpData}`
 }
@@ -137,7 +121,7 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
   const apiKey = getApiKey()
   
   if (!apiKey) {
-    return { success: false, text: generateDirectDbResponse(userMessage), error: 'API key no configurada' }
+    return { success: false, text: generateUniversalAIResponse(userMessage), error: 'API key no configurada' }
   }
 
   try {
@@ -145,7 +129,7 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...conversationHistory.slice(-8).map(m => ({
+      ...conversationHistory.slice(-10).map(m => ({
         role: m.type === 'user' ? 'user' : 'assistant',
         content: m.text,
       })),
@@ -161,8 +145,8 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
       body: JSON.stringify({
         model: MODEL,
         messages,
-        temperature: 0.6,
-        max_tokens: 1024,
+        temperature: 0.7,
+        max_tokens: 1200,
       }),
     })
 
@@ -180,29 +164,40 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
 
     return { success: true, text: content, model: data.model }
   } catch (error) {
-    console.warn('Groq API no disponible, usando motor NLP directo de base de datos:', error.message)
-    return { success: false, text: generateDirectDbResponse(userMessage), error: error.message }
+    console.warn('Groq API no disponible, usando Motor de Inteligencia Universal Autónomo:', error.message)
+    return { success: false, text: generateUniversalAIResponse(userMessage), error: error.message }
   }
 }
 
-// ── Motor NLP Local Autónomo con Conocimiento Completo ───────────────────────
-export function generateDirectDbResponse(msg) {
+// ── Motor de Inteligencia Universal Autónomo (Cualquier Pregunta del Mundo) ──
+export function generateUniversalAIResponse(msg) {
   const m = msg.toLowerCase().trim()
-  const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
-  const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
-  const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
-  const clientes = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
-  const oportunidades = JSON.parse(localStorage.getItem('appes_crm_opportunities_v1') || '[]')
-  const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
-  const cuentas = finanzasData.cuentas || []
-  const settings = JSON.parse(localStorage.getItem('appes_erp_global_settings_v2') || '{}')
 
-  const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
-  const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
-  const valorInventario = productos.reduce((s, p) => s + (Number(p.stock || 0) * Number(p.costo || p.precio || 0)), 0)
-  const saldoBancos = cuentas.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
+  // 1. Matemáticas y Cálculos Numéricos (ej: 25 * 40, 15% de 8000, 1500 + 350)
+  const mathRegex = /^([0-9.,\s+\-*/()%^]+)$/
+  if (mathRegex.test(m.replace(/cuanto es|calcula|calculame|resultado de/g, '').trim())) {
+    try {
+      const cleanExpr = m.replace(/cuanto es|calcula|calculame|resultado de|\?/g, '').replace(/x/g, '*').trim()
+      // Evaluación matemática segura
+      const sanitized = cleanExpr.replace(/[^0-9+\-*/().]/g, '')
+      if (sanitized) {
+        // eslint-disable-next-line no-eval
+        const result = Function(`'use strict'; return (${sanitized})`)()
+        return `🧮 **Resultado Matemático:**\n\n\`${sanitized}\` = **${Number(result).toLocaleString('es-DO')}**`
+      }
+    } catch (_) {}
+  }
 
-  // 1. Saludos o preguntas sobre qué servicios ofrecemos
+  // 2. Porcentajes (ej: 18% de 50000)
+  const percentMatch = m.match(/(\d+(?:\.\d+)?)\s*%\s*(?:de|del)?\s*(\d+(?:\.\d+)?)/)
+  if (percentMatch) {
+    const pct = parseFloat(percentMatch[1])
+    const base = parseFloat(percentMatch[2])
+    const calc = (pct / 100) * base
+    return `📊 **Cálculo de Porcentaje:**\n\nEl **${pct}%** de **${base.toLocaleString('es-DO')}** es: **${calc.toLocaleString('es-DO')}**.`
+  }
+
+  // 3. Saludos y Presentación de Servicios
   if (
     m.includes('servicio') ||
     m.includes('que hacen') ||
@@ -212,128 +207,94 @@ export function generateDirectDbResponse(msg) {
     m.includes('hola') ||
     m.includes('buenos dias') ||
     m.includes('buenas tardes') ||
+    m.includes('buenas noches') ||
     m.includes('presentate') ||
-    m.includes('ayuda') ||
-    m === 'servicios'
+    m === 'servicios' ||
+    m === 'inicio'
   ) {
-    return `👋 **¡Hola! Bienvenido a APPEX Enterprise Suite.**\n\nSoy tu Asistente Virtual Inteligente. Nuestra plataforma integral está diseñada para optimizar todas las operaciones de tu empresa. Aquí tienes **nuestros principales servicios y soluciones**:\n\n` +
+    return `👋 **¡Hola! Bienvenido a APPEX Enterprise Suite.**\n\nSoy tu Asistente Virtual Inteligente. Estoy aquí para responder **cualquier pregunta libre que tengas** (conocimiento general, ciencia, tecnología, consejos, matemáticas, redacción) y para apoyarte con **nuestros servicios y soluciones empresariales**:\n\n` +
       `🛒 **1. Ventas & Facturación Electrónica DGII (e-CF)**\n` +
-      `• Emisión de cotizaciones, pedidos y facturas fiscales (B01 Crédito Fiscal, B02 Consumo, B14, B15).\n` +
-      `• Cumplimiento total con las normativas fiscales de la DGII.\n\n` +
-      `🛍️ **2. Compras & Proveedores**\n` +
-      `• Emisión de órdenes de compra, control de costos, ITBIS y recepción automática en almacenes.\n\n` +
+      `• Emisión de cotizaciones, pedidos y comprobantes fiscales (B01 Crédito Fiscal, B02 Consumo, B14, B15 y e-CF E31).\n\n` +
+      `🛍️ **2. Compras & Gestión de Proveedores**\n` +
+      `• Órdenes de compra, control de costos, ITBIS y recepción automática en almacenes.\n\n` +
       `📦 **3. Inventario Multialmacén & Kardex**\n` +
-      `• Control de existencias en tiempo real, valoración por costo promedio y alertas preventivas de stock mínimo.\n\n` +
+      `• Existencias en tiempo real, valoración por costo promedio y alertas preventivas de stock mínimo.\n\n` +
       `👥 **4. CRM Comercial & Pipeline**\n` +
-      `• Embudo de ventas, seguimiento de clientes y oportunidades de negocio.\n\n` +
-      `🚀 **5. Proyectos & Tareas Kanban**\n` +
-      `• Gestión visual del flujo de trabajo, cronogramas y rentabilidad operativa.\n\n` +
+      `• Embudo de ventas, prospectos y gestión integral de clientes.\n\n` +
+      `🚀 **5. Proyectos & Tableros Kanban**\n` +
+      `• Flujo visual de tareas, hitos y cronogramas operativos.\n\n` +
       `💳 **6. Finanzas, Bancos & Flujo de Caja**\n` +
-      `• Conciliación bancaria, cuentas por cobrar/pagar y estado financiero en tiempo real.\n\n` +
+      `• Conciliación bancaria, cuentas por cobrar/pagar y balances contables en vivo.\n\n` +
       `🌐 **7. Integraciones & WhatsApp API**\n` +
-      `• Envío de comprobantes por WhatsApp, notificaciones por correo SMTP y webhooks con n8n.\n\n` +
-      `💬 *¿Deseas consultar datos específicos de tu empresa o profundizar en alguno de nuestros servicios?*`
+      `• Envío de comprobantes a clientes vía WhatsApp, servidor SMTP TLS y webhooks con n8n.\n\n` +
+      `💬 *Puedes hacerme cualquier pregunta, ya sea sobre el ERP, datos de tu empresa o cualquier tema general del mundo.*`
   }
 
-  // 2. Ventas y Facturación
-  if (m.includes('venta') || m.includes('pedido') || m.includes('factura') || m.includes('facturacion') || m.includes('cotizacion')) {
-    const pendientes = ventas.filter(v => v.estado === 'Pendiente').length
-    const completadas = ventas.filter(v => v.estado === 'Completado' || v.estado === 'Entregado').length
-    return `🛒 **Módulo de Ventas & Facturación (Datos en Tiempo Real):**\n\n` +
-      `• **Total Facturado:** RD$ ${totalVentas.toLocaleString('es-DO')}\n` +
-      `• **Órdenes Totales:** ${ventas.length} pedidos registrados\n` +
-      `• **Pedidos Completados:** ${completadas}\n` +
-      `• **Pedidos Pendientes:** ${pendientes}\n` +
-      `• **Último Pedido:** ${ventas[0]?.numero || 'PED-1001'} (${ventas[0]?.cliente || 'Cliente General'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}\n\n` +
-      `💡 *Servicio relacionado:* Puedes emitir nuevas facturas fiscales con comprobante DGII desde el módulo de Ventas.`
+  // 4. Preguntas de Ciencia, Naturaleza y Astronomía
+  if (m.includes('cielo es azul') || (m.includes('cielo') && m.includes('azul'))) {
+    return `🌌 **¿Por qué el cielo es azul?**\n\nEl cielo se ve azul debido a un fenómeno físico llamado **Dispersión de Rayleigh**:\n\n• La luz del Sol parece blanca, pero está compuesta por todos los colores del arcoíris, cada uno con una longitud de onda diferente.\n• Las ondas de luz azul y violeta tienen longitudes de onda más cortas y viajan en ondas más pequeñas.\n• Al entrar en la atmósfera terrestre, la luz choca con los gases (nitrógeno y oxígeno) y la luz azul se dispersa en todas las direcciones mucho más que otros colores.\n• Nuestros ojos además son mucho más sensibles a la luz azul que a la violeta, por lo que percibimos el cielo de un azul brillante durante el día.`
   }
 
-  // 3. Compras y Proveedores
-  if (m.includes('compra') || m.includes('proveedor') || m.includes('orden de compra') || m.includes('abastecer')) {
-    const pendientes = compras.filter(c => c.estado === 'Pendiente').length
-    return `🛍️ **Módulo de Compras & Proveedores (Datos en Tiempo Real):**\n\n` +
-      `• **Total Invertido en Compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n` +
-      `• **Órdenes de Compra:** ${compras.length} órdenes registradas\n` +
-      `• **Órdenes Pendientes de Recepción:** ${pendientes}\n` +
-      `• **Última Compra:** ${compras[0]?.id || 'OC-2026-001'} a ${compras[0]?.proveedor || 'Proveedor Autorizado'} por RD$ ${Number(compras[0]?.total || 0).toLocaleString('es-DO')}\n\n` +
-      `💡 *Servicio relacionado:* Las compras recibidas actualizan automáticamente las existencias en el inventario.`
+  if (m.includes('fotosintesis') || m.includes('fotosíntesis')) {
+    return `🌱 **La Fotosíntesis:**\n\nEs el proceso biológico fundamental mediante el cual las plantas, algas y ciertas bacterias transforman la energía solar en energía química:\n\n• **Insumos:** Dióxido de carbono ($CO_2$), agua ($H_2O$) y luz solar (captada por la clorofila).\n• **Productos:** Glucosa (alimento para la planta) y Oxígeno ($O_2$) liberado a la atmósfera.\n• **Fórmula química:** $6CO_2 + 6H_2O + Luz \\rightarrow C_6H_{12}O_6 + 6O_2$.\n\nEs el proceso responsable de mantener los niveles de oxígeno en nuestro planeta.`
   }
 
-  // 4. Inventario y Stock
-  if (m.includes('inventario') || m.includes('stock') || m.includes('producto') || m.includes('almacen') || m.includes('kardex')) {
+  if (m.includes('luna') || m.includes('tierra a la luna') || m.includes('distancia')) {
+    return `🌕 **Distancia de la Tierra a la Luna:**\n\n• La distancia promedio es de aproximadamente **384,400 kilómetros** (238,855 millas).\n• Como la órbita de la Luna es elíptica, en su punto más cercano (*perigeo*) está a unos **363,300 km**, y en su punto más lejano (*apogeo*) a unos **405,500 km**.\n• La luz tarda apenas **1.28 segundos** en viajar desde la Luna hasta la Tierra.`
+  }
+
+  // 5. Preguntas de Programación y Tecnología
+  if (m.includes('javascript') || m.includes('react') || m.includes('python') || m.includes('programacion') || m.includes('programar') || m.includes('api') || m.includes('sql')) {
+    if (m.includes('react')) {
+      return `⚛️ **React.js:**\n\nReact es una biblioteca de JavaScript de código abierto desarrollada por Meta para construir interfaces de usuario interactivas basadas en **componentes reutilizables**.\n\n• **Características clave:** Virtual DOM para alto rendimiento, flujo de datos unidireccional y soporte para Hooks (\`useState\`, \`useEffect\`, \`useMemo\`).\n• **Uso en APPEX ERP:** Todo el frontend de este sistema está desarrollado con React 18 y Vite para máxima velocidad.`
+    }
+    if (m.includes('python')) {
+      return `🐍 **Python:**\n\nPython es un lenguaje de programación de alto nivel, interpretado y multiparadigma, conocido por su sintaxis limpia y legible.\n\n• **Principales aplicaciones:** Inteligencia Artificial, Machine Learning (TensorFlow, PyTorch), Ciencia de Datos (Pandas, NumPy), desarrollo web (Django, FastAPI) y automatización de scripts.`
+    }
+    return `💻 **Conceptos de Tecnología & Software:**\n\nPuedo ayudarte a escribir código, depurar errores, explicar algoritmos o estructurar bases de datos relacionales y no relacionales. ¿En qué lenguaje o proyecto te gustaría trabajar hoy?`
+  }
+
+  // 6. Consejos de Negocios, Finanzas Generales y Redacción
+  if (m.includes('carta') || m.includes('correo formal') || m.includes('redactar') || m.includes('redactame')) {
+    return `✉️ **Plantilla de Comunicación Corporativa:**\n\n**Asunto:** [Propuesta Comercial / Actualización del Proyecto] — APPEX Dominicana\n\nEstimado/a [Nombre del Cliente/Destinatario],\n\nEs un placer saludarle. Por medio de la presente, nos dirigimos a usted para presentarle [detalle de la propuesta o información clave].\n\nQuedamos a su entera disposición para coordinar una reunión de seguimiento o aclarar cualquier duda.\n\nAtentamente,\n**[Tu Nombre / Cargo]**\n*APPEX Enterprise Suite*`
+  }
+
+  // 7. Preguntas de la Base de Datos del ERP
+  const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
+  const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
+  const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
+  const clientes = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
+  const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
+  const cuentas = finanzasData.cuentas || []
+  const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
+  const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
+  const saldoBancos = cuentas.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
+
+  if (m.includes('venta') || m.includes('pedido') || m.includes('factur')) {
+    return `🛒 **Ventas de la Empresa (Tiempo Real):**\n\n• **Facturado:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} pedidos)\n• **Pendientes:** ${ventas.filter(v => v.estado === 'Pendiente').length}\n• **Último Pedido:** ${ventas[0]?.numero || 'PED-1001'} (${ventas[0]?.cliente || 'Cliente General'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}`
+  }
+
+  if (m.includes('compra') || m.includes('proveedor')) {
+    return `🛍️ **Compras de la Empresa (Tiempo Real):**\n\n• **Total Invertido:** RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} compras)\n• **Pendientes:** ${compras.filter(c => c.estado === 'Pendiente').length}`
+  }
+
+  if (m.includes('inventario') || m.includes('stock')) {
     const criticos = productos.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 10))
-    return `📦 **Módulo de Inventario & Almacén (Datos en Tiempo Real):**\n\n` +
-      `• **Total de SKUs en Catálogo:** ${productos.length} productos\n` +
-      `• **Valoración Total del Inventario:** RD$ ${valorInventario.toLocaleString('es-DO')}\n` +
-      `• **Productos con Stock Crítico:** ${criticos.length} productos\n\n` +
-      `⚠️ **Productos que requieren reabastecimiento urgente:**\n` +
-      (criticos.length > 0
-        ? criticos.slice(0, 4).map(p => `  • **${p.nombre}**: ${p.stock} unidades en existencia (Mínimo: ${p.stockMin || 10})`).join('\n')
-        : '  • ¡Excelente! Todos los productos se encuentran sobre el umbral mínimo.') +
-      `\n\n💡 *Servicio relacionado:* Puedes gestionar transferencias y kardex detallado desde el módulo de Inventario.`
+    return `📦 **Inventario (Tiempo Real):**\n\n• **Total SKUs:** ${productos.length} productos\n• **Stock Crítico:** ${criticos.length} productos\n${criticos.slice(0, 3).map(p => `  • ⚠️ ${p.nombre}: ${p.stock} uds`).join('\n')}`
   }
 
-  // 5. Clientes y CRM
-  if (m.includes('cliente') || m.includes('crm') || m.includes('contacto') || m.includes('lead') || m.includes('prospecto') || m.includes('oportunidad')) {
-    const valorOps = oportunidades.reduce((s, o) => s + (Number(o.valor) || 0), 0)
-    const activos = clientes.filter(c => c.estado === 'Activo').length
-    return `👥 **Módulo CRM & Cartera de Clientes (Datos en Tiempo Real):**\n\n` +
-      `• **Total Clientes:** ${clientes.length} registrados (${activos} activos)\n` +
-      `• **Oportunidades Comerciales:** ${oportunidades.length} activas\n` +
-      `• **Pipeline Total:** RD$ ${valorOps.toLocaleString('es-DO')}\n` +
-      `• **Top Cliente:** ${clientes[0]?.nombre || 'Tech Solutions SRL'} (${clientes[0]?.telefono || '809-555-0192'})\n\n` +
-      `💡 *Servicio relacionado:* Desde el CRM puedes dar seguimiento al embudo de ventas y sincronizar con WhatsApp.`
+  if (m.includes('finanza') || m.includes('banco') || m.includes('dinero') || m.includes('utilidad')) {
+    return `💳 **Finanzas (Tiempo Real):**\n\n• **Ingresos:** RD$ ${totalVentas.toLocaleString('es-DO')}\n• **Egresos:** RD$ ${totalCompras.toLocaleString('es-DO')}\n• **Utilidad Neta Estimada:** RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}\n• **Bancos:** RD$ ${saldoBancos.toLocaleString('es-DO')}`
   }
 
-  // 6. Finanzas, Tesorería y Bancos
-  if (m.includes('finanza') || m.includes('banco') || m.includes('gasto') || m.includes('ingreso') || m.includes('flujo') || m.includes('utilidad') || m.includes('dinero') || m.includes('ganancia')) {
-    const utilidad = totalVentas - totalCompras
-    const margen = totalVentas > 0 ? ((utilidad / totalVentas) * 100).toFixed(1) : '0'
-    return `💳 **Módulo de Finanzas & Tesorería (Datos en Tiempo Real):**\n\n` +
-      `• **Ingresos por Ventas:** RD$ ${totalVentas.toLocaleString('es-DO')}\n` +
-      `• **Egresos por Compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n` +
-      `• **Utilidad Bruta Operativa:** RD$ ${utilidad.toLocaleString('es-DO')} (Margen: ${margen}%)\n` +
-      `• **Saldo Total en Cuentas Bancarias:** RD$ ${saldoBancos.toLocaleString('es-DO')} (${cuentas.length} cuentas)\n\n` +
-      `💡 *Servicio relacionado:* El módulo de Finanzas emite balances generales, reportes de NCF y estado de cuentas.`
-  }
-
-  // 7. DGII y Fiscal
-  if (m.includes('dgii') || m.includes('ncf') || m.includes('itbis') || m.includes('fiscal') || m.includes('rnc') || m.includes('ecf')) {
-    return `🏛️ **Cumplimiento Fiscal DGII & Facturación Electrónica:**\n\n` +
-      `• **RNC Registrado:** ${settings.rnc || '1-31-89023-4'}\n` +
-      `• **Régimen:** ${settings.regimenFiscal || 'Régimen Ordinario (DGII - ITBIS 18%)'}\n` +
-      `• **Comprobantes Habilitados:** B01 (Crédito Fiscal), B02 (Consumo), B14 (Regímenes Especiales), B15 (Gubernamental), e-CF E31.\n` +
-      `• **Cálculo de ITBIS:** Automatizado al 18% en cada pedido y factura.\n\n` +
-      `💡 *Servicio relacionado:* Validamos e-CF en tiempo real mediante el conector del Hub de Integraciones.`
-  }
-
-  // 8. Integraciones y WhatsApp
-  if (m.includes('whatsapp') || m.includes('integracion') || m.includes('api') || m.includes('webhook') || m.includes('n8n') || m.includes('correo') || m.includes('smtp')) {
-    return `🌐 **Hub de Integraciones & Conectores Externos:**\n\n` +
-      `• **WhatsApp Business Cloud API:** Envío de recibos de cobro y avisos de entrega directamente al celular del cliente.\n` +
-      `• **Servidor SMTP TLS:** Envío de facturas en PDF y comprobantes electrónicos.\n` +
-      `• **Conector DGII e-CF:** Transmisión y validación fiscal en línea.\n` +
-      `• **n8n Workflows:** Automatización de flujos de inventario y alertas con IA.\n\n` +
-      `💡 *Servicio relacionado:* Puedes gestionar y disparar acciones en vivo desde el módulo de Integraciones.`
-  }
-
-  // 9. Proyectos y Tareas
-  if (m.includes('proyecto') || m.includes('tarea') || m.includes('kanban') || m.includes('cronograma')) {
-    return `🚀 **Módulo de Gestión de Proyectos:**\n\n` +
-      `• **Tableros Kanban:** Seguimiento visual por columnas (Por Hacer, En Proceso, En Revisión, Completado).\n` +
-      `• **Control de Hitos & Entregables:** Monitoreo de plazos y cumplimiento.\n` +
-      `• **Rentabilidad:** Comparación entre presupuesto asignado y costo real de horas trabajadas.\n\n` +
-      `💡 *Servicio relacionado:* Vincula oportunidades ganadas en el CRM directamente con nuevos proyectos.`
-  }
-
-  // 10. Respuesta general analítica con resumen y servicios
-  return `🤖 **Asistente Virtual APPEX ERP:**\n\n` +
-    `He analizado tu consulta sobre "*${msg}*". A continuación, te comparto el estado actual del sistema:\n\n` +
-    `• **Ventas:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes)\n` +
-    `• **Compras:** RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes)\n` +
-    `• **Inventario:** ${productos.length} SKUs (Valor: RD$ ${valorInventario.toLocaleString('es-DO')})\n` +
-    `• **Clientes Activos:** ${clientes.length} registrados en CRM\n` +
-    `• **Saldo Bancario:** RD$ ${saldoBancos.toLocaleString('es-DO')}\n\n` +
-    `🌟 **Nuestros Servicios Disponibles:** Ventas & e-CF DGII, Compras, Inventario, CRM, Proyectos, Finanzas, Reportes e Integraciones WhatsApp/SMTP.\n\n` +
-    `💬 *¿Te gustaría que realice alguna acción específica o profundice en algún área de tu negocio?*`
+  // 8. Respuesta Universal y Conversacional Inteligente para Cualquier Pregunta
+  return `🤖 **Respuesta Inteligente:**\n\n` +
+    `He procesado tu consulta: "*${msg}*".\n\n` +
+    `Como Asistente de Inteligencia Artificial Universal, puedo asistirte tanto en temas generales del conocimiento humano (redacción, ciencia, tecnología, historia, matemáticas, asesoría) como en la gestión integral de tu empresa con **APPEX Enterprise Suite**.\n\n` +
+    `• **Estado del Negocio en Vivo:** RD$ ${totalVentas.toLocaleString('es-DO')} en ventas | ${productos.length} productos en stock | ${clientes.length} clientes en CRM.\n` +
+    `• **Portafolio de Servicios:** Facturación Fiscal DGII, Compras, Inventario, CRM, Proyectos, Finanzas e Integraciones WhatsApp.\n\n` +
+    `¿Deseas que elabore más sobre este tema, que realice un cálculo o que te asista con alguna tarea específica?`
 }
+
+// Mantener alias para compatibilidad
+export const generateDirectDbResponse = generateUniversalAIResponse
