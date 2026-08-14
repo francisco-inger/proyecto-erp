@@ -611,10 +611,14 @@ function TabAsistencia({ asistencia, setAsistencia, empleados, showToast }) {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ empleado: '', fecha: '', entrada: '', salida: '', estado: 'Presente', observacion: '' })
 
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10))
+  const [selectedDept, setSelectedDept] = useState('Todos')
+
   const filtered = asistencia.filter(a => {
     const matchSearch = a.empleado.toLowerCase().includes(search.toLowerCase())
     const matchEstado = filterEstado === 'Todos' || a.estado === filterEstado
-    return matchSearch && matchEstado
+    const matchDept = selectedDept === 'Todos' || (a.departamento === selectedDept)
+    return matchSearch && matchEstado && matchDept
   })
 
   const handleAdd = async (ev) => {
@@ -647,11 +651,27 @@ function TabAsistencia({ asistencia, setAsistencia, empleados, showToast }) {
           <span>🔍</span>
           <input placeholder="Buscar empleado..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <div className="rrhh-date-btn">📅 30 May, 2025 ▾</div>
-          <select className="rrhh-inline-select">
-            <option>Departamento ▾</option>
-            {['Ventas', 'Compras', 'Almacén'].map(d => <option key={d}>{d}</option>)}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="date"
+            className="rrhh-date-btn"
+            value={selectedDate}
+            onChange={(e) => {
+              setSelectedDate(e.target.value)
+              showToast(`Fecha de asistencia: ${e.target.value} 📅`)
+            }}
+            style={{ cursor: 'pointer', outline: 'none', border: '1px solid #CBD5E1', padding: '6px 10px', borderRadius: 8 }}
+          />
+          <select
+            className="rrhh-inline-select"
+            value={selectedDept}
+            onChange={(e) => {
+              setSelectedDept(e.target.value)
+              showToast(`Departamento: ${e.target.value}`)
+            }}
+          >
+            <option value="Todos">Todos los departamentos</option>
+            {['Ventas', 'Compras', 'Almacén', 'Tecnología', 'Recursos Humanos'].map(d => <option key={d} value={d}>{d}</option>)}
           </select>
           <div className="rrhh-filter-chips">
             {['Todos', 'Presente', 'Ausente', 'Tarde'].map(s => (
