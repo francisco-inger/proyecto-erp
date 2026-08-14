@@ -69,6 +69,8 @@ export function ChatbotHome() {
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [showKeyModal, setShowKeyModal] = useState(false)
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('appes_groq_api_key') || '')
   const [toast, setToast] = useState(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
@@ -332,6 +334,24 @@ export function ChatbotHome() {
               🕐 Historial de Chats ({sessions.length})
             </button>
             <button
+              onClick={() => setShowKeyModal(true)}
+              style={{
+                background: 'rgba(16, 185, 129, 0.20)',
+                color: '#6EE7B7',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              ⚙️ API Key IA ({customApiKey || import.meta.env.VITE_GROQ_API_KEY ? 'Configurada' : 'Ingresar'})
+            </button>
+            <button
               onClick={handleNewChat}
               style={{
                 background: 'rgba(255, 255, 255, 0.10)',
@@ -587,6 +607,95 @@ export function ChatbotHome() {
                 onClick={() => setShowHistoryModal(false)}
               >
                 Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Configuración API Key (Para todo el equipo de GitHub) ── */}
+      {showKeyModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }} onClick={() => setShowKeyModal(false)}>
+          <div style={{ background: '#FFFFFF', borderRadius: 16, width: 520, maxWidth: '92vw', padding: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #E2E8F0' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 20 }}>🔑</span>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A' }}>Configurar API Key de Groq IA</h3>
+              </div>
+              <button style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#64748B' }} onClick={() => setShowKeyModal(false)}>✕</button>
+            </div>
+
+            <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.5, margin: '0 0 16px' }}>
+              Cualquier miembro del equipo puede configurar su clave de <strong>Groq Cloud (Llama 3.1)</strong> para realizar consultas universales y responder cualquier pregunta en tiempo real.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: 6 }}>
+                Clave de API Groq (gsk_...)
+              </label>
+              <input
+                type="password"
+                placeholder="gsk_..."
+                value={customApiKey}
+                onChange={(e) => setCustomApiKey(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #CBD5E1',
+                  fontSize: 13,
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ display: 'block', marginTop: 6, fontSize: 11, color: '#64748B' }}>
+                Se guarda de forma segura en tu navegador local (<code>localStorage</code>) o en el archivo <code>.env</code>.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('appes_groq_api_key')
+                  setCustomApiKey('')
+                  showToastMsg('ℹ️ Clave eliminada del navegador')
+                  setShowKeyModal(false)
+                }}
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: 8,
+                  padding: '8px 16px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer'
+                }}
+              >
+                Limpiar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (customApiKey.trim()) {
+                    localStorage.setItem('appes_groq_api_key', customApiKey.trim())
+                    showToastMsg('✅ ¡API Key guardada exitosamente!')
+                  }
+                  setShowKeyModal(false)
+                }}
+                style={{
+                  background: '#2563EB',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 18px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  cursor: 'pointer'
+                }}
+              >
+                Guardar y Activar
               </button>
             </div>
           </div>
