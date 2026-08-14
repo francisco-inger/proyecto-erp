@@ -8,7 +8,11 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const MODEL = 'llama-3.1-8b-instant'
 
 function getApiKey() {
-  return import.meta.env.VITE_GROQ_API_KEY || ''
+  return (
+    import.meta.env.VITE_GROQ_API_KEY ||
+    localStorage.getItem('appes_groq_api_key') ||
+    ''
+  )
 }
 
 // ── Servicios Corporativos del Sistema ─────────────────────────────────────────

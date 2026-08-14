@@ -250,23 +250,40 @@ export function ChatbotHome() {
         }} />
 
         <div style={{ position: 'relative', zIndex: 2, maxWidth: 760 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'rgba(255, 255, 255, 0.12)',
-            color: '#93C5FD',
-            padding: '4px 12px',
-            borderRadius: 20,
-            fontSize: 11,
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-            marginBottom: 10,
-            backdropFilter: 'blur(4px)',
-            border: '1px solid rgba(255, 255, 255, 0.15)'
-          }}>
-            <span>🤖</span> ASISTENTE VIRTUAL IA & ASESOR CORPORATIVO · v2026.4.0
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: '#93C5FD',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
+            }}>
+              <span>🤖</span> ASISTENTE VIRTUAL IA & ASESOR CORPORATIVO · v2026.4.0
+            </div>
+
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(16, 185, 129, 0.20)',
+              color: '#6EE7B7',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 11,
+              fontWeight: 800,
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(16, 185, 129, 0.35)'
+            }}>
+              <span style={{ fontSize: 8 }}>🟢</span> GROQ LLAMA-3.1 CLOUD ACTIVO
+            </div>
           </div>
 
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
