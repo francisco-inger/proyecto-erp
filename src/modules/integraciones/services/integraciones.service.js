@@ -116,7 +116,21 @@ export const integracionesService = {
   getIntegraciones: async () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) return JSON.parse(raw)
+      if (raw) {
+        const stored = JSON.parse(raw)
+        // Asegurar que si faltan los disparadores nuevos se fusionen con DEFAULT_INTEGRACIONES
+        const merged = stored.map(s => {
+          const def = DEFAULT_INTEGRACIONES.find(d => d.id === s.id)
+          return {
+            ...s,
+            triggersDisponibles: s.triggersDisponibles || def?.triggersDisponibles || [
+              { id: `trig_${s.id}`, label: 'Enviar Webhook de Prueba', sampleDest: s.endpoint, payload: '{"event":"TEST_PING"}' }
+            ],
+            eventosActivos: s.eventosActivos || def?.eventosActivos || ['sistema.general']
+          }
+        })
+        return merged
+      }
     } catch (_) {}
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_INTEGRACIONES))
