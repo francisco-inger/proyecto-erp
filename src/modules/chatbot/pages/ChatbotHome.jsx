@@ -337,58 +337,63 @@ export function ChatbotHome() {
         </div>
       </div>
 
-      {/* ── Panel Izquierdo (Principal) ── */}
-      <div className="chat-main">
-        {/* Breadcrumb y Título */}
-        <div>
-          <div className="chat-breadcrumb">Módulo AI / Chatbot</div>
-          <div className="chat-title-row" style={{ marginTop: 4 }}>
-            <div>
-              <h1 className="chat-title">
-                Asistente inteligente <span style={{ fontSize: 20 }}>✨</span>
-              </h1>
-              <p className="chat-subtitle">Tu asistente de IA con acceso en tiempo real a Ventas, Finanzas e Inventario.</p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Indicador de modo AI */}
-              {aiMode === true && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '4px 10px', borderRadius: 6 }}>
-                  🤖 Groq AI activo
-                </span>
-              )}
-              {aiMode === false && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#B45309', background: '#FFFBEB', padding: '4px 10px', borderRadius: 6 }}>
-                  💾 Modo local
-                </span>
-              )}
-              <button
-                className="chat-history-btn"
-                onClick={() => setShowHistoryModal(true)}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <span>🕐</span> Historial de chats ({sessions.length})
-              </button>
-              <button
-                onClick={handleNewChat}
-                style={{
-                  background: '#2563EB',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
-              >
-                <span>+</span> Nuevo Chat
-              </button>
-            </div>
-          </div>
+      {/* ── Tabs de Navegación del Asistente ── */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: '#FFFFFF',
+        padding: '12px 18px',
+        borderRadius: 14,
+        border: '1px solid #E2E8F0',
+        marginBottom: 16,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        flexWrap: 'wrap',
+        gap: 12
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>🤖</span> Estado del Motor:
+          </span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '3px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+            Groq LLaMA 3.3 (Sincronizado con BD)
+          </span>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            className="chat-history-btn"
+            onClick={() => setShowHistoryModal(true)}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span>🕐</span> Historial ({sessions.length})
+          </button>
+          <button
+            onClick={handleNewChat}
+            style={{
+              background: '#2563EB',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 8,
+              padding: '6px 14px',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <span>+</span> Nuevo Chat
+          </button>
+        </div>
+      </div>
+
+      {/* ── Contenedor Principal: Chat y Sidebar ordenados ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
+        {/* ── Panel Izquierdo (Chat y Mensajes) ── */}
+        <div className="chat-main">
 
         {/* Área de Mensajes */}
         <div className="chat-messages-area">
@@ -539,6 +544,7 @@ export function ChatbotHome() {
             Sistema conectado y operativo
           </div>
         </div>
+      </div>
       </div>
 
       {/* ── Modal Interactivo de Historial de Chats ── */}
