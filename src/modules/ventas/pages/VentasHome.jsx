@@ -1,57 +1,53 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ventasService } from '../services/ventas.service'
 import './VentasHome.css'
 
-const ORDER_STATUS = ['Todos', 'Pendiente', 'Confirmado', 'Enviado', 'Entregado', 'Cancelado']
+const STATUS = [
+  'Todos',
+  'Pendiente',
+  'Confirmado',
+  'Enviado',
+  'Entregado',
+  'Cancelado',
+]
 
-const EMPTY_FORM = {
-  customerName: '',
-  customerEmail: '',
-  status: 'Pendiente',
-  total: '',
-  notes: '',
+const STATUS_META = {
+  Pendiente: { tone: 'warning', icon: '◷' },
+  Confirmado: { tone: 'success', icon: '✓' },
+  Enviado: { tone: 'info', icon: '→' },
+  Entregado: { tone: 'done', icon: '✓✓' },
+  Cancelado: { tone: 'danger', icon: '×' },
 }
 
-function normalizeOrder(rawOrder, index = 0) {
-  const source = rawOrder && typeof rawOrder === 'object' ? rawOrder : {}
-
-  const totalValue = Number(source.total ?? source.amount ?? source.totalAmount ?? 0)
+function normalizeOrder(raw, index = 0) {
+  const total = Number(raw?.total ?? 0)
 
   return {
-    id: source.id ?? source._id ?? `pedido-${index + 1}`,
-    customerName:
-      source.customerName ||
-      source.customer ||
-      source.cliente ||
-      source.clientName ||
-      source.name ||
-      'Cliente sin nombre',
-    customerEmail: source.customerEmail || source.email || '',
-    status: String(source.status || source.estado || 'Pendiente'),
-    total: Number.isFinite(totalValue) ? totalValue : 0,
-    createdAt:
-      source.createdAt ||
-      source.created_at ||
-      source.fecha ||
-      source.fechaCreacion ||
-      source.date ||
-      new Date().toISOString(),
-    notes: source.notes || source.observations || source.observaciones || 'Sin observaciones',
-    items: Array.isArray(source.items) ? source.items : [],
+    id: raw?.id ?? `local-${index}`,
+    numero: raw?.numero || `PED-${raw?.id ?? index}`,
+    cliente: raw?.cliente || 'Sin cliente',
+    fecha: raw?.fecha || raw?.fechaCreacion || null,
+    fechaCreacion: raw?.fechaCreacion || raw?.fecha || null,
+    estado: raw?.estado || 'Pendiente',
+    total: Number.isFinite(total) ? total : 0,
+    observaciones: raw?.observaciones || '',
   }
 }
 
 function normalizeOrders(payload) {
   if (Array.isArray(payload)) {
-    return payload.map((order, index) => normalizeOrder(order, index))
+    return payload.map(normalizeOrder)
   }
 
   if (payload && typeof payload === 'object') {
-    const candidates = [payload.orders, payload.data, payload.results]
-
-    for (const candidate of candidates) {
-      if (Array.isArray(candidate)) {
-        return candidate.map((order, index) => normalizeOrder(order, index))
+    for (const value of [
+      payload.value,
+      payload.orders,
+      payload.data,
+      payload.results,
+    ]) {
+      if (Array.isArray(value)) {
+        return value.map(normalizeOrder)
       }
     }
   }
@@ -59,479 +55,1517 @@ function normalizeOrders(payload) {
   return []
 }
 
-export function VentasHome() {
-  const [orders, setOrders] = useState([])
-  const [selectedOrderId, setSelectedOrderId] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('Todos')
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState('')
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [formState, setFormState] = useState(EMPTY_FORM)
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState('')
-  const [createSuccess, setCreateSuccess] = useState('')
+function money(value) {
+  return Number(value || 0).toLocaleString('es-DO', {
+    style: 'currency',
+    currency: 'DOP',
+    minimumFractionDigits: 2,
+  })
+}
 
-  useEffect(() => {
-    let isMounted = true
+function formatDate(value) {
+  if (!value) return '—'
 
-    async function loadOrders() {
-      try {
-        setLoading(true)
-        setLoadError('')
+  const d = new Date(value)
 
-        const response = await ventasService.listOrders()
-
-        if (!isMounted) return
-
-        const normalized = normalizeOrders(response)
-        setOrders(normalized)
-        setSelectedOrderId((current) => current || normalized[0]?.id || '')
-      } catch (error) {
-        if (!isMounted) return
-        setOrders([])
-        setLoadError(error?.message || 'No se pudieron cargar los pedidos.')
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadOrders()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  const filteredOrders = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase()
-
-    return orders.filter((order) => {
-      const matchesStatus = statusFilter === 'Todos' || order.status === statusFilter
-      const text = `${order.id} ${order.customerName} ${order.customerEmail}`.toLowerCase()
-      const matchesQuery = !query || text.includes(query)
-      return matchesStatus && matchesQuery
-    })
-  }, [orders, searchTerm, statusFilter])
-
-  useEffect(() => {
-    if (!filteredOrders.length) {
-      setSelectedOrderId('')
-      return
-    }
-
-    const currentExists = filteredOrders.some((order) => order.id === selectedOrderId)
-    if (!currentExists) {
-      setSelectedOrderId(filteredOrders[0].id)
-    }
-  }, [filteredOrders, selectedOrderId])
-
-  const selectedOrder =
-    orders.find((order) => order.id === selectedOrderId) || filteredOrders[0] || null
-
-  const summary = useMemo(() => {
-    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0)
-    const pendings = orders.filter((order) => order.status === 'Pendiente').length
-    const confirmed = orders.filter((order) => order.status === 'Confirmado').length
-    const sent = orders.filter((order) => order.status === 'Enviado').length
-    const completed = orders.filter((order) => order.status === 'Entregado').length
-
-    return {
-      totalOrders: orders.length,
-      totalRevenue,
-      pendings,
-      confirmed,
-      sent,
-      completed,
-    }
-  }, [orders])
-
-  const statusBreakdown = useMemo(() => {
-    const countByStatus = ORDER_STATUS.filter((status) => status !== 'Todos').map((status) => ({
-      status,
-      count: orders.filter((order) => order.status === status).length,
-    }))
-
-    return countByStatus
-  }, [orders])
-
-  const quotePreview = [
-    { id: 'COT-2041', customer: 'Northwind', total: 2650, status: 'Pendiente' },
-    { id: 'COT-2042', customer: 'Apex Labs', total: 3320, status: 'Aprobada' },
-    { id: 'COT-2043', customer: 'Luma Studio', total: 1485, status: 'Borrador' },
-  ]
-
-  const invoicePreview = [
-    { id: 'FAC-9901', customer: 'Giro Financiero', total: 4400, status: 'Pagada' },
-    { id: 'FAC-9902', customer: 'CloudX', total: 2780, status: 'Pendiente' },
-    { id: 'FAC-9903', customer: 'Grupo Verde', total: 1840, status: 'En revisión' },
-  ]
-
-  function handleInputChange(event) {
-    const { name, value } = event.target
-    setFormState((current) => ({ ...current, [name]: value }))
+  if (Number.isNaN(d.getTime())) {
+    return '—'
   }
 
-  async function handleCreateOrder(event) {
-    event.preventDefault()
+  return d.toLocaleDateString('es-DO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
 
-    setCreateError('')
-    setCreateSuccess('')
-
-    const payload = {
-      customerName: formState.customerName.trim(),
-      customerEmail: formState.customerEmail.trim(),
-      status: formState.status,
-      total: Number(formState.total) || 0,
-      notes: formState.notes.trim(),
+function StatusBadge({ status }) {
+  const meta =
+    STATUS_META[status] || {
+      tone: 'neutral',
+      icon: '•',
     }
 
-    if (!payload.customerName) {
-      setCreateError('Necesitas indicar el cliente del pedido.')
+  return (
+    <span className={`ventas-status ventas-status-${meta.tone}`}>
+      <span>{meta.icon}</span>
+      {status}
+    </span>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <span className="ventas-icon" aria-hidden="true">
+      ⌕
+    </span>
+  )
+}
+
+export function VentasHome() {
+  const [orders, setOrders] = useState([])
+  const [selectedId, setSelectedId] = useState(null)
+
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('Todos')
+  const [groupBy, setGroupBy] = useState('none')
+
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
+
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem('ventas_favorites') || '[]'
+      )
+    } catch {
+      return []
+    }
+  })
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const [showCreate, setShowCreate] = useState(false)
+  const [showImport, setShowImport] = useState(false)
+
+  const [importing, setImporting] = useState(false)
+
+  const [form, setForm] = useState({
+    cliente: '',
+    total: '',
+    fecha: '',
+    observaciones: '',
+  })
+
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  const importRef = useRef(null)
+
+  async function loadOrders(selectFirst = false) {
+    setLoading(true)
+    setError('')
+
+    try {
+      const payload = await ventasService.listOrders()
+      const data = normalizeOrders(payload)
+
+      setOrders(data)
+
+      if (selectFirst || selectedId == null) {
+        setSelectedId(data[0]?.id ?? null)
+      } else if (
+        selectedId &&
+        !data.some(order => order.id === selectedId)
+      ) {
+        setSelectedId(data[0]?.id ?? null)
+      }
+    } catch (e) {
+      setError(
+        e?.message ||
+        'No se pudieron cargar los pedidos.'
+      )
+
+      setOrders([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadOrders(true)
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(
+      'ventas_favorites',
+      JSON.stringify(favorites)
+    )
+  }, [favorites])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+
+    return orders.filter(order => {
+      const text = `
+        ${order.numero}
+        ${order.cliente}
+        ${order.estado}
+        ${order.observaciones}
+      `.toLowerCase()
+
+      const matchesSearch =
+        !q || text.includes(q)
+
+      const matchesStatus =
+        status === 'Todos' ||
+        order.estado === status
+
+      const matchesFavorite =
+        !favoritesOnly ||
+        favorites.includes(order.id)
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesFavorite
+      )
+    })
+  }, [
+    orders,
+    search,
+    status,
+    favoritesOnly,
+    favorites,
+  ])
+
+  const selected =
+    orders.find(order => order.id === selectedId) ||
+    null
+
+  const stats = useMemo(() => {
+    const now = new Date()
+
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+
+    const thisMonth = orders.filter(order => {
+      const d = new Date(order.fecha)
+
+      return (
+        !Number.isNaN(d.getTime()) &&
+        d.getMonth() === currentMonth &&
+        d.getFullYear() === currentYear
+      )
+    })
+
+    const uniqueClients = new Set(
+      orders
+        .map(order =>
+          order.cliente.trim().toLowerCase()
+        )
+        .filter(Boolean)
+    )
+
+    return {
+      total: orders.length,
+
+      revenue: orders.reduce(
+        (sum, order) =>
+          sum + order.total,
+        0
+      ),
+
+      monthRevenue:
+        thisMonth.reduce(
+          (sum, order) =>
+            sum + order.total,
+          0
+        ),
+
+      pending: orders.filter(
+        order =>
+          order.estado === 'Pendiente'
+      ).length,
+
+      confirmed: orders.filter(
+        order =>
+          order.estado === 'Confirmado'
+      ).length,
+
+      delivered: orders.filter(
+        order =>
+          order.estado === 'Entregado'
+      ).length,
+
+      clients: uniqueClients.size,
+    }
+  }, [orders])
+
+  const chart = useMemo(() => {
+    const now = new Date()
+
+    const months = Array.from(
+      { length: 6 },
+      (_, index) => {
+        const d = new Date(
+          now.getFullYear(),
+          now.getMonth() - 5 + index,
+          1
+        )
+
+        return {
+          key: `${d.getFullYear()}-${d.getMonth()}`,
+
+          label: d
+            .toLocaleDateString(
+              'es-DO',
+              { month: 'short' }
+            )
+            .replace('.', ''),
+
+          value: 0,
+        }
+      }
+    )
+
+    for (const order of orders) {
+      const d = new Date(order.fecha)
+
+      if (Number.isNaN(d.getTime())) {
+        continue
+      }
+
+      const item = months.find(
+        month =>
+          month.key ===
+          `${d.getFullYear()}-${d.getMonth()}`
+      )
+
+      if (item) {
+        item.value += order.total
+      }
+    }
+
+    const max = Math.max(
+      ...months.map(month => month.value),
+      1
+    )
+
+    return {
+      months,
+      max,
+    }
+  }, [orders])
+
+  const grouped = useMemo(() => {
+    if (groupBy === 'none') {
+      return [
+        {
+          key: '',
+          label: '',
+          rows: filtered,
+        },
+      ]
+    }
+
+    const map = new Map()
+
+    filtered.forEach(order => {
+      const key =
+        groupBy === 'status'
+          ? order.estado
+          : order.cliente
+
+      if (!map.has(key)) {
+        map.set(key, [])
+      }
+
+      map.get(key).push(order)
+    })
+
+    return [...map.entries()].map(
+      ([key, rows]) => ({
+        key,
+        label: key,
+        rows,
+      })
+    )
+  }, [filtered, groupBy])
+
+  function toggleFavorite(id) {
+    setFavorites(current =>
+      current.includes(id)
+        ? current.filter(
+            value => value !== id
+          )
+        : [...current, id]
+    )
+  }
+
+  async function createOrder(event) {
+    event.preventDefault()
+
+    setSaveError('')
+
+    const cliente =
+      form.cliente.trim()
+
+    const total =
+      Number(form.total)
+
+    if (!cliente) {
+      setSaveError(
+        'El cliente es obligatorio.'
+      )
       return
     }
 
-    try {
-      setCreating(true)
-      const response = await ventasService.createOrder(payload)
+    if (
+      !Number.isFinite(total) ||
+      total < 0
+    ) {
+      setSaveError(
+        'El total debe ser un número válido mayor o igual a 0.'
+      )
+      return
+    }
 
-      const newOrder = normalizeOrders([response])[0] || {
-        ...payload,
-        id: `pedido-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        items: [],
+    setSaving(true)
+
+    try {
+      const payload = {
+        cliente,
+        total,
+
+        observaciones:
+          form.observaciones.trim() ||
+          null,
+
+        ...(form.fecha
+          ? {
+              fecha:
+                new Date(
+                  `${form.fecha}T12:00:00`
+                ).toISOString(),
+            }
+          : {}),
       }
 
-      setOrders((current) => [newOrder, ...current])
-      setSelectedOrderId(newOrder.id)
-      setFormState(EMPTY_FORM)
-      setShowCreateModal(false)
-      setCreateSuccess('Pedido creado correctamente.')
-    } catch (error) {
-      setCreateError(error?.message || 'No se pudo crear el pedido.')
+      await ventasService.createOrder(
+        payload
+      )
+
+      setShowCreate(false)
+
+      setForm({
+        cliente: '',
+        total: '',
+        fecha: '',
+        observaciones: '',
+      })
+
+      await loadOrders(true)
+    } catch (e) {
+      setSaveError(
+        e?.message ||
+        'No se pudo crear el pedido.'
+      )
     } finally {
-      setCreating(false)
+      setSaving(false)
+    }
+  }
+
+  async function changeStatus(
+    id,
+    nextStatus
+  ) {
+    setError('')
+
+    try {
+      await ventasService.updateOrderStatus(
+        id,
+        nextStatus
+      )
+
+      setOrders(current =>
+        current.map(order =>
+          order.id === id
+            ? {
+                ...order,
+                estado: nextStatus,
+              }
+            : order
+        )
+      )
+    } catch (e) {
+      setError(
+        e?.message ||
+        'No se pudo actualizar el estado.'
+      )
+    }
+  }
+
+  function exportCsv() {
+    const header = [
+      'id',
+      'numero',
+      'cliente',
+      'fecha',
+      'estado',
+      'total',
+      'observaciones',
+    ]
+
+    const rows = orders.map(order =>
+      header
+        .map(key => {
+          const value =
+            key === 'fecha'
+              ? order.fecha || ''
+              : order[key] ?? ''
+
+          return `"${String(value)
+            .replaceAll('"', '""')}"`
+        })
+        .join(',')
+    )
+
+    const csv = [
+      header.join(','),
+      ...rows,
+    ].join('\n')
+
+    const blob = new Blob(
+      [csv],
+      {
+        type:
+          'text/csv;charset=utf-8;',
+      }
+    )
+
+    const url =
+      URL.createObjectURL(blob)
+
+    const a =
+      document.createElement('a')
+
+    a.href = url
+
+    a.download =
+      `pedidos-ventas-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`
+
+    a.click()
+
+    URL.revokeObjectURL(url)
+  }
+
+  async function importCsv(file) {
+    if (!file) return
+
+    setImporting(true)
+    setError('')
+
+    try {
+      const text =
+        await file.text()
+
+      const lines =
+        text
+          .split(/\r?\n/)
+          .filter(Boolean)
+
+      if (lines.length < 2) {
+        throw new Error(
+          'El CSV debe tener encabezado y al menos un registro.'
+        )
+      }
+
+      const headers =
+        lines[0]
+          .split(',')
+          .map(header =>
+            header
+              .trim()
+              .replace(
+                /^"|"$/g,
+                ''
+              )
+              .toLowerCase()
+          )
+
+      const indexOf =
+        name =>
+          headers.indexOf(name)
+
+      if (
+        indexOf('cliente') === -1 ||
+        indexOf('total') === -1
+      ) {
+        throw new Error(
+          'El CSV necesita las columnas: cliente,total.'
+        )
+      }
+
+      for (
+        const line of lines.slice(1)
+      ) {
+        const columns =
+          line
+            .split(',')
+            .map(value =>
+              value
+                .trim()
+                .replace(
+                  /^"|"$/g,
+                  ''
+                )
+                .replaceAll(
+                  '""',
+                  '"'
+                )
+            )
+
+        const cliente =
+          columns[indexOf('cliente')]
+
+        const total =
+          Number(
+            columns[indexOf('total')]
+          )
+
+        if (
+          !cliente ||
+          !Number.isFinite(total)
+        ) {
+          continue
+        }
+
+        await ventasService.createOrder({
+          cliente,
+          total,
+
+          fecha:
+            indexOf('fecha') >= 0 &&
+            columns[indexOf('fecha')]
+              ? columns[indexOf('fecha')]
+              : undefined,
+
+          observaciones:
+            indexOf('observaciones') >= 0
+              ? columns[
+                  indexOf(
+                    'observaciones'
+                  )
+                ] || null
+              : null,
+        })
+      }
+
+      setShowImport(false)
+
+      await loadOrders(true)
+    } catch (e) {
+      setError(
+        e?.message ||
+        'No se pudo importar el archivo.'
+      )
+    } finally {
+      setImporting(false)
+
+      if (importRef.current) {
+        importRef.current.value = ''
+      }
     }
   }
 
   return (
     <div className="ventas-page">
-      <header className="ventas-header">
-        <div>
-          <span className="badge ventas-badge">Ventas</span>
-          <h1>Panel de ventas</h1>
+
+      <header className="ventas-topbar">
+
+        <div className="ventas-heading">
+
+          <div className="ventas-app-mark">
+            ◈
+          </div>
+
+          <div>
+            <span>Ventas</span>
+
+            <h1>
+              Pedidos de ventas
+
+              <button
+                type="button"
+                className="gear-btn"
+                title="Configuración"
+              >
+                ⚙
+              </button>
+            </h1>
+          </div>
+
         </div>
 
-        <button className="primary-button" onClick={() => setShowCreateModal(true)}>
-          + Nuevo pedido
-        </button>
+        <div className="global-search">
+          <SearchIcon />
+
+          <input
+            placeholder="Buscar..."
+            value={search}
+            onChange={e =>
+              setSearch(e.target.value)
+            }
+          />
+        </div>
+
+        <div className="top-actions">
+
+          <button
+            type="button"
+            onClick={() => {
+              setSaveError('')
+              setShowCreate(true)
+            }}
+            title="Nuevo pedido"
+          >
+            +
+          </button>
+
+          <button
+            type="button"
+            title="Notificaciones"
+          >
+            ♧
+          </button>
+
+          <button
+            type="button"
+            title="Opciones"
+          >
+            ▣
+          </button>
+
+          <span className="user-avatar">
+            E
+          </span>
+
+          <button
+            type="button"
+            title="Cerrar"
+          >
+            ⌄
+          </button>
+
+        </div>
+
       </header>
 
-      {loadError ? (
-        <div className="alert alert-error">{loadError}</div>
-      ) : null}
+      {error && (
+        <div className="ventas-alert error">
 
-      {createSuccess ? (
-        <div className="alert alert-success">{createSuccess}</div>
-      ) : null}
+          <span>{error}</span>
 
-      <section className="summary-grid">
-        <article className="summary-card accent-blue">
-          <span>Total pedidos</span>
-          <strong>{summary.totalOrders}</strong>
-          <small>Activos en el ciclo</small>
-        </article>
+          <button
+            type="button"
+            onClick={() =>
+              setError('')
+            }
+          >
+            ×
+          </button>
 
-        <article className="summary-card accent-green">
-          <span>Ingresos</span>
-          <strong>$ {summary.totalRevenue.toLocaleString('es-ES', { maximumFractionDigits: 2 })}</strong>
-          <small>Base de ventas</small>
-        </article>
+        </div>
+      )}
 
-        <article className="summary-card accent-gold">
-          <span>Pendientes</span>
-          <strong>{summary.pendings}</strong>
-          <small>Esperando confirmación</small>
-        </article>
+      <div className="ventas-commandbar">
 
-        <article className="summary-card accent-purple">
-          <span>Entregados</span>
-          <strong>{summary.completed}</strong>
-          <small>Finalizados</small>
-        </article>
-      </section>
+        <div className="command-left">
 
-      <div className="ventas-content">
-        <section className="panel panel-table">
-          <div className="panel-header">
-            <div>
-              <h2>Pedidos</h2>
-              <p>Gestión del pipeline de ventas</p>
-            </div>
+          <button
+            className="btn primary"
+            type="button"
+            onClick={() => {
+              setSaveError('')
+              setShowCreate(true)
+            }}
+          >
+            Nuevo
+          </button>
 
-            <div className="filters-row">
-              <input
-                type="search"
-                value={searchTerm}
-                placeholder="Buscar cliente o pedido"
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
+          <button
+            className="btn"
+            type="button"
+            onClick={() =>
+              setShowImport(true)
+            }
+          >
+            Importar
+          </button>
 
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                {ORDER_STATUS.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <button
+            className="btn icon-only"
+            type="button"
+            title="Exportar CSV"
+            onClick={exportCsv}
+          >
+            ⇩
+          </button>
 
-          {loading ? (
-            <div className="state-card">Cargando pedidos...</div>
-          ) : filteredOrders.length === 0 ? (
-            <div className="state-card empty-state">
-              <strong>No hay pedidos para mostrar.</strong>
-              <span>Usa “Nuevo pedido” para crear el primero.</span>
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className={selectedOrder?.id === order.id ? 'selected-row' : ''}
-                      onClick={() => setSelectedOrderId(order.id)}
-                    >
-                      <td>#{order.id}</td>
-                      <td>{order.customerName}</td>
-                      <td>{new Date(order.createdAt).toLocaleDateString('es-ES')}</td>
-                      <td>
-                        <span className={`status-pill status-${order.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td>$ {Number(order.total || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        </div>
 
-        <aside className="panel detail-panel">
-          <div className="panel-header compact">
-            <div>
-              <h2>Detalle</h2>
-              <p>Vista del pedido seleccionado</p>
-            </div>
-          </div>
+        <div className="command-right">
 
-          {selectedOrder ? (
-            <>
-              <div className="detail-topbar">
-                <span className="muted-label">Pedido</span>
-                <strong>#{selectedOrder.id}</strong>
-              </div>
+          <label className="search-control">
 
-              <div className="detail-block">
-                <h3>{selectedOrder.customerName}</h3>
-                <p>{selectedOrder.customerEmail || 'Sin correo registrado'}</p>
-              </div>
+            <SearchIcon />
 
-              <div className="detail-grid">
-                <div>
-                  <span>Estado</span>
-                  <strong>{selectedOrder.status}</strong>
-                </div>
-                <div>
-                  <span>Fecha</span>
-                  <strong>{new Date(selectedOrder.createdAt).toLocaleDateString('es-ES')}</strong>
-                </div>
-                <div>
-                  <span>Total</span>
-                  <strong>$ {Number(selectedOrder.total || 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}</strong>
-                </div>
-                <div>
-                  <span>Artículos</span>
-                  <strong>{selectedOrder.items.length || 0}</strong>
-                </div>
-              </div>
+            <input
+              value={search}
+              onChange={e =>
+                setSearch(
+                  e.target.value
+                )
+              }
+              placeholder="Buscar pedidos..."
+            />
 
-              <div className="detail-notes">
-                <h4>Notas</h4>
-                <p>{selectedOrder.notes || 'Sin observaciones para este pedido.'}</p>
-              </div>
-            </>
-          ) : (
-            <div className="state-card">Selecciona un pedido para ver sus detalles.</div>
-          )}
+          </label>
 
-          <div className="status-panel">
-            <h3>Estado de pedidos</h3>
-            <div className="status-list">
-              {statusBreakdown.map((item) => (
-                <div key={item.status} className="status-item">
-                  <div className="status-head">
-                    <span>{item.status}</span>
-                    <strong>{item.count}</strong>
-                  </div>
-                  <div className="progress-bar">
-                    <span style={{ width: `${orders.length ? (item.count / orders.length) * 100 : 0}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
+          <select
+            className="btn select-btn"
+            value={status}
+            onChange={e =>
+              setStatus(
+                e.target.value
+              )
+            }
+          >
+            {STATUS.map(item => (
+              <option
+                key={item}
+                value={item}
+              >
+                {item}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="btn select-btn"
+            value={groupBy}
+            onChange={e =>
+              setGroupBy(
+                e.target.value
+              )
+            }
+          >
+            <option value="none">
+              Agrupar por
+            </option>
+
+            <option value="status">
+              Estado
+            </option>
+
+            <option value="client">
+              Cliente
+            </option>
+          </select>
+
+          <button
+            className={`btn ${
+              favoritesOnly
+                ? 'selected'
+                : ''
+            }`}
+            type="button"
+            onClick={() =>
+              setFavoritesOnly(
+                value => !value
+              )
+            }
+          >
+            ☆ Favoritos
+          </button>
+
+        </div>
+
       </div>
 
-      <section className="secondary-grid">
-        <article className="panel mini-panel">
-          <div className="panel-header compact">
-            <div>
-              <h2>Cotizaciones</h2>
-              <p>Preparado para un endpoint futuro</p>
-            </div>
+      <section className="kpi-grid">
+
+        <article className="kpi">
+
+          <div className="kpi-icon purple">
+            $
           </div>
 
-          <ul className="mini-list">
-            {quotePreview.map((quote) => (
-              <li key={quote.id}>
-                <div>
-                  <strong>{quote.id}</strong>
-                  <span>{quote.customer}</span>
-                </div>
-                <div>
-                  <b>$ {quote.total.toLocaleString('es-ES')}</b>
-                  <em>{quote.status}</em>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </article>
+          <div>
+            <small>
+              Ventas este mes
+            </small>
 
-        <article className="panel mini-panel">
-          <div className="panel-header compact">
-            <div>
-              <h2>Facturas</h2>
-              <p>Preparado para un endpoint futuro</p>
-            </div>
+            <strong>
+              {money(
+                stats.monthRevenue
+              )}
+            </strong>
+
+            <span>
+              Pedidos del mes actual
+            </span>
           </div>
 
-          <ul className="mini-list">
-            {invoicePreview.map((invoice) => (
-              <li key={invoice.id}>
-                <div>
-                  <strong>{invoice.id}</strong>
-                  <span>{invoice.customer}</span>
-                </div>
-                <div>
-                  <b>$ {invoice.total.toLocaleString('es-ES')}</b>
-                  <em>{invoice.status}</em>
-                </div>
-              </li>
-            ))}
-          </ul>
         </article>
+
+        <article className="kpi">
+
+          <div className="kpi-icon green">
+            ▣
+          </div>
+
+          <div>
+            <small>
+              Pedidos
+            </small>
+
+            <strong>
+              {stats.total}
+            </strong>
+
+            <span>
+              {stats.pending} pendientes
+            </span>
+          </div>
+
+        </article>
+
+        <article className="kpi">
+
+          <div className="kpi-icon orange">
+            ◈
+          </div>
+
+          <div>
+            <small>
+              Ventas acumuladas
+            </small>
+
+            <strong>
+              {money(
+                stats.revenue
+              )}
+            </strong>
+
+            <span>
+              Basado en pedidos registrados
+            </span>
+          </div>
+
+        </article>
+
+        <article className="kpi">
+
+          <div className="kpi-icon blue">
+            ♙
+          </div>
+
+          <div>
+            <small>
+              Clientes con pedidos
+            </small>
+
+            <strong>
+              {stats.clients}
+            </strong>
+
+            <span>
+              Clientes distintos en ventas
+            </span>
+          </div>
+
+        </article>
+
       </section>
 
-      {showCreateModal ? (
-        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-header compact">
-              <div>
-                <h2>Crear pedido</h2>
-                <p>Se envía a /api/sales/orders</p>
-              </div>
+      <div className="ventas-main-grid">
+
+        <section className="orders-panel">
+
+          <nav className="status-tabs">
+
+            {STATUS.map(item => (
+
+              <button
+                key={item}
+                type="button"
+                className={
+                  status === item
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  setStatus(item)
+                }
+              >
+                {item}
+
+                <b>
+                  {item === 'Todos'
+                    ? orders.length
+                    : orders.filter(
+                        order =>
+                          order.estado ===
+                          item
+                      ).length}
+                </b>
+
+              </button>
+
+            ))}
+
+          </nav>
+
+          {loading ? (
+
+            <div className="state-box">
+              Cargando pedidos desde la base de datos...
             </div>
 
-            <form onSubmit={handleCreateOrder} className="order-form">
-              <div className="field-grid">
-                <label>
-                  <span>Cliente</span>
-                  <input
-                    name="customerName"
-                    value={formState.customerName}
-                    onChange={handleInputChange}
-                    placeholder="Nombre del cliente"
-                  />
-                </label>
+          ) : filtered.length === 0 ? (
 
-                <label>
-                  <span>Email</span>
-                  <input
-                    name="customerEmail"
-                    type="email"
-                    value={formState.customerEmail}
-                    onChange={handleInputChange}
-                    placeholder="cliente@correo.com"
-                  />
-                </label>
+            <div className="state-box">
 
-                <label>
-                  <span>Estado</span>
-                  <select name="status" value={formState.status} onChange={handleInputChange}>
-                    {ORDER_STATUS.filter((status) => status !== 'Todos').map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <strong>
+                No hay pedidos para mostrar.
+              </strong>
 
-                <label>
-                  <span>Total</span>
-                  <input
-                    name="total"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formState.total}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                  />
-                </label>
-              </div>
+              <span>
+                Ajusta los filtros o crea un pedido.
+              </span>
 
-              <label>
-                <span>Notas</span>
-                <textarea
-                  name="notes"
-                  value={formState.notes}
-                  onChange={handleInputChange}
-                  rows="4"
-                  placeholder="Información adicional del pedido"
+              <button
+                className="btn primary"
+                type="button"
+                onClick={() => {
+                  setSaveError('')
+                  setShowCreate(true)
+                }}
+              >
+                Nuevo pedido
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div className="table-wrap">
+
+              {grouped.map(group => (
+
+                <div
+                  key={group.key || 'all'}
+                  className="order-group"
+                >
+
+                  {group.label && (
+                    <div className="order-group-title">
+                      {group.label}
+                      <span>
+                        {group.rows.length}
+                      </span>
+                    </div>
+                  )}
+
+                  <table className="ventas-table">
+
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+
+                      {group.rows.map(order => (
+
+                        <tr
+                          key={order.id}
+                          className={
+                            selectedId === order.id
+                              ? 'selected-row'
+                              : ''
+                          }
+                          onClick={() =>
+                            setSelectedId(
+                              order.id
+                            )
+                          }
+                        >
+
+                          <td>
+
+                            <button
+                              type="button"
+                              className={`favorite-btn ${
+                                favorites.includes(
+                                  order.id
+                                )
+                                  ? 'favorite-active'
+                                  : ''
+                              }`}
+                              onClick={event => {
+                                event.stopPropagation()
+                                toggleFavorite(
+                                  order.id
+                                )
+                              }}
+                              title="Favorito"
+                            >
+                              {favorites.includes(
+                                order.id
+                              )
+                                ? '★'
+                                : '☆'}
+                            </button>
+
+                          </td>
+
+                          <td>
+                            <strong>
+                              {order.numero}
+                            </strong>
+                          </td>
+
+                          <td>
+                            {order.cliente}
+                          </td>
+
+                          <td>
+                            {formatDate(
+                              order.fecha
+                            )}
+                          </td>
+
+                          <td>
+
+                            <StatusBadge
+                              status={
+                                order.estado
+                              }
+                            />
+
+                          </td>
+
+                          <td>
+                            <strong>
+                              {money(
+                                order.total
+                              )}
+                            </strong>
+                          </td>
+
+                          <td>
+
+                            <select
+                              className="status-select"
+                              value={
+                                order.estado
+                              }
+                              onClick={event =>
+                                event.stopPropagation()
+                              }
+                              onChange={event =>
+                                changeStatus(
+                                  order.id,
+                                  event.target.value
+                                )
+                              }
+                            >
+                              {STATUS
+                                .filter(
+                                  value =>
+                                    value !==
+                                    'Todos'
+                                )
+                                .map(value => (
+                                  <option
+                                    key={value}
+                                    value={value}
+                                  >
+                                    {value}
+                                  </option>
+                                ))}
+                            </select>
+
+                          </td>
+
+                        </tr>
+
+                      ))}
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </section>
+
+        <aside className="order-detail-panel">
+
+          {selected ? (
+
+            <>
+
+              <div className="detail-header">
+
+                <div>
+                  <small>
+                    Pedido
+                  </small>
+
+                  <h2>
+                    {selected.numero}
+                  </h2>
+                </div>
+
+                <StatusBadge
+                  status={
+                    selected.estado
+                  }
                 />
-              </label>
 
-              {createError ? <div className="alert alert-error">{createError}</div> : null}
-
-              <div className="form-actions">
-                <button type="button" className="secondary-button" onClick={() => setShowCreateModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="primary-button" disabled={creating}>
-                  {creating ? 'Creando...' : 'Crear pedido'}
-                </button>
               </div>
-            </form>
-          </div>
+
+              <div className="detail-content">
+
+                <div className="detail-field">
+                  <span>Cliente</span>
+                  <strong>
+                    {selected.cliente}
+                  </strong>
+                </div>
+
+                <div className="detail-field">
+                  <span>Fecha</span>
+                  <strong>
+                    {formatDate(
+                      selected.fecha
+                    )}
+                  </strong>
+                </div>
+
+                <div className="detail-field">
+                  <span>Fecha de creación</span>
+                  <strong>
+                    {formatDate(
+                      selected.fechaCreacion
+                    )}
+                  </strong>
+                </div>
+
+                <div className="detail-total">
+                  <span>Total</span>
+                  <strong>
+                    {money(
+                      selected.total
+                    )}
+                  </strong>
+                </div>
+
+                <div className="detail-field">
+                  <span>Observaciones</span>
+
+                  <p>
+                    {selected.observaciones ||
+                      'Sin observaciones'}
+                  </p>
+                </div>
+
+                <div className="detail-actions">
+
+                  <label>
+                    Cambiar estado
+                  </label>
+
+                  <select
+                    className="status-select large"
+                    value={
+                      selected.estado
+                    }
+                    onChange={event =>
+                      changeStatus(
+                        selected.id,
+                        event.target.value
+                      )
+                    }
+                  >
+                    {STATUS
+                      .filter(
+                        value =>
+                          value !==
+                          'Todos'
+                      )
+                      .map(value => (
+                        <option
+                          key={value}
+                          value={value}
+                        >
+                          {value}
+                        </option>
+                      ))}
+                  </select>
+
+                </div>
+
+              </div>
+
+            </>
+
+          ) : (
+
+            <div className="state-box">
+              Selecciona un pedido para ver sus detalles.
+            </div>
+
+          )}
+
+        </aside>
+
+      </div>
+
+      {showCreate && (
+
+        <div
+          className="ventas-modal-overlay"
+          onMouseDown={event => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setShowCreate(false)
+            }
+          }}
+        >
+
+          <form
+            className="ventas-modal"
+            onSubmit={createOrder}
+          >
+
+            <div className="modal-header">
+
+              <div>
+                <small>
+                  Ventas
+                </small>
+
+                <h2>
+                  Nuevo pedido
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowCreate(false)
+                }
+              >
+                ×
+              </button>
+
+            </div>
+
+            {saveError && (
+              <div className="ventas-alert error">
+                {saveError}
+              </div>
+            )}
+
+            <label>
+              Cliente
+
+              <input
+                value={form.cliente}
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    cliente:
+                      event.target.value,
+                  }))
+                }
+                placeholder="Nombre del cliente"
+                autoFocus
+              />
+            </label>
+
+            <label>
+              Total
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.total}
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    total:
+                      event.target.value,
+                  }))
+                }
+                placeholder="0.00"
+              />
+            </label>
+
+            <label>
+              Fecha
+
+              <input
+                type="date"
+                value={form.fecha}
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    fecha:
+                      event.target.value,
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              Observaciones
+
+              <textarea
+                rows="4"
+                value={
+                  form.observaciones
+                }
+                onChange={event =>
+                  setForm(current => ({
+                    ...current,
+                    observaciones:
+                      event.target.value,
+                  }))
+                }
+                placeholder="Observaciones del pedido"
+              />
+            </label>
+
+            <div className="modal-actions">
+
+              <button
+                type="button"
+                className="btn"
+                onClick={() =>
+                  setShowCreate(false)
+                }
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={saving}
+              >
+                {saving
+                  ? 'Guardando...'
+                  : 'Crear pedido'}
+              </button>
+
+            </div>
+
+          </form>
+
         </div>
-      ) : null}
+
+      )}
+
+      {showImport && (
+
+        <div
+          className="ventas-modal-overlay"
+          onMouseDown={event => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              setShowImport(false)
+            }
+          }}
+        >
+
+          <div className="ventas-modal">
+
+            <div className="modal-header">
+
+              <div>
+                <small>
+                  Ventas
+                </small>
+
+                <h2>
+                  Importar pedidos
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowImport(false)
+                }
+              >
+                ×
+              </button>
+
+            </div>
+
+            <p>
+              Selecciona un archivo CSV con
+              las columnas <strong>cliente</strong>
+              y <strong>total</strong>.
+            </p>
+
+            <input
+              ref={importRef}
+              type="file"
+              accept=".csv,text/csv"
+              disabled={importing}
+              onChange={event =>
+                importCsv(
+                  event.target.files?.[0]
+                )
+              }
+            />
+
+            {importing && (
+              <div className="state-box">
+                Importando pedidos...
+              </div>
+            )}
+
+            <div className="modal-actions">
+
+              <button
+                type="button"
+                className="btn"
+                disabled={importing}
+                onClick={() =>
+                  setShowImport(false)
+                }
+              >
+                Cerrar
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   )
 }
+
+export default VentasHome
