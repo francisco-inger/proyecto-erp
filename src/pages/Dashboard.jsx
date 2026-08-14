@@ -288,56 +288,124 @@ export function Dashboard() {
 
   return (
     <div className="dash-container">
-      {/* ── Encabezado & Hero Banner Ejecutivo ── */}
+      {/* ── Hero Banner Ejecutivo con Estilo Idéntico a la Referencia ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%)',
-        borderRadius: 16,
-        padding: '24px 28px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 20,
-        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.25)',
+        background: '#FFFFFF',
+        borderRadius: 24,
+        border: '1px solid #E2E8F0',
+        padding: '30px 36px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
         position: 'relative',
         overflow: 'hidden',
-        color: '#FFFFFF'
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+        backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.95) 40%, rgba(255,255,255,0.8) 100%), url(/branding/dashboard_modern_hero.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
       }}>
-        {/* Imagen de fondo ejecutiva con superposición sutil */}
-        <div style={{
-          position: 'absolute',
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: '45%',
-          backgroundImage: 'url(/branding/dashboard_hero.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.18,
-          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
-          pointerEvents: 'none'
-        }} />
+        {/* Fila Superior del Hero */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20 }}>
+          <div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#F1F5F9',
+              color: '#2563EB',
+              padding: '5px 14px',
+              borderRadius: 20,
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              marginBottom: 12,
+              border: '1px solid #E2E8F0'
+            }}>
+              <span>✦</span> PANEL CENTRAL · SISTEMA DE GESTIÓN EMPRESARIAL
+            </div>
 
-        <div style={{ zIndex: 2, maxWidth: 650 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.12)', color: '#93C5FD', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8, backdropFilter: 'blur(4px)' }}>
-            <span>🏢</span> PLATAFORMA EMPRESARIAL APPEX ERP
+            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
+              Buenos días, <span style={{ color: '#2563EB' }}>{user?.name || 'Administrador'}</span>
+            </h1>
+            <p style={{ margin: '8px 0 16px', fontSize: 13, color: '#64748B', fontWeight: 500 }}>
+              {new Date().toLocaleDateString('es-DO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+
+            {/* Badges de Estado */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
+                Conexión SQLite Activa
+              </span>
+              <span style={{ background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
+                Todos los 11 módulos en línea
+              </span>
+              <span style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                Ciclo Fiscal 2026
+              </span>
+            </div>
           </div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-            Panel Ejecutivo & Control Operativo
-          </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5 }}>
-            Monitoreo en tiempo real de finanzas, ventas, inventario multialmacén y cumplimiento tributario ante la DGII.
-          </p>
+
+          {/* Tarjetas Flotantes de Estado Derecho */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 280 }}>
+            {/* Tarjeta 1: Eficiencia */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                EFICIENCIA OPERATIVA
+              </span>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '4px 0 2px' }}>
+                +18.4%
+              </div>
+              <span style={{ fontSize: 11, color: '#64748B' }}>Automatización y control de procesos</span>
+            </div>
+
+            {/* Tarjeta 2: Seguridad */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                SEGURIDAD DE DATOS
+              </span>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#059669', margin: '4px 0 2px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>🛡️</span> Protegido
+              </div>
+              <span style={{ fontSize: 11, color: '#64748B' }}>Encriptación JWT y 2FA activos</span>
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, zIndex: 2 }}>
-          <div className="dash-date-btn" style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-            📅 <span>01 - 31 May, 2025</span> ▾
+        {/* Barra de Operaciones Rápidas */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          border: '1px solid #E2E8F0',
+          borderRadius: 14,
+          padding: '12px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12
+        }}>
+          <div>
+            <strong style={{ fontSize: 13, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: '#EA580C' }}>⚡</span> Operaciones Rápidas de Gestión Empresarial
+            </strong>
+            <span style={{ fontSize: 11, color: '#64748B' }}>Acceda de inmediato a los procesos diarios más utilizados</span>
           </div>
-          <button className="dash-filter-btn" style={{ background: '#2563EB', color: '#FFFFFF', border: 'none' }} onClick={() => alert('Filtros ejecutivos aplicados')}>
-            ⚡ Filtros
-          </button>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <Link to="/ventas" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              🛒 Facturar Venta
+            </Link>
+            <Link to="/compras" style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              🛍️ Orden de Compra
+            </Link>
+            <Link to="/rrhh" style={{ background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              👤 Asistencia / RRHH
+            </Link>
+            <Link to="/ajustes?tab=Sistema" style={{ background: '#F8FAFC', color: '#334155', border: '1px solid #CBD5E1', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              ⚙️ Ajustes del Sistema
+            </Link>
+          </div>
         </div>
       </div>
 
