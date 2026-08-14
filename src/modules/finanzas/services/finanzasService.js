@@ -410,13 +410,109 @@ export const finanzasService = {
       }
     } catch (_) {}
 
-    // Sincronización con almacenamiento local
+    // 2. Sincronización cruzada con módulos del ERP (Ventas, Compras y Nómina RRHH)
+    try {
+      // Sincronizar Ingresos generados desde Ventas
+      const rawVentas = localStorage.getItem('ventas_orders_v1')
+      if (rawVentas) {
+        const ventas = JSON.parse(rawVentas)
+        ventas.forEach((v) => {
+          const yaExiste = comprobantes.some((c) => c.descripcion && c.descripcion.includes(v.numero))
+          if (!yaExiste && (v.estado === 'Confirmado' || v.estado === 'Entregado' || v.estado === 'Enviado')) {
+            const parts = (v.fecha || '').split('-')
+            const fechaFormateada = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : v.fecha || '12/08/2025'
+            comprobantes.push({
+              id: `vta-${v.id || v.numero}`,
+              numero: `FV-000${200 + parseInt(v.id || '1', 10)}`,
+              tipo: 'Ingreso',
+              fecha: fechaFormateada,
+              fechaRaw: v.fecha || '2025-08-12',
+              descripcion: `Cobro pedido ${v.numero} - ${v.cliente}`,
+              cuenta: 'Banco Popular 960-123456',
+              cuentaId: 'cta-1',
+              monto: Number(v.total) || 0,
+              estado: 'Aprobado',
+              creadoPor: 'ventas.auto',
+              categoria: 'Ventas de Software',
+              clienteProveedor: v.cliente,
+            })
+          }
+        })
+      }
+
+      // Sincronizar Gastos generados desde Órdenes de Compra
+      const rawCompras = localStorage.getItem('compras_orders_v1')
+      if (rawCompras) {
+        const compras = JSON.parse(rawCompras)
+        compras.forEach((oc) => {
+          const yaExiste = comprobantes.some((c) => c.descripcion && c.descripcion.includes(oc.id))
+          if (!yaExiste && (oc.estado === 'Recibida' || oc.estado === 'En Tránsito')) {
+            comprobantes.push({
+              id: `oc-${oc.id}`,
+              numero: `EG-000${300 + Math.abs(parseInt(oc.id.replace(/\D/g, '') || '1', 10))}`,
+              tipo: 'Gasto',
+              fecha: oc.fecha || '08/08/2025',
+              fechaRaw: '2025-08-08',
+              descripcion: `Pago Orden de Compra ${oc.id} - ${oc.proveedor}`,
+              cuenta: 'Banco Popular 960-123456',
+              cuentaId: 'cta-1',
+              monto: Number(oc.total) || 0,
+              estado: 'Aprobado',
+              creadoPor: 'compras.auto',
+              categoria: 'Suministros',
+              clienteProveedor: oc.proveedor,
+            })
+          }
+        })
+      }
+
+      // Sincronizar Nómina Calculada desde RRHH
+      const rawRRHH = localStorage.getItem('rrhh_data_v1')
+      if (rawRRHH) {
+        const rrhhData = JSON.parse(rawRRHH)
+        if (rrhhData && Array.isArray(rrhhData.nomina)) {
+          const totalNominaCalculada = rrhhData.nomina
+            .filter((n) => n.estado === 'Calculado')
+            .reduce((acc, n) => acc + (Number(n.netoPagar) || 0), 0)
+
+          if (totalNominaCalculada > 0) {
+            const yaExisteNomina = comprobantes.some((c) => c.descripcion && c.descripcion.includes('Pago de Nómina General'))
+            if (!yaExisteNomina) {
+              comprobantes.push({
+                id: 'rrhh-nom-1',
+                numero: 'EG-000099',
+                tipo: 'Gasto',
+                fecha: '15/08/2025',
+                fechaRaw: '2025-08-15',
+                descripcion: 'Pago de Nómina General RRHH quincenal',
+                cuenta: 'Banco Popular 960-123456',
+                cuentaId: 'cta-1',
+                monto: totalNominaCalculada,
+                estado: 'Aprobado',
+                creadoPor: 'rrhh.sistema',
+                categoria: 'Sueldos y Salarios',
+                clienteProveedor: 'Nómina de Empleados',
+              })
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error sincronizando datos cruzados entre módulos', e)
+    }
+
+    // Sincronización con almacenamiento local de Finanzas
     try {
       const local = localStorage.getItem(STORAGE_KEY)
       if (local) {
         const parsed = JSON.parse(local)
         if (parsed.cuentas) cuentas = parsed.cuentas
-        if (parsed.comprobantes) comprobantes = parsed.comprobantes
+        if (parsed.comprobantes) {
+          // Fusionar comprobantes locales con los generados por sincronización cruzada
+          const idsExistentes = new Set(parsed.comprobantes.map(c => c.id))
+          const nuevosCruzados = comprobantes.filter(c => !idsExistentes.has(c.id))
+          comprobantes = [...parsed.comprobantes, ...nuevosCruzados]
+        }
         if (parsed.presupuestos) presupuestos = parsed.presupuestos
         if (parsed.conciliaciones) conciliaciones = parsed.conciliaciones
       }
