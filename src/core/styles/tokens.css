@@ -20,11 +20,11 @@
   --color-ink-soft: #475569;
   --color-ink-faint: #94A3B8;
 
-  /* ---- Acento de marca (Azul Indigo Premium #2B389F) ---- */
-  --color-accent: #2B389F;
-  --color-accent-hover: #1E297C;
+  /* ---- Acento de marca (Azul Real Corporativo APPEX #2563EB) ---- */
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
   --color-accent-ink: #FFFFFF;
-  --color-accent-light: #EEF2FF;
+  --color-accent-light: #EFF6FF;
 
   /* ---- Estados Semánticos (Iconos & Fondos Tintados) ---- */
   --color-success: #10B981;
@@ -38,24 +38,24 @@
 
   /* ---- Paleta de Acciones Rápidas (Pasteles Vibrantes) ---- */
   --action-blue-bg: #EFF6FF;
-  --action-blue-text: #1D4ED8;
+  --action-blue-text: #2563EB;
   --action-green-bg: #ECFDF5;
-  --action-green-text: #047857;
+  --action-green-text: #059669;
   --action-orange-bg: #FFF7ED;
-  --action-orange-text: #C2410C;
+  --action-orange-text: #EA580C;
   --action-pink-bg: #FDF2F8;
-  --action-pink-text: #BE185D;
+  --action-pink-text: #DB2777;
   --action-purple-bg: #F5F3FF;
-  --action-purple-text: #6D28D9;
+  --action-purple-text: #7C3AED;
   --action-amber-bg: #FFFBEB;
-  --action-amber-text: #B45309;
+  --action-amber-text: #D97706;
 
   /* ---- Color de identidad por módulo ---- */
-  --color-ventas: #2B389F;
-  --color-crm: #0F766E;
-  --color-rrhh: #B45309;
-  --color-chatbot: #6D28D9;
-  --color-plugins: #334155;
+  --color-ventas: #2563EB;
+  --color-crm: #0D9488;
+  --color-rrhh: #D97706;
+  --color-chatbot: #7C3AED;
+  --color-plugins: #475569;
 
   /* ---- Tipografía ---- */
   --font-ui: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

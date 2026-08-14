@@ -198,7 +198,7 @@ button, input, select {
   background: var(--color-accent);
   color: var(--color-white);
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(43, 56, 159, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
 }
 
 /* Enlace padre con submenú */
