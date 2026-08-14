@@ -17,10 +17,6 @@ export function Topbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
-  const [showScanner, setShowScanner] = useState(false)
-  const [scannedCode, setScannedCode] = useState('')
-  const [scannerResult, setScannerResult] = useState(null)
-  const [isScanning, setIsScanning] = useState(false)
   const [toast, setToast] = useState(null)
 
   const searchInputRef = useRef(null)
@@ -89,27 +85,109 @@ export function Topbar() {
     ? MODULES_SEARCH.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()) || m.cat.toLowerCase().includes(searchQuery.toLowerCase()))
     : []
 
-  // Simulación de escaneo de código de barras
+  // Estados del Escáner de Código de Barras
+  const [showScanner, setShowScanner] = useState(false)
+  const [scannedCode, setScannedCode] = useState('')
+  const [scannerResult, setScannerResult] = useState(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [cameraActive, setCameraActive] = useState(false)
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+
+  // Sonido de Beep al escanear
+  const playBeep = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = 1800
+      gain.gain.setValueAtTime(0.15, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start()
+      osc.stop(ctx.currentTime + 0.12)
+    } catch (_) {}
+  }
+
+  // Activar Cámara Web
+  const startCamera = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+        })
+        streamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play()
+        }
+        setCameraActive(true)
+      }
+    } catch (err) {
+      console.warn('Cámara no disponible o permiso denegado, usando modo simulador', err)
+      setCameraActive(false)
+    }
+  }
+
+  // Detener Cámara Web
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    setCameraActive(false)
+  }
+
+  const toggleCamera = () => {
+    if (cameraActive) {
+      stopCamera()
+    } else {
+      startCamera()
+    }
+  }
+
+  // Simulación y Lectura de Código de Barras conectado al Inventario Real
   const handleSimulateScan = (code) => {
     setIsScanning(true)
     setScannerResult(null)
     setTimeout(() => {
       setIsScanning(false)
-      const mockDb = {
-        'MED-001': { nombre: 'Paracetamol 500mg', stock: 450, precio: 'RD$ 100.00', ubicacion: 'Almacén Principal - Pasillo A-02' },
-        'MED-002': { nombre: 'Amoxicilina 500mg', stock: 280, precio: 'RD$ 100.00', ubicacion: 'Almacén Principal - Pasillo B-01' },
-        'CUI-001': { nombre: 'Alcohol 70%', stock: 120, precio: 'RD$ 100.00', ubicacion: 'Sucursal Norte - Pasillo C-04' },
-        'SUP-001': { nombre: 'Vitamina C 1000mg', stock: 95, precio: 'RD$ 100.00', ubicacion: 'Sucursal Este - Pasillo A-01' },
+      playBeep()
+
+      let item = null
+      try {
+        const rawInv = localStorage.getItem('appes_inventory_products_v1')
+        if (rawInv) {
+          const products = JSON.parse(rawInv)
+          item = products.find(p => p.codigo?.toLowerCase() === code.trim().toLowerCase())
+        }
+      } catch (_) {}
+
+      if (!item) {
+        const mockDb = {
+          'MED-001': { codigo: 'MED-001', nombre: 'Paracetamol 500mg', stock: 450, stockMin: 50, precio: 100, categoria: 'Medicamentos', ubicacion: 'Almacén Principal - Pasillo A-02' },
+          'MED-002': { codigo: 'MED-002', nombre: 'Amoxicilina 500mg', stock: 280, stockMin: 40, precio: 100, categoria: 'Medicamentos', ubicacion: 'Almacén Principal - Pasillo B-01' },
+          'CUI-001': { codigo: 'CUI-001', nombre: 'Alcohol 70%', stock: 120, stockMin: 30, precio: 100, categoria: 'Cuidado Personal', ubicacion: 'Sucursal Norte - Pasillo C-04' },
+          'SUP-001': { codigo: 'SUP-001', nombre: 'Vitamina C 1000mg', stock: 95, stockMin: 25, precio: 100, categoria: 'Suplementos', ubicacion: 'Sucursal Este - Pasillo A-01' },
+          'MED-003': { codigo: 'MED-003', nombre: 'Ibuprofeno 400mg', stock: 310, stockMin: 50, precio: 100, categoria: 'Medicamentos', ubicacion: 'Almacén Principal' },
+          'CUI-002': { codigo: 'CUI-002', nombre: 'Jarabe para la Tos', stock: 10, stockMin: 30, precio: 100, categoria: 'Cuidado Personal', ubicacion: 'Sucursal Norte' },
+        }
+        item = mockDb[code.trim().toUpperCase()]
       }
-      const item = mockDb[code] || {
-        nombre: `Producto SKU #${code}`,
-        stock: Math.floor(Math.random() * 200) + 15,
-        precio: `RD$ ${(Math.random() * 500 + 50).toFixed(2)}`,
-        ubicacion: 'Almacén Central - Rack General',
+
+      if (item) {
+        setScannerResult(item)
+        showToastMsg(`✅ Código leído: ${item.codigo} (${item.nombre})`)
+      } else {
+        setScannerResult({
+          nombre: `Código "${code}" no encontrado en inventario`,
+          notFound: true,
+        })
+        showToastMsg(`⚠️ Código no registrado: ${code}`)
       }
-      setScannerResult(item)
-      showToastMsg(`✅ Código escaneado: ${code}`)
-    }, 600)
+    }, 500)
   }
 
   return (
@@ -473,12 +551,15 @@ export function Topbar() {
       {/* ── Modal Escáner de Código de Barras / SKU ── */}
       {showScanner && (
         <div
-          onClick={() => setShowScanner(false)}
+          onClick={() => {
+            stopCamera()
+            setShowScanner(false)
+          }}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.5)',
-            backdropFilter: 'blur(4px)',
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -491,36 +572,45 @@ export function Topbar() {
             style={{
               background: '#FFFFFF',
               borderRadius: 16,
-              maxWidth: 480,
+              maxWidth: 520,
               width: '100%',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
               overflow: 'hidden',
+              border: '1px solid #E2E8F0',
             }}
           >
+            {/* Header del Escáner */}
             <div style={{
               padding: '18px 22px',
               borderBottom: '1px solid #E2E8F0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              background: '#F8FAFC',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>📷</span>
-                <strong style={{ fontSize: 16, color: '#0F172A' }}>Escáner de Código de Barras / SKU</strong>
+                <div>
+                  <strong style={{ fontSize: 16, color: '#0F172A', display: 'block' }}>Escáner de Código de Barras / SKU</strong>
+                  <span style={{ fontSize: 11, color: '#64748B' }}>Lector óptico con cámara web y búsqueda instantánea</span>
+                </div>
               </div>
               <button
-                onClick={() => setShowScanner(false)}
-                style={{ background: 'none', border: 'none', fontSize: 18, color: '#94A3B8', cursor: 'pointer' }}
+                onClick={() => {
+                  stopCamera()
+                  setShowScanner(false)
+                }}
+                style={{ background: 'none', border: 'none', fontSize: 18, color: '#94A3B8', cursor: 'pointer', padding: 4 }}
               >
                 ✕
               </button>
             </div>
 
             <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Visor de Cámara Simulado */}
+              {/* Visor de Cámara Real / Simulado con Láser */}
               <div style={{
-                height: 180,
-                background: '#0F172A',
+                height: 220,
+                background: '#0B0F19',
                 borderRadius: 12,
                 display: 'flex',
                 flexDirection: 'column',
@@ -528,26 +618,103 @@ export function Topbar() {
                 justifyContent: 'center',
                 position: 'relative',
                 overflow: 'hidden',
+                border: '2px solid #1E293B',
               }}>
+                {/* Elemento de Video de la Cámara */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: cameraActive ? 'block' : 'none',
+                  }}
+                />
+
+                {/* Retícula y Línea Láser Animada */}
                 <div style={{
-                  width: '80%',
-                  height: 2,
-                  background: '#EF4444',
-                  boxShadow: '0 0 8px #EF4444',
-                  animation: 'scannerLaser 2s infinite linear',
-                }} />
-                <span style={{ color: '#94A3B8', fontSize: 12, marginTop: 12 }}>
-                  {isScanning ? '🔍 Leyendo código de barras...' : 'Apunta la cámara al código de barras o ingresa el SKU'}
-                </span>
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                }}>
+                  {/* Marco de enfoque óptico */}
+                  <div style={{
+                    width: 260,
+                    height: 120,
+                    border: '2px dashed rgba(255, 255, 255, 0.4)',
+                    borderRadius: 10,
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {/* Línea Láser Roja */}
+                    <div style={{
+                      width: '100%',
+                      height: 2,
+                      background: '#EF4444',
+                      boxShadow: '0 0 12px 2px #EF4444',
+                      animation: 'scannerLaser 2s infinite ease-in-out',
+                    }} />
+                  </div>
+
+                  <span style={{
+                    color: '#E2E8F0',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    marginTop: 14,
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    padding: '4px 12px',
+                    borderRadius: 20,
+                    backdropFilter: 'blur(4px)',
+                  }}>
+                    {isScanning ? '⚡ Procesando lectura óptica...' : cameraActive ? '🟢 Cámara activa — Apunta al código' : 'Apunta la cámara al código de barras o ingresa el SKU'}
+                  </span>
+                </div>
+
+                {/* Botón flotante para encender/apagar cámara */}
+                <button
+                  onClick={toggleCamera}
+                  style={{
+                    position: 'absolute',
+                    bottom: 10,
+                    right: 10,
+                    background: cameraActive ? '#EF4444' : '#2563EB',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    zIndex: 10,
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  {cameraActive ? '🔴 Apagar Cámara' : '📹 Encender Cámara'}
+                </button>
               </div>
 
-              {/* Botones de simulación rápida */}
+              {/* Botones de prueba rápidos */}
               <div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                  Códigos de prueba rápidos:
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>
+                    Códigos de prueba rápidos en inventario:
+                  </span>
+                  <span style={{ fontSize: 10, color: '#2563EB', fontWeight: 600 }}>1-clic para escanear</span>
+                </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {['MED-001', 'MED-002', 'CUI-001', 'SUP-001'].map(code => (
+                  {['MED-001', 'MED-002', 'CUI-001', 'SUP-001', 'MED-003', 'CUI-002'].map(code => (
                     <button
                       key={code}
                       onClick={() => {
@@ -555,14 +722,18 @@ export function Topbar() {
                         handleSimulateScan(code)
                       }}
                       style={{
-                        background: '#F1F5F9',
+                        background: '#F8FAFC',
                         border: '1px solid #CBD5E1',
                         borderRadius: 6,
-                        padding: '4px 10px',
+                        padding: '5px 10px',
                         fontSize: 11,
-                        fontWeight: 600,
+                        fontWeight: 700,
+                        color: '#1E293B',
                         cursor: 'pointer',
+                        transition: 'all 120ms ease',
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#2563EB'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#CBD5E1'; }}
                     >
                       {code}
                     </button>
@@ -570,75 +741,134 @@ export function Topbar() {
                 </div>
               </div>
 
-              {/* Input manual */}
+              {/* Input manual con teclado */}
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
-                  placeholder="Escribe código de barras o SKU..."
+                  placeholder="Escribe código de barras o SKU (Ej: MED-001)..."
                   value={scannedCode}
                   onChange={(e) => setScannedCode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSimulateScan(scannedCode)}
+                  onKeyDown={(e) => e.key === 'Enter' && scannedCode.trim() && handleSimulateScan(scannedCode)}
                   style={{
                     flex: 1,
                     border: '1px solid #CBD5E1',
                     borderRadius: 8,
-                    padding: '8px 12px',
+                    padding: '9px 12px',
                     fontSize: 13,
                     outline: 'none',
+                    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)',
                   }}
                 />
                 <button
                   onClick={() => handleSimulateScan(scannedCode)}
-                  disabled={!scannedCode.trim()}
+                  disabled={!scannedCode.trim() || isScanning}
                   style={{
                     background: '#2563EB',
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: 8,
-                    padding: '8px 16px',
+                    padding: '9px 18px',
                     fontSize: 13,
                     fontWeight: 700,
-                    cursor: scannedCode.trim() ? 'pointer' : 'not-allowed',
-                    opacity: scannedCode.trim() ? 1 : 0.6,
+                    cursor: scannedCode.trim() && !isScanning ? 'pointer' : 'not-allowed',
+                    opacity: scannedCode.trim() && !isScanning ? 1 : 0.6,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  Buscar
+                  {isScanning ? 'Leyendo...' : 'Buscar'}
                 </button>
               </div>
 
-              {/* Resultado del escaneo */}
+              {/* Resultado del escaneo en tiempo real */}
               {scannerResult && (
                 <div style={{
-                  background: '#ECFDF5',
-                  border: '1px solid #A7F3D0',
-                  borderRadius: 10,
-                  padding: 14,
+                  background: scannerResult.notFound ? '#FEF2F2' : '#F0FDF4',
+                  border: `1px solid ${scannerResult.notFound ? '#FECACA' : '#BBF7D0'}`,
+                  borderRadius: 12,
+                  padding: 16,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 4,
+                  gap: 8,
+                  animation: 'fnFadeIn 150ms ease-out',
                 }}>
-                  <strong style={{ fontSize: 13, color: '#065F46' }}>📦 {scannerResult.nombre}</strong>
-                  <span style={{ fontSize: 11, color: '#047857' }}>• Stock actual: <strong>{scannerResult.stock} unidades</strong></span>
-                  <span style={{ fontSize: 11, color: '#047857' }}>• Precio: <strong>{scannerResult.precio}</strong></span>
-                  <span style={{ fontSize: 11, color: '#047857' }}>• Ubicación: {scannerResult.ubicacion}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <strong style={{ fontSize: 14, color: scannerResult.notFound ? '#991B1B' : '#166534', display: 'block' }}>
+                        {scannerResult.notFound ? '❌ ' : '📦 '} {scannerResult.nombre}
+                      </strong>
+                      <span style={{ fontSize: 11, color: scannerResult.notFound ? '#B91C1C' : '#15803D', fontWeight: 600 }}>
+                        SKU: {scannerResult.codigo || scannedCode} · Categoría: {scannerResult.categoria || 'General'}
+                      </span>
+                    </div>
+                    {!scannerResult.notFound && (
+                      <span style={{
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: scannerResult.stock <= (scannerResult.stockMin || 20) ? '#FEF2F2' : '#DCFCE7',
+                        color: scannerResult.stock <= (scannerResult.stockMin || 20) ? '#DC2626' : '#16A34A',
+                      }}>
+                        {scannerResult.stock <= (scannerResult.stockMin || 20) ? '⚠️ Stock Bajo' : '✓ Disponible'}
+                      </span>
+                    )}
+                  </div>
+
+                  {!scannerResult.notFound && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, marginTop: 4 }}>
+                      <div style={{ background: '#FFFFFF', padding: '6px 10px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+                        <span style={{ color: '#64748B', fontSize: 11, display: 'block' }}>Stock en Bodega</span>
+                        <strong style={{ fontSize: 14, color: '#0F172A' }}>{scannerResult.stock} uds</strong>
+                      </div>
+                      <div style={{ background: '#FFFFFF', padding: '6px 10px', borderRadius: 6, border: '1px solid #E2E8F0' }}>
+                        <span style={{ color: '#64748B', fontSize: 11, display: 'block' }}>Precio de Venta</span>
+                        <strong style={{ fontSize: 14, color: '#16A34A' }}>
+                          RD$ {Number(scannerResult.precio || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
                     <button
                       onClick={() => {
+                        stopCamera()
                         navigate('/rrhh-inventario?tab=Productos')
                         setShowScanner(false)
                       }}
                       style={{
-                        background: '#059669',
+                        background: '#16A34A',
                         color: '#FFFFFF',
                         border: 'none',
                         borderRadius: 6,
-                        padding: '5px 12px',
-                        fontSize: 11,
+                        padding: '6px 14px',
+                        fontSize: 12,
                         fontWeight: 700,
                         cursor: 'pointer',
                       }}
                     >
                       Ver en Inventario →
+                    </button>
+                    <button
+                      onClick={() => {
+                        stopCamera()
+                        navigate('/ventas')
+                        setShowScanner(false)
+                      }}
+                      style={{
+                        background: '#2563EB',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Facturar en Ventas 🛒
                     </button>
                   </div>
                 </div>
