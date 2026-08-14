@@ -6,6 +6,12 @@ import { CashFlowChart } from '../components/CashFlowChart'
 import { ExpensesDonutChart } from '../components/ExpensesDonutChart'
 import { ComprobantesTable } from '../components/ComprobantesTable'
 import { NuevoComprobanteModal } from '../components/NuevoComprobanteModal'
+import { CuentasTab } from '../components/CuentasTab'
+import { IngresosGastosTab } from '../components/IngresosGastosTab'
+import { TransferenciasTab } from '../components/TransferenciasTab'
+import { ConciliacionesTab } from '../components/ConciliacionesTab'
+import { PresupuestoTab } from '../components/PresupuestoTab'
+import { ReportesFinancierosTab } from '../components/ReportesFinancierosTab'
 import './FinanzasHome.css'
 
 export function FinanzasHome() {
@@ -26,6 +32,21 @@ export function FinanzasHome() {
     setData(updated)
   }
 
+  const handleNuevaCuenta = (nueva) => {
+    const updated = finanzasService.addCuenta(nueva)
+    setData(updated)
+  }
+
+  const handleNuevoPresupuesto = (nuevo) => {
+    const updated = finanzasService.addPresupuesto(nuevo)
+    setData(updated)
+  }
+
+  const handleConciliar = (cuentaNombre) => {
+    const updated = finanzasService.conciliarCuenta(cuentaNombre)
+    setData(updated)
+  }
+
   if (!data) return null
 
   return (
@@ -34,7 +55,7 @@ export function FinanzasHome() {
       <div className="fn-header-row">
         <div className="fn-title-group">
           <h2 className="fn-title">
-            <span>🪙</span> Finanzas
+            <span>🪙</span> Finanzas — {activeTab}
             <span
               className="fn-title-info-icon"
               title="Módulo de gestión contable, presupuestaria y tesorería empresarial"
@@ -57,23 +78,93 @@ export function FinanzasHome() {
         </div>
       </div>
 
-      {/* Tarjetas KPI de Saldo, Ingresos, Gastos y Resultado */}
-      <KpiCards kpis={data.kpis} />
+      {/* RENDERIZADO POR SUBMÓDULO SEGÚN EL TAB ACTIVO */}
+      {activeTab === 'Resumen' && (
+        <>
+          {/* Tarjetas KPI */}
+          <KpiCards kpis={data.kpis} />
 
-      {/* Sección de Gráficos Analíticos */}
-      <div className="fn-charts-grid">
-        <CashFlowChart data={data.cashFlowData} />
-        <ExpensesDonutChart categorias={data.categoriasGastos} />
-      </div>
+          {/* Gráficos Analíticos */}
+          <div className="fn-charts-grid">
+            <CashFlowChart data={data.cashFlowData} />
+            <ExpensesDonutChart categorias={data.categoriasGastos} />
+          </div>
 
-      {/* Tabla de Comprobantes, Ingresos, Gastos y Transferencias */}
-      <ComprobantesTable
-        comprobantes={data.comprobantes}
-        onVerDetalle={(item) => setComprobanteSeleccionado(item)}
-        onNuevoComprobante={() => setIsModalOpen(true)}
-      />
+          {/* Tabla de Comprobantes Recientes */}
+          <ComprobantesTable
+            comprobantes={data.comprobantes}
+            onVerDetalle={(item) => setComprobanteSeleccionado(item)}
+            onNuevoComprobante={() => setIsModalOpen(true)}
+          />
+        </>
+      )}
 
-      {/* Modal para Crear Comprobante */}
+      {activeTab === 'Cuentas' && (
+        <CuentasTab
+          cuentas={data.cuentas}
+          movimientos={data.comprobantes}
+          onNuevaCuenta={handleNuevaCuenta}
+        />
+      )}
+
+      {activeTab === 'Comprobantes' && (
+        <ComprobantesTable
+          comprobantes={data.comprobantes}
+          onVerDetalle={(item) => setComprobanteSeleccionado(item)}
+          onNuevoComprobante={() => setIsModalOpen(true)}
+        />
+      )}
+
+      {activeTab === 'Ingresos' && (
+        <IngresosGastosTab
+          tipo="Ingreso"
+          items={data.comprobantes}
+          cuentas={data.cuentas}
+          onNuevoItem={handleSaveComprobante}
+        />
+      )}
+
+      {activeTab === 'Gastos' && (
+        <IngresosGastosTab
+          tipo="Gasto"
+          items={data.comprobantes}
+          cuentas={data.cuentas}
+          onNuevoItem={handleSaveComprobante}
+        />
+      )}
+
+      {activeTab === 'Transferencias' && (
+        <TransferenciasTab
+          comprobantes={data.comprobantes}
+          cuentas={data.cuentas}
+          onNuevaTransferencia={handleSaveComprobante}
+        />
+      )}
+
+      {activeTab === 'Conciliaciones' && (
+        <ConciliacionesTab
+          conciliaciones={data.conciliaciones}
+          onConciliar={handleConciliar}
+        />
+      )}
+
+      {activeTab === 'Reportes' && (
+        <ReportesFinancierosTab
+          kpis={data.kpis}
+          categorias={data.categoriasGastos}
+          comprobantes={data.comprobantes}
+          cuentas={data.cuentas}
+        />
+      )}
+
+      {activeTab === 'Presupuesto' && (
+        <PresupuestoTab
+          presupuestos={data.presupuestos}
+          onNuevoPresupuesto={handleNuevoPresupuesto}
+        />
+      )}
+
+      {/* Modal para Crear Comprobante Global */}
       <NuevoComprobanteModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -90,7 +181,7 @@ export function FinanzasHome() {
           <div
             className="fn-modal-card"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: 440 }}
+            style={{ maxWidth: 460 }}
           >
             <div className="fn-modal-header">
               <div className="fn-modal-title-group">
@@ -121,11 +212,15 @@ export function FinanzasHome() {
                 <span>{comprobanteSeleccionado.fecha}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
-                <strong style={{ color: '#64748b' }}>Descripción:</strong>
+                <strong style={{ color: '#64748b' }}>Concepto:</strong>
                 <span>{comprobanteSeleccionado.descripcion}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
-                <strong style={{ color: '#64748b' }}>Cuenta:</strong>
+                <strong style={{ color: '#64748b' }}>Tercero:</strong>
+                <span>{comprobanteSeleccionado.clienteProveedor || 'General'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
+                <strong style={{ color: '#64748b' }}>Cuenta Afectada:</strong>
                 <span>{comprobanteSeleccionado.cuenta}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: 8 }}>
@@ -141,7 +236,7 @@ export function FinanzasHome() {
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <strong style={{ color: '#64748b' }}>Creado por:</strong>
+                <strong style={{ color: '#64748b' }}>Registrado por:</strong>
                 <span>{comprobanteSeleccionado.creadoPor}</span>
               </div>
 

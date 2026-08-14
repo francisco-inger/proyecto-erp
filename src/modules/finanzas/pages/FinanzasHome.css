@@ -925,3 +925,172 @@
   gap: 10px;
   margin-top: 10px;
 }
+
+/* ── Submodules Common Styles ── */
+.fn-submodule-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fn-submodule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #ffffff;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.fn-submodule-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fn-submodule-desc {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.fn-badge-total-saldo {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.badge-ingreso-total {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.badge-gasto-total {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.fn-badge-cat {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Cuentas Grid */
+.fn-cuentas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .fn-cuentas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fn-cuenta-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.fn-cuenta-card:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.fn-cuenta-card.active-cuenta-card {
+  border-color: #2563eb;
+  background: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.fn-cuenta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fn-cuenta-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.fn-cuenta-status-badge {
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.fn-cuenta-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fn-cuenta-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fn-cuenta-num {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.fn-cuenta-type {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.fn-cuenta-bottom {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fn-cuenta-balance-label {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.fn-cuenta-balance {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+}
