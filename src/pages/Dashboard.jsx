@@ -288,121 +288,138 @@ export function Dashboard() {
 
   return (
     <div className="dash-container">
-      {/* ── Hero Banner Ejecutivo con Estilo Idéntico a la Referencia ── */}
+      {/* ── Hero Banner Panorámico Ejecutivo (Misma Secuencia de Color Azul Real del Login) ── */}
       <div style={{
-        background: '#FFFFFF',
-        borderRadius: 24,
-        border: '1px solid #E2E8F0',
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
         padding: '30px 36px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.35)',
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        gap: 24,
-        backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.95) 40%, rgba(255,255,255,0.8) 100%), url(/branding/dashboard_modern_hero.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        gap: 22,
+        color: '#FFFFFF'
       }}>
+        {/* Imagen panorámica de fondo superpuesta en la parte derecha */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
         {/* Fila Superior del Hero */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20, position: 'relative', zIndex: 2 }}>
           <div>
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: '#F1F5F9',
-              color: '#2563EB',
-              padding: '5px 14px',
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: '#93C5FD',
+              padding: '4px 14px',
               borderRadius: 20,
               fontSize: 11,
               fontWeight: 800,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              marginBottom: 12,
-              border: '1px solid #E2E8F0'
+              marginBottom: 10,
+              backdropFilter: 'blur(4px)',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
             }}>
-              <span>✦</span> PANEL CENTRAL · SISTEMA DE GESTIÓN EMPRESARIAL
+              <span>✦</span> PANEL DE CONTROL · APPEX ERP
             </div>
 
-            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.15 }}>
-              Buenos días, <span style={{ color: '#2563EB' }}>{user?.name || 'Administrador'}</span>
+            <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              Buenos días, <span style={{ color: '#60A5FA' }}>{user?.name || 'Administrador'}</span>
             </h1>
-            <p style={{ margin: '8px 0 16px', fontSize: 13, color: '#64748B', fontWeight: 500 }}>
+            <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#CBD5E1', fontWeight: 500 }}>
               {new Date().toLocaleDateString('es-DO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
 
             {/* Badges de Estado */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.2)', color: '#A7F3D0', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
                 Conexión SQLite Activa
               </span>
-              <span style={{ background: '#FFFFFF', color: '#334155', border: '1px solid #CBD5E1', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
+              <span style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
                 Todos los 11 módulos en línea
               </span>
-              <span style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+              <span style={{ background: 'rgba(37, 99, 235, 0.3)', color: '#BFDBFE', border: '1px solid rgba(37, 99, 235, 0.5)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                 Ciclo Fiscal 2026
               </span>
             </div>
           </div>
 
           {/* Tarjetas Flotantes de Estado Derecho */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 280 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 260 }}>
             {/* Tarjeta 1: Eficiencia */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: 14, padding: '12px 18px' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 EFICIENCIA OPERATIVA
               </span>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '4px 0 2px' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', margin: '2px 0 1px' }}>
                 +18.4%
               </div>
-              <span style={{ fontSize: 11, color: '#64748B' }}>Automatización y control de procesos</span>
+              <span style={{ fontSize: 10, color: '#CBD5E1' }}>Automatización de procesos</span>
             </div>
 
             {/* Tarjeta 2: Seguridad */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: 14, padding: '12px 18px' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#FCD34D', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 SEGURIDAD DE DATOS
               </span>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#059669', margin: '4px 0 2px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#34D399', margin: '2px 0 1px', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>🛡️</span> Protegido
               </div>
-              <span style={{ fontSize: 11, color: '#64748B' }}>Encriptación JWT y 2FA activos</span>
+              <span style={{ fontSize: 10, color: '#CBD5E1' }}>Encriptación JWT y 2FA activos</span>
             </div>
           </div>
         </div>
 
         {/* Barra de Operaciones Rápidas */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          border: '1px solid #E2E8F0',
+          background: 'rgba(15, 23, 42, 0.5)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: 14,
           padding: '12px 20px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 12
+          gap: 12,
+          position: 'relative',
+          zIndex: 2
         }}>
           <div>
-            <strong style={{ fontSize: 13, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ color: '#EA580C' }}>⚡</span> Operaciones Rápidas de Gestión Empresarial
+            <strong style={{ fontSize: 13, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: '#FB923C' }}>⚡</span> Operaciones Rápidas de Gestión Empresarial
             </strong>
-            <span style={{ fontSize: 11, color: '#64748B' }}>Acceda de inmediato a los procesos diarios más utilizados</span>
+            <span style={{ fontSize: 11, color: '#94A3B8' }}>Acceda de inmediato a los procesos diarios más utilizados</span>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <Link to="/ventas" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Link to="/ventas" style={{ background: '#2563EB', color: '#FFFFFF', border: 'none', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 2px 6px rgba(37,99,235,0.4)' }}>
               🛒 Facturar Venta
             </Link>
-            <Link to="/compras" style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Link to="/compras" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
               🛍️ Orden de Compra
             </Link>
-            <Link to="/rrhh" style={{ background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Link to="/rrhh" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
               👤 Asistencia / RRHH
             </Link>
-            <Link to="/ajustes?tab=Sistema" style={{ background: '#F8FAFC', color: '#334155', border: '1px solid #CBD5E1', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Link to="/ajustes?tab=Sistema" style={{ background: 'rgba(255,255,255,0.15)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
               ⚙️ Ajustes del Sistema
             </Link>
           </div>
