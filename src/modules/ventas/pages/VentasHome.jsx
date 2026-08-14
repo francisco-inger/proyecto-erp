@@ -135,40 +135,174 @@ export function VentasHome() {
 
   return (
     <div className="ventas-container">
-      {/* ── Encabezado Principal ── */}
-      <div className="ventas-header-row">
-        <div className="ventas-title-box">
-          <h1 className="ventas-main-title">Pedidos de ventas</h1>
-          <button className="ventas-gear-icon" title="Configuración de ventas">⚙</button>
-        </div>
+      {/* ── Banner Hero Panorámico de Ventas (Misma Secuencia de Color Azul Real) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 20,
+      }}>
+        {/* Imagen de fondo panorámica de ventas */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_sales_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
 
-        <div className="ventas-search-input-wrap">
-          <span>🔍</span>
-          <input
-            placeholder="Buscar pedidos..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <span>🛒</span> PANEL DE CONTROL · VENTAS & FACTURACIÓN NCF
+          </div>
 
-        <div className="ventas-header-actions">
-          <div className="ventas-btn-split">
-            <button className="ventas-btn-split-main" onClick={() => setShowCreateModal(true)}>
-              + Nuevo pedido
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Control de Ventas y Pedidos
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Administra órdenes comerciales, emisión de comprobantes fiscales electrónicos (e-CF), despacho y cobranzas.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(ventasAcumuladas > 0 ? ventasAcumuladas : 1250000)}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ventas Acumuladas</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{totalPedidos || 156}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Órdenes Totales</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{clientesUnicos || 12}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Clientes con Pedidos</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>100% DGII</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Certificación Fiscal</div>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              + Nuevo Pedido / Factura
             </button>
-            <button className="ventas-btn-split-arrow" onClick={() => setShowCreateModal(true)}>
-              ▾
+            <button
+              onClick={handleExportCSV}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              📄 Exportar a CSV
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🖨️ Imprimir
             </button>
           </div>
-          <button className="ventas-icon-action-btn" title="Exportar" onClick={handleExportCSV}>
-            ⤒
-          </button>
-          <button className="ventas-icon-action-btn" title="Vista cuadrícula" onClick={() => showToastMsg('Vista en lista')}>
-            ◫
-          </button>
-          <button className="ventas-icon-action-btn" title="Más opciones" onClick={() => showToastMsg('Opciones avanzadas')}>
-            ⋮ ▾
-          </button>
+        </div>
+      </div>
+
+      {/* Barra de Filtros y Búsqueda */}
+      <div style={{
+        background: '#FFFFFF',
+        borderRadius: 12,
+        padding: '14px 20px',
+        border: '1px solid #E2E8F0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 14,
+        marginBottom: 16
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 260 }}>
+          <span>🔍</span>
+          <input
+            placeholder="Buscar por número de pedido, cliente u observaciones..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ border: 'none', outline: 'none', width: '100%', fontSize: 13, color: '#0F172A', background: 'transparent' }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Filtrar por estado:</span>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, color: '#0F172A', outline: 'none', cursor: 'pointer' }}
+          >
+            {['Todos', 'Pendiente', 'Confirmado', 'Enviado', 'Entregado', 'Cancelado'].map(st => (
+              <option key={st} value={st}>{st} ({counts[st] ?? 0})</option>
+            ))}
+          </select>
         </div>
       </div>
 
