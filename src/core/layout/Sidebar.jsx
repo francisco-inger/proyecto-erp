@@ -17,6 +17,7 @@ const MODULE_ICONS = {
   chatbot:         '🤖',
   integraciones:   '🔗',
   'plugin-manager':'🧩',
+  ajustes:         '⚙️',
 }
 
 const MODULE_NAMES = {
@@ -26,6 +27,7 @@ const MODULE_NAMES = {
   crm: 'Clientes (CRM)',
   reportes: 'Reportes & Analytics',
   rrhh: 'RRHH',
+  ajustes: 'Ajustes',
 }
 
 const SUBMENUS = {
@@ -191,13 +193,6 @@ export function Sidebar() {
               </NavLink>
             )
           })}
-
-          <NavLink
-            to="/ajustes"
-            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-          >
-            <span className="sidebar-icon">⚙️</span> Ajustes
-          </NavLink>
         </nav>
       </div>
 
