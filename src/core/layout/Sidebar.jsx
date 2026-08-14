@@ -110,9 +110,9 @@ export function Sidebar() {
         <div className="sidebar-brand-container">
           <div className="sidebar-brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
-              src="/src/assets/branding/logo_appex.jpg"
+              src="/branding/logo_appex.jpg"
               alt="APPEX ERP Logo"
-              style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'contain', background: '#F8FAFC', border: '1px solid #E2E8F0' }}
+              style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: 2 }}
             />
             <div>
               <span className="sidebar-brand-name" style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>

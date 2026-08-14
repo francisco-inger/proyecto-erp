@@ -290,36 +290,52 @@ export function Dashboard() {
     <div className="dash-container">
       {/* ── Encabezado & Hero Banner Ejecutivo ── */}
       <div style={{
-        background: '#FFFFFF',
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%)',
         borderRadius: 16,
-        border: '1px solid #E2E8F0',
         padding: '24px 28px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: 20,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.25)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        color: '#FFFFFF'
       }}>
+        {/* Imagen de fondo ejecutiva con superposición sutil */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '45%',
+          backgroundImage: 'url(/branding/dashboard_hero.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.18,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
         <div style={{ zIndex: 2, maxWidth: 650 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#EFF6FF', color: '#2563EB', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255, 255, 255, 0.12)', color: '#93C5FD', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8, backdropFilter: 'blur(4px)' }}>
             <span>🏢</span> PLATAFORMA EMPRESARIAL APPEX ERP
           </div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
             Panel Ejecutivo & Control Operativo
           </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5 }}>
             Monitoreo en tiempo real de finanzas, ventas, inventario multialmacén y cumplimiento tributario ante la DGII.
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, zIndex: 2 }}>
-          <div className="dash-date-btn">
+          <div className="dash-date-btn" style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
             📅 <span>01 - 31 May, 2025</span> ▾
           </div>
-          <button className="dash-filter-btn" onClick={() => alert('Filtros ejecutivos aplicados')}>
+          <button className="dash-filter-btn" style={{ background: '#2563EB', color: '#FFFFFF', border: 'none' }} onClick={() => alert('Filtros ejecutivos aplicados')}>
             ⚡ Filtros
           </button>
         </div>

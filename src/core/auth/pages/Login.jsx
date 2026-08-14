@@ -98,9 +98,9 @@ export function Login() {
       <div className="auth-card">
         <div className="auth-logo">
           <img
-            src="/src/assets/branding/logo_appex.jpg"
+            src="/branding/logo_appex.jpg"
             alt="APPEX Logo"
-            style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'contain', background: '#FFFFFF', padding: 2, boxShadow: '0 4px 14px rgba(37,99,235,0.3)' }}
+            style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain', background: '#FFFFFF', padding: 2, boxShadow: '0 4px 14px rgba(37,99,235,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}
           />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span className="auth-logo-text">APPEX<span>.ERP</span></span>
