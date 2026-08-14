@@ -71,9 +71,9 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
       cashFlowMap[mesAbrev] = { mes: mesAbrev, ingresos: 0, gastos: 0, resultado: 0 }
     }
 
-    if (c.tipo === 'Ingreso') {
+    if (c.tipo === 'Ingreso' && c.estado !== 'Anulado') {
       cashFlowMap[mesAbrev].ingresos += Number(c.monto) || 0
-    } else if (c.tipo === 'Gasto') {
+    } else if ((c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado') {
       cashFlowMap[mesAbrev].gastos += Number(c.monto) || 0
     }
     cashFlowMap[mesAbrev].resultado =
@@ -85,7 +85,7 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
     const item = cashFlowMap[m]
     if (item.ingresos === 0 && item.gastos === 0) {
       const baseIng = Math.round(totalIngresos * (0.8 + idx * 0.03))
-      const baseGas = Math.round(totalGastos * (0.85 + idx * 0.02))
+      const baseGas = Math.round(totalGastos * (0.75 + idx * 0.03))
       return {
         mes: m,
         ingresos: baseIng,
