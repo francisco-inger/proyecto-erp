@@ -106,44 +106,6 @@ button, input, select {
   color: var(--color-ink-soft);
 }
 
-.auth-shell {
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-surface-alt);
-  padding: var(--space-5);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 380px;
-  background: var(--color-white);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-7) var(--space-6);
-}
-
-.auth-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  margin-bottom: var(--space-5);
-}
-
-.auth-footer {
-  margin-top: var(--space-5);
-  font-size: 13px;
-  color: var(--color-ink-soft);
-}
-
 .app-shell {
   display: grid;
   grid-template-columns: 240px 1fr;

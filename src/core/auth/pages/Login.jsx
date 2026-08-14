@@ -98,18 +98,22 @@ export function Login() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-              <path d="M8 12h16M8 16h10M8 20h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="9" fill="url(#gradLogo)"/>
+              <path d="M7 16L16 7L25 16L16 25L7 16Z" stroke="white" strokeWidth="2.2" strokeLinejoin="round" fill="rgba(255,255,255,0.15)"/>
+              <circle cx="16" cy="16" r="3.5" fill="white" />
               <defs>
-                <linearGradient id="grad" x1="0" y1="0" x2="32" y2="32">
-                  <stop offset="0%" stopColor="#6366f1"/>
-                  <stop offset="100%" stopColor="#8b5cf6"/>
+                <linearGradient id="gradLogo" x1="0" y1="0" x2="32" y2="32">
+                  <stop offset="0%" stopColor="#3B82F6"/>
+                  <stop offset="100%" stopColor="#1D4ED8"/>
                 </linearGradient>
               </defs>
             </svg>
           </div>
-          <span className="auth-logo-text">appes<span>.erp</span></span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="auth-logo-text">appes<span>.erp</span></span>
+            <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sistema Integral de Gestión</span>
+          </div>
         </div>
 
         <h1 className="auth-title">Iniciar sesión</h1>
