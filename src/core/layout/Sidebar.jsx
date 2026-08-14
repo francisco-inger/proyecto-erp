@@ -174,9 +174,12 @@ export function Sidebar() {
             )
           })}
 
-          <div className="sidebar-link inactive-link">
+          <NavLink
+            to="/ajustes"
+            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+          >
             <span className="sidebar-icon">⚙️</span> Ajustes
-          </div>
+          </NavLink>
         </nav>
       </div>
 

@@ -23,6 +23,7 @@ import 'modules/finanzas'
 import 'modules/proyectos'
 import 'modules/reportes'
 import 'modules/integraciones'
+import 'modules/ajustes'
 
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './core/auth/AuthContext'
