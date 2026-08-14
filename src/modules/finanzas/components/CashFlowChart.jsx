@@ -4,7 +4,7 @@ export function CashFlowChart({ data }) {
   const [periodo, setPeriodo] = useState('Este mes')
   const [hoveredPoint, setHoveredPoint] = useState(null)
 
-  const items = data || [
+  const rawItems = (data && data.length > 0) ? data : [
     { mes: 'Ene', ingresos: 1050000, gastos: 620000, resultado: 430000 },
     { mes: 'Feb', ingresos: 1200000, gastos: 640000, resultado: 560000 },
     { mes: 'Mar', ingresos: 1180000, gastos: 650000, resultado: 530000 },
@@ -15,12 +15,18 @@ export function CashFlowChart({ data }) {
     { mes: 'Ago', ingresos: 1280000, gastos: 680000, resultado: 600000 },
   ]
 
+  const items = periodo === 'Este mes'
+    ? rawItems.slice(-4)
+    : periodo === 'Últimos 3 meses'
+    ? rawItems.slice(-6)
+    : rawItems
+
   // Dimensiones del canvas SVG
   const width = 600
   const height = 240
   const paddingX = 45
   const paddingY = 30
-  const maxVal = 1500000 // RD$ 1.5M
+  const maxVal = Math.max(...items.map(i => Math.max(i.ingresos || 0, i.gastos || 0, 1500000))) * 1.15
 
   const getX = (index) => paddingX + (index * (width - paddingX * 2)) / (items.length - 1)
   const getY = (val) => height - paddingY - (val / maxVal) * (height - paddingY * 2)

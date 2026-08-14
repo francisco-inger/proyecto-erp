@@ -4,15 +4,28 @@ export function ExpensesDonutChart({ categorias }) {
   const [periodo, setPeriodo] = useState('Este mes')
   const [activeCategory, setActiveCategory] = useState(null)
 
-  const items = categorias || [
-    { id: 'sueldos', nombre: 'Sueldos y Salarios', porcentaje: 40, monto: 272000, color: '#10b981' },
-    { id: 'servicios', nombre: 'Servicios', porcentaje: 20, monto: 136000, color: '#3b82f6' },
-    { id: 'alquileres', nombre: 'Alquileres', porcentaje: 15, monto: 102000, color: '#f59e0b' },
-    { id: 'suministros', nombre: 'Suministros', porcentaje: 10, monto: 68000, color: '#8b5cf6' },
-    { id: 'otros', nombre: 'Otros Gastos', porcentaje: 15, monto: 102000, color: '#6366f1' },
+  const mult = periodo === 'Últimos 3 meses' ? 3 : periodo === 'Año actual' ? 12 : 1
+
+  const baseItems = (categorias && categorias.length > 0) ? categorias : [
+    { id: 'alquileres', nombre: 'Alquileres', monto: 85000, color: '#10b981' },
+    { id: 'suministros', nombre: 'Suministros', monto: 937500, color: '#3b82f6' },
+    { id: 'servicios', nombre: 'Servicios', monto: 14500, color: '#f59e0b' },
+    { id: 'sueldos', nombre: 'Sueldos y Salarios', monto: 406980, color: '#8b5cf6' },
   ]
 
-  const totalGastos = items.reduce((acc, curr) => acc + curr.monto, 0)
+  const totalCalculado = baseItems.reduce((acc, curr) => acc + (curr.monto * mult), 0)
+
+  const items = baseItems.map((cat) => {
+    const montoPeriodo = cat.monto * mult
+    const porcentaje = totalCalculado > 0 ? Math.round((montoPeriodo / totalCalculado) * 100) : 0
+    return {
+      ...cat,
+      monto: montoPeriodo,
+      porcentaje,
+    }
+  })
+
+  const totalGastos = totalCalculado
 
   // Geometría del Donut SVG
   const size = 180
