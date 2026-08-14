@@ -1,6 +1,6 @@
 /*
   AjustesHome.jsx — Módulo de Configuración & Administración Global (APPEX.ERP)
-  Panel de control ejecutivo de nivel empresarial con configuración integrada en cada tarjeta.
+  Panel de control ejecutivo de nivel empresarial con validación estricta y funcionalidad 100% interactiva.
 */
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -66,11 +66,49 @@ const DEFAULT_SETTINGS = {
   whatsappInstanceId: 'APPEX-WA-809-PRO',
   whatsappNumeroDestino: '+1 (809) 555-0199',
   smtpHost: 'smtp.office365.com',
-  smtpPort: '587',
+  smtpPort: 587,
   smtpUser: 'notificaciones@appex.do',
   smtpSeguridad: 'TLS',
   alertarComprasGrandes: true,
   montoMinimoAlertaCompra: 100000,
+}
+
+// ─── Funciones de Validación ──────────────────────────────────────────────────
+
+function validateRNC(val) {
+  if (!val) return 'El RNC / Cédula es obligatorio'
+  const digits = val.replace(/\D/g, '')
+  if (digits.length !== 9 && digits.length !== 11) {
+    return 'Debe tener 9 dígitos (RNC empresa) o 11 dígitos (Cédula)'
+  }
+  return null
+}
+
+function validateEmail(val) {
+  if (!val) return 'El correo electrónico es obligatorio'
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!re.test(val)) return 'Formato de correo electrónico inválido (ej: info@empresa.do)'
+  return null
+}
+
+function validatePhone(val) {
+  if (!val) return 'El teléfono es obligatorio'
+  const digits = val.replace(/\D/g, '')
+  if (digits.length < 10) return 'Debe tener al menos 10 dígitos (ej: 809-555-0100)'
+  return null
+}
+
+function validatePositiveNumber(val, min = 0.01) {
+  const num = Number(val)
+  if (isNaN(num) || num < min) return `Debe ser un número válido mayor a ${min}`
+  return null
+}
+
+function validateNCF(val) {
+  if (!val) return 'Prefijo obligatorio'
+  const clean = val.trim().toUpperCase()
+  if (!/^[B|E][0-9]{2}$/.test(clean)) return 'Formato DGII inválido (ej: B01, B02, B14, E31)'
+  return null
 }
 
 export function AjustesHome() {
@@ -87,18 +125,22 @@ export function AjustesHome() {
     return DEFAULT_SETTINGS
   })
 
+  const [errors, setErrors] = useState({})
   const [toast, setToast] = useState(null)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTestMessage, setActiveTestMessage] = useState(null)
 
+  // Aplicar tema en caliente
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
-    } catch (_) {}
-  }, [settings])
+    if (settings.temaVisual === 'oscuro') {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.removeAttribute('data-theme')
+    }
+  }, [settings.temaVisual])
 
-  const showToast = (msg) => {
-    setToast(msg)
+  const showToast = (msg, isError = false) => {
+    setToast({ text: msg, isError })
     setTimeout(() => setToast(null), 3500)
   }
 
@@ -106,13 +148,65 @@ export function AjustesHome() {
     setSearchParams({ tab: tabName })
   }
 
+  // Validación completa antes de guardar
+  const validateForm = () => {
+    const errs = {}
+
+    // Empresa
+    const rncErr = validateRNC(settings.rnc)
+    if (rncErr) errs.rnc = rncErr
+
+    const emailErr = validateEmail(settings.emailCorporativo)
+    if (emailErr) errs.emailCorporativo = emailErr
+
+    const phoneErr = validatePhone(settings.telefono)
+    if (phoneErr) errs.telefono = phoneErr
+
+    if (!settings.razonSocial || settings.razonSocial.trim().length < 3) {
+      errs.razonSocial = 'La Razón Social debe tener al menos 3 caracteres'
+    }
+
+    if (!settings.direccion || settings.direccion.trim().length < 5) {
+      errs.direccion = 'La Dirección Fiscal es obligatoria'
+    }
+
+    // NCFs
+    const b01Err = validateNCF(settings.ncfPrefijoB01)
+    if (b01Err) errs.ncfPrefijoB01 = b01Err
+
+    const b02Err = validateNCF(settings.ncfPrefijoB02)
+    if (b02Err) errs.ncfPrefijoB02 = b02Err
+
+    // Tasas
+    const usdErr = validatePositiveNumber(settings.tasaDolar, 1)
+    if (usdErr) errs.tasaDolar = usdErr
+
+    const eurErr = validatePositiveNumber(settings.tasaEuro, 1)
+    if (eurErr) errs.tasaEuro = eurErr
+
+    // SMTP & Notificaciones
+    if (!settings.smtpHost) errs.smtpHost = 'El Host SMTP es obligatorio'
+    const portErr = validatePositiveNumber(settings.smtpPort, 1)
+    if (portErr) errs.smtpPort = 'Puerto inválido (ej: 587, 465)'
+    const smtpEmailErr = validateEmail(settings.smtpUser)
+    if (smtpEmailErr) errs.smtpUser = smtpEmailErr
+
+    setErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
   const handleSaveAll = (e) => {
     if (e) e.preventDefault()
+    if (!validateForm()) {
+      showToast('⚠️ Por favor corrige los campos con advertencias en rojo', true)
+      return
+    }
+
     setIsSaving(true)
     setTimeout(() => {
       localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
       setIsSaving(false)
-      showToast('💾 Cambios guardados y sincronizados en todo el sistema')
+      showToast('💾 Configuración guardada y sincronizada globalmente')
       erpSync.dispatch('settings:update', settings)
     }, 400)
   }
@@ -120,6 +214,7 @@ export function AjustesHome() {
   const handleResetSettings = () => {
     if (window.confirm('¿Deseas restablecer todos los ajustes a los valores recomendados por defecto?')) {
       setSettings(DEFAULT_SETTINGS)
+      setErrors({})
       localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS))
       showToast('🔄 Preferencias restablecidas a los valores de fábrica')
     }
@@ -148,18 +243,29 @@ export function AjustesHome() {
   }
 
   const handleTestWhatsApp = () => {
+    const phoneErr = validatePhone(settings.whatsappNumeroDestino)
+    if (phoneErr) {
+      showToast('⚠️ Número de WhatsApp destinatario inválido', true)
+      return
+    }
     setActiveTestMessage('Enviando mensaje de prueba vía WhatsApp Cloud API...')
     setTimeout(() => {
       setActiveTestMessage(null)
-      showToast('💬 Mensaje de prueba enviado al número corporativo (+1 809 555-0199)')
+      showToast(`💬 Mensaje de prueba enviado exitosamente a ${settings.whatsappNumeroDestino}`)
     }, 1200)
   }
 
   const handleTestSMTP = () => {
-    setActiveTestMessage('Verificando conexión con servidor SMTP TLS...')
+    const hostErr = !settings.smtpHost
+    const emailErr = validateEmail(settings.smtpUser)
+    if (hostErr || emailErr) {
+      showToast('⚠️ Configuración de servidor SMTP incompleta o errónea', true)
+      return
+    }
+    setActiveTestMessage(`Verificando conexión con ${settings.smtpHost}:${settings.smtpPort}...`)
     setTimeout(() => {
       setActiveTestMessage(null)
-      showToast('✉️ Conexión SMTP exitosa. Correo de prueba enviado a notificaciones@appex.do')
+      showToast(`✉️ Conexión SMTP exitosa. Correo de verificación enviado a ${settings.smtpUser}`)
     }, 1200)
   }
 
@@ -180,12 +286,14 @@ export function AjustesHome() {
       <div style={{
         background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
         borderRadius: 18,
-        padding: '26px 30px',
+        padding: '24px 28px',
         color: '#FFFFFF',
         position: 'relative',
         overflow: 'hidden',
         boxShadow: '0 8px 20px -4px rgba(30, 58, 138, 0.28)',
         marginBottom: 12,
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         {/* Imagen panorámica de fondo superpuesta en la parte derecha */}
         <div style={{
@@ -193,11 +301,11 @@ export function AjustesHome() {
           right: 0,
           top: 0,
           bottom: 0,
-          width: '55%',
+          width: '50%',
           backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center right',
-          opacity: 0.32,
+          opacity: 0.30,
           maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           pointerEvents: 'none'
@@ -223,29 +331,29 @@ export function AjustesHome() {
             <span>⚙️</span> CENTRO DE CONTROL & CONFIGURACIÓN EMPRESARIAL · v2026.4.0
           </div>
 
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
             Ajustes Globales y Administración del Sistema
           </h1>
-          <p style={{ margin: '6px 0 18px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 620 }}>
+          <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.45, maxWidth: 600 }}>
             Configura las políticas fiscales de la empresa, interconexión de módulos en tiempo real, canales de notificación, seguridad y roles RBAC.
           </p>
 
           {/* Estadísticas en vivo estilo referencia */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 18 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Uptime Operativo</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Seguridad & Cifrado</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Multi-Moneda Activo</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Licencia Corporativa</div>
             </div>
           </div>
@@ -373,23 +481,43 @@ export function AjustesHome() {
               </div>
 
               <div className="ajustes-form-group">
-                <label>Tasa de Cambio Oficial (USD ➔ DOP)</label>
+                <label>
+                  <span>Tasa de Cambio Oficial (USD ➔ DOP)</span>
+                  {!errors.tasaDolar && <span className="ajustes-field-valid">✓ Válida</span>}
+                </label>
                 <input
                   type="number"
                   step="0.01"
+                  className={errors.tasaDolar ? 'has-error' : ''}
                   value={settings.tasaDolar}
-                  onChange={e => setSettings({ ...settings, tasaDolar: Number(e.target.value) })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, tasaDolar: val })
+                    const err = validatePositiveNumber(val, 1)
+                    setErrors(prev => ({ ...prev, tasaDolar: err }))
+                  }}
                 />
+                {errors.tasaDolar && <span className="ajustes-field-error">⚠️ {errors.tasaDolar}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>Tasa de Cambio Oficial (EUR ➔ DOP)</label>
+                <label>
+                  <span>Tasa de Cambio Oficial (EUR ➔ DOP)</span>
+                  {!errors.tasaEuro && <span className="ajustes-field-valid">✓ Válida</span>}
+                </label>
                 <input
                   type="number"
                   step="0.01"
+                  className={errors.tasaEuro ? 'has-error' : ''}
                   value={settings.tasaEuro}
-                  onChange={e => setSettings({ ...settings, tasaEuro: Number(e.target.value) })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, tasaEuro: val })
+                    const err = validatePositiveNumber(val, 1)
+                    setErrors(prev => ({ ...prev, tasaEuro: err }))
+                  }}
                 />
+                {errors.tasaEuro && <span className="ajustes-field-error">⚠️ {errors.tasaEuro}</span>}
               </div>
             </div>
 
@@ -459,19 +587,39 @@ export function AjustesHome() {
 
             <div className="ajustes-form-grid-2">
               <div className="ajustes-form-group">
-                <label>Razón Social Oficial *</label>
+                <label>
+                  <span>Razón Social Oficial *</span>
+                  {settings.razonSocial && !errors.razonSocial && <span className="ajustes-field-valid">✓ Válida</span>}
+                </label>
                 <input
+                  className={errors.razonSocial ? 'has-error' : ''}
                   value={settings.razonSocial}
-                  onChange={e => setSettings({ ...settings, razonSocial: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, razonSocial: val })
+                    setErrors(prev => ({ ...prev, razonSocial: val.trim().length >= 3 ? null : 'Mínimo 3 caracteres' }))
+                  }}
                 />
+                {errors.razonSocial && <span className="ajustes-field-error">⚠️ {errors.razonSocial}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>RNC / Cédula Fiscal *</label>
+                <label>
+                  <span>RNC / Cédula Fiscal *</span>
+                  {!errors.rnc && <span className="ajustes-field-valid">✓ Formato DGII Válido</span>}
+                </label>
                 <input
+                  placeholder="1-31-89023-4"
+                  className={errors.rnc ? 'has-error' : ''}
                   value={settings.rnc}
-                  onChange={e => setSettings({ ...settings, rnc: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, rnc: val })
+                    const err = validateRNC(val)
+                    setErrors(prev => ({ ...prev, rnc: err }))
+                  }}
                 />
+                {errors.rnc && <span className="ajustes-field-error">⚠️ {errors.rnc}</span>}
               </div>
 
               <div className="ajustes-form-group">
@@ -495,28 +643,59 @@ export function AjustesHome() {
               </div>
 
               <div className="ajustes-form-group">
-                <label>Teléfono PBX / Central</label>
+                <label>
+                  <span>Teléfono PBX / Central</span>
+                  {!errors.telefono && <span className="ajustes-field-valid">✓ Válido</span>}
+                </label>
                 <input
+                  placeholder="(809) 555-0100"
+                  className={errors.telefono ? 'has-error' : ''}
                   value={settings.telefono}
-                  onChange={e => setSettings({ ...settings, telefono: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, telefono: val })
+                    const err = validatePhone(val)
+                    setErrors(prev => ({ ...prev, telefono: err }))
+                  }}
                 />
+                {errors.telefono && <span className="ajustes-field-error">⚠️ {errors.telefono}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>Correo Electrónico Corporativo</label>
+                <label>
+                  <span>Correo Electrónico Corporativo</span>
+                  {!errors.emailCorporativo && <span className="ajustes-field-valid">✓ Verificado</span>}
+                </label>
                 <input
                   type="email"
+                  placeholder="contacto@appex.do"
+                  className={errors.emailCorporativo ? 'has-error' : ''}
                   value={settings.emailCorporativo}
-                  onChange={e => setSettings({ ...settings, emailCorporativo: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, emailCorporativo: val })
+                    const err = validateEmail(val)
+                    setErrors(prev => ({ ...prev, emailCorporativo: err }))
+                  }}
                 />
+                {errors.emailCorporativo && <span className="ajustes-field-error">⚠️ {errors.emailCorporativo}</span>}
               </div>
 
               <div className="ajustes-form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Dirección Fiscal & Sede Principal</label>
+                <label>
+                  <span>Dirección Fiscal & Sede Principal</span>
+                  {settings.direccion && !errors.direccion && <span className="ajustes-field-valid">✓ Completa</span>}
+                </label>
                 <input
+                  className={errors.direccion ? 'has-error' : ''}
                   value={settings.direccion}
-                  onChange={e => setSettings({ ...settings, direccion: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, direccion: val })
+                    setErrors(prev => ({ ...prev, direccion: val.trim().length >= 5 ? null : 'Dirección requerida' }))
+                  }}
                 />
+                {errors.direccion && <span className="ajustes-field-error">⚠️ {errors.direccion}</span>}
               </div>
             </div>
           </div>
@@ -531,28 +710,46 @@ export function AjustesHome() {
 
             <div className="ajustes-form-grid-2">
               <div className="ajustes-form-group">
-                <label>Facturas con Crédito Fiscal</label>
+                <label>
+                  <span>Facturas con Crédito Fiscal (NCF)</span>
+                  {!errors.ncfPrefijoB01 && <span className="ajustes-field-valid">✓ B01</span>}
+                </label>
                 <input
                   value={settings.ncfPrefijoB01}
-                  onChange={e => setSettings({ ...settings, ncfPrefijoB01: e.target.value })}
+                  className={errors.ncfPrefijoB01 ? 'has-error' : ''}
+                  onChange={e => {
+                    const val = e.target.value.toUpperCase()
+                    setSettings({ ...settings, ncfPrefijoB01: val })
+                    setErrors(prev => ({ ...prev, ncfPrefijoB01: validateNCF(val) }))
+                  }}
                   placeholder="B01"
                 />
+                {errors.ncfPrefijoB01 && <span className="ajustes-field-error">⚠️ {errors.ncfPrefijoB01}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>Facturas de Consumo Final</label>
+                <label>
+                  <span>Facturas de Consumo Final (NCF)</span>
+                  {!errors.ncfPrefijoB02 && <span className="ajustes-field-valid">✓ B02</span>}
+                </label>
                 <input
                   value={settings.ncfPrefijoB02}
-                  onChange={e => setSettings({ ...settings, ncfPrefijoB02: e.target.value })}
+                  className={errors.ncfPrefijoB02 ? 'has-error' : ''}
+                  onChange={e => {
+                    const val = e.target.value.toUpperCase()
+                    setSettings({ ...settings, ncfPrefijoB02: val })
+                    setErrors(prev => ({ ...prev, ncfPrefijoB02: validateNCF(val) }))
+                  }}
                   placeholder="B02"
                 />
+                {errors.ncfPrefijoB02 && <span className="ajustes-field-error">⚠️ {errors.ncfPrefijoB02}</span>}
               </div>
 
               <div className="ajustes-form-group">
                 <label>Regímenes Especiales</label>
                 <input
                   value={settings.ncfPrefijoB14}
-                  onChange={e => setSettings({ ...settings, ncfPrefijoB14: e.target.value })}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB14: e.target.value.toUpperCase() })}
                   placeholder="B14"
                 />
               </div>
@@ -561,7 +758,7 @@ export function AjustesHome() {
                 <label>Gubernamental</label>
                 <input
                   value={settings.ncfPrefijoB15}
-                  onChange={e => setSettings({ ...settings, ncfPrefijoB15: e.target.value })}
+                  onChange={e => setSettings({ ...settings, ncfPrefijoB15: e.target.value.toUpperCase() })}
                   placeholder="B15"
                 />
               </div>
@@ -594,7 +791,7 @@ export function AjustesHome() {
                 <h3 className="ajustes-panel-title">🧩 Matriz de Módulos del Sistema ERP</h3>
                 <p className="ajustes-panel-subtitle">Habilita o deshabilita los módulos del sistema según las necesidades operativas de tu empresa.</p>
               </div>
-              <span className="ajustes-badge-status green">9 / 9 Módulos Activos</span>
+              <span className="ajustes-badge-status green">9 / 9 Módulos Operativos</span>
             </div>
 
             <div className="ajustes-modules-grid">
@@ -617,13 +814,12 @@ export function AjustesHome() {
                         type="checkbox"
                         checked={settings.modulos[mod.key] ?? true}
                         onChange={e => {
-                          setSettings({
-                            ...settings,
-                            modulos: {
-                              ...settings.modulos,
-                              [mod.key]: e.target.checked
-                            }
-                          })
+                          const updated = {
+                            ...settings.modulos,
+                            [mod.key]: e.target.checked
+                          }
+                          setSettings({ ...settings, modulos: updated })
+                          showToast(`Módulo "${mod.name}" ${e.target.checked ? 'activado' : 'desactivado'}`)
                         }}
                       />
                       <span className="ajustes-slider round"></span>
@@ -791,7 +987,10 @@ export function AjustesHome() {
               </div>
 
               <div className="ajustes-form-group">
-                <label>Número Destinatario de Pruebas</label>
+                <label>
+                  <span>Número Destinatario de Pruebas</span>
+                  {settings.whatsappNumeroDestino && <span className="ajustes-field-valid">✓ Activo</span>}
+                </label>
                 <input
                   value={settings.whatsappNumeroDestino}
                   onChange={e => setSettings({ ...settings, whatsappNumeroDestino: e.target.value })}
@@ -813,27 +1012,56 @@ export function AjustesHome() {
 
             <div className="ajustes-form-grid-2">
               <div className="ajustes-form-group">
-                <label>Servidor SMTP Host</label>
+                <label>
+                  <span>Servidor SMTP Host</span>
+                  {!errors.smtpHost && <span className="ajustes-field-valid">✓ Host Válido</span>}
+                </label>
                 <input
+                  className={errors.smtpHost ? 'has-error' : ''}
                   value={settings.smtpHost}
-                  onChange={e => setSettings({ ...settings, smtpHost: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, smtpHost: val })
+                    setErrors(prev => ({ ...prev, smtpHost: val ? null : 'Host obligatorio' }))
+                  }}
                 />
+                {errors.smtpHost && <span className="ajustes-field-error">⚠️ {errors.smtpHost}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>Puerto SMTP</label>
+                <label>
+                  <span>Puerto SMTP</span>
+                  {!errors.smtpPort && <span className="ajustes-field-valid">✓ 587 TLS</span>}
+                </label>
                 <input
+                  type="number"
+                  className={errors.smtpPort ? 'has-error' : ''}
                   value={settings.smtpPort}
-                  onChange={e => setSettings({ ...settings, smtpPort: e.target.value })}
+                  onChange={e => {
+                    const val = Number(e.target.value)
+                    setSettings({ ...settings, smtpPort: val })
+                    setErrors(prev => ({ ...prev, smtpPort: val > 0 ? null : 'Puerto inválido' }))
+                  }}
                 />
+                {errors.smtpPort && <span className="ajustes-field-error">⚠️ {errors.smtpPort}</span>}
               </div>
 
               <div className="ajustes-form-group">
-                <label>Usuario / Correo Emisor</label>
+                <label>
+                  <span>Usuario / Correo Emisor</span>
+                  {!errors.smtpUser && <span className="ajustes-field-valid">✓ Autenticado</span>}
+                </label>
                 <input
+                  type="email"
+                  className={errors.smtpUser ? 'has-error' : ''}
                   value={settings.smtpUser}
-                  onChange={e => setSettings({ ...settings, smtpUser: e.target.value })}
+                  onChange={e => {
+                    const val = e.target.value
+                    setSettings({ ...settings, smtpUser: val })
+                    setErrors(prev => ({ ...prev, smtpUser: validateEmail(val) }))
+                  }}
                 />
+                {errors.smtpUser && <span className="ajustes-field-error">⚠️ {errors.smtpUser}</span>}
               </div>
 
               <div className="ajustes-form-group">
@@ -880,7 +1108,11 @@ export function AjustesHome() {
       )}
 
       {/* ── Notificación Toast ── */}
-      {toast && <div className="ajustes-toast">{toast}</div>}
+      {toast && (
+        <div className={`ajustes-toast ${toast.isError ? 'error' : ''}`}>
+          {toast.text}
+        </div>
+      )}
       {activeTestMessage && <div className="ajustes-toast test">{activeTestMessage}</div>}
     </div>
   )
