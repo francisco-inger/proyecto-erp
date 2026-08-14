@@ -3,7 +3,11 @@
 * { box-sizing: border-box; }
 
 html, body, #root {
-  height: 100%;
+  min-height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 body {
@@ -12,6 +16,27 @@ body {
   background: var(--color-white);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Utilidad para ocultar barras de scroll innecesarias conservando el desplazamiento */
+.no-scrollbar,
+.ajustes-tabs-bar,
+.inv-tabs-nav,
+.rrhh-tabs-nav,
+.compras-nav-tabs {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.ajustes-tabs-bar::-webkit-scrollbar,
+.inv-tabs-nav::-webkit-scrollbar,
+.rrhh-tabs-nav::-webkit-scrollbar,
+.compras-nav-tabs::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 h1, h2, h3, h4 {
@@ -393,5 +418,8 @@ button, input, select {
   padding: var(--space-6);
   background: var(--color-bg-app);
   min-height: calc(100vh - 64px);
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
