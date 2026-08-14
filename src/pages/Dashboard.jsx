@@ -772,7 +772,207 @@ export function Dashboard() {
           </span>
         </div>
       </div>
+
+      {/* ── Sección Institucional & Pie de Página Corporativo ── */}
+      <div className="dash-corporate-section">
+        {/* Banner de Identidad Corporativa: Misión, Visión y Valores */}
+        <div className="dash-corporate-card">
+          <div className="dash-corporate-header">
+            <div className="dash-corporate-badge">
+              <span>🏢</span> IDENTIDAD & CULTURA CORPORATIVA
+            </div>
+            <h2 className="dash-corporate-title">Misión, Visión y Valores Empresariales</h2>
+            <p className="dash-corporate-desc">
+              Impulsando la transformación digital y la excelencia operativa de las organizaciones mediante tecnología de clase mundial.
+            </p>
+          </div>
+
+          <div className="dash-mv-grid">
+            {/* Tarjeta de Misión */}
+            <div className="dash-mv-card mission">
+              <div className="dash-mv-icon-wrap">
+                <span className="dash-mv-icon">🎯</span>
+                <span className="dash-mv-tag">Propósito Fundamental</span>
+              </div>
+              <h3 className="dash-mv-heading">Nuestra Misión</h3>
+              <p className="dash-mv-text">
+                Proveer a las empresas una suite de gestión empresarial inteligente, escalable e integrada que automatice procesos críticos, optimice la toma de decisiones basada en datos y potencie la productividad de cada equipo de trabajo.
+              </p>
+            </div>
+
+            {/* Tarjeta de Visión */}
+            <div className="dash-mv-card vision">
+              <div className="dash-mv-icon-wrap">
+                <span className="dash-mv-icon">🔭</span>
+                <span className="dash-mv-tag">Destino Estratégico</span>
+              </div>
+              <h3 className="dash-mv-heading">Nuestra Visión</h3>
+              <p className="dash-mv-text">
+                Consolidarnos como la plataforma ERP en la nube y ecosistema de inteligencia de negocios líder en la República Dominicana y el Caribe, reconocida por su innovación continua, seguridad de nivel bancario y excelencia en el servicio al cliente.
+              </p>
+            </div>
+          </div>
+
+          {/* Valores Corporativos */}
+          <div className="dash-values-wrapper">
+            <div className="dash-values-header">
+              <span className="dash-values-title">✨ Nuestros Valores Fundamentales</span>
+            </div>
+            <div className="dash-values-grid">
+              <div className="dash-val-item">
+                <div className="dash-val-icon-box blue">💡</div>
+                <div className="dash-val-content">
+                  <strong>Innovación Continua</strong>
+                  <p>Desarrollamos soluciones vanguardistas adaptadas a los retos empresariales del futuro.</p>
+                </div>
+              </div>
+
+              <div className="dash-val-item">
+                <div className="dash-val-icon-box green">🛡️</div>
+                <div className="dash-val-content">
+                  <strong>Integridad & Seguridad</strong>
+                  <p>Protegemos la confidencialidad, trazabilidad y máxima seguridad de cada dato corporativo.</p>
+                </div>
+              </div>
+
+              <div className="dash-val-item">
+                <div className="dash-val-icon-box purple">🤝</div>
+                <div className="dash-val-content">
+                  <strong>Compromiso con el Cliente</strong>
+                  <p>Acompañamos estratégicamente a cada organización para asegurar su éxito y crecimiento continuo.</p>
+                </div>
+              </div>
+
+              <div className="dash-val-item">
+                <div className="dash-val-icon-box orange">⚡</div>
+                <div className="dash-val-content">
+                  <strong>Agilidad & Eficiencia</strong>
+                  <p>Optimizamos tiempos de respuesta y simplificamos operaciones complejas con fluidez.</p>
+                </div>
+              </div>
+
+              <div className="dash-val-item">
+                <div className="dash-val-icon-box pink">🏆</div>
+                <div className="dash-val-content">
+                  <strong>Excelencia & Calidad</strong>
+                  <p>Mantenemos los más altos estándares globales en ingeniería de software y soporte técnico.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Ubicación & Canales de Contacto Directo */}
+        <div className="dash-location-grid">
+          {/* Tarjeta de Ubicación Geográfica */}
+          <div className="card dash-location-card">
+            <div className="dash-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>📍</span>
+                <strong>Sede Principal & Ubicación</strong>
+              </div>
+              <span className="dash-status-pill green">Sede Operativa</span>
+            </div>
+
+            <div className="dash-location-body">
+              <div className="dash-location-address-box">
+                <div className="dash-location-icon">🏢</div>
+                <div className="dash-location-info">
+                  <strong>APPEX Technologies & Enterprise Suite</strong>
+                  <p>Av. Winston Churchill #109, Torre Empresarial Blue Mall, Piso 14, Sector Piantini, Santo Domingo, Distrito Nacional, República Dominicana.</p>
+                  <span className="dash-location-postal">Código Postal: 10148 · Coordenadas: 18.4721° N, 69.9405° W</span>
+                </div>
+              </div>
+
+              <div className="dash-sedes-row">
+                <div className="dash-sede-chip active">
+                  <span className="sede-dot" /> Santo Domingo (Headquarters)
+                </div>
+                <div className="dash-sede-chip">
+                  <span className="sede-dot" /> Santiago de los Caballeros (Tech Hub)
+                </div>
+                <div className="dash-sede-chip">
+                  <span className="sede-dot" /> Miami, FL (Enlace Internacional)
+                </div>
+              </div>
+
+              <div className="dash-location-actions">
+                <a
+                  href="https://maps.google.com/?q=Torre+Empresarial+Blue+Mall+Santo+Domingo"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dash-maps-btn"
+                >
+                  🗺️ Abrir Ubicación en Google Maps
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarjeta de Contacto y Horarios */}
+          <div className="card dash-location-card">
+            <div className="dash-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>📞</span>
+                <strong>Contacto & Soporte Corporativo</strong>
+              </div>
+              <span className="dash-status-pill blue">Atención 24/7</span>
+            </div>
+
+            <div className="dash-contact-list">
+              <div className="dash-contact-item">
+                <div className="dash-contact-icon">📱</div>
+                <div>
+                  <span className="dash-contact-label">Central Telefónica / PBX</span>
+                  <strong className="dash-contact-val">+1 (809) 555-0199 / +1 (809) 555-0200</strong>
+                </div>
+              </div>
+
+              <div className="dash-contact-item">
+                <div className="dash-contact-icon">✉️</div>
+                <div>
+                  <span className="dash-contact-label">Correo Electrónico Oficial</span>
+                  <strong className="dash-contact-val">contacto@appes.erp · soporte@appes.erp</strong>
+                </div>
+              </div>
+
+              <div className="dash-contact-item">
+                <div className="dash-contact-icon">🕒</div>
+                <div>
+                  <span className="dash-contact-label">Horario de Operaciones</span>
+                  <strong className="dash-contact-val">Lunes a Viernes: 8:00 AM – 6:00 PM | Sábados: 9:00 AM – 1:00 PM</strong>
+                </div>
+              </div>
+
+              <div className="dash-contact-item">
+                <div className="dash-contact-icon">🛡️</div>
+                <div>
+                  <span className="dash-contact-label">Soporte Técnico de Emergencia</span>
+                  <strong className="dash-contact-val">Mesa de ayuda crítica y monitoreo de servidores activo 24/7</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Barra de Pie de Página Final del Sistema ── */}
+        <footer className="dash-footer-bar">
+          <div className="dash-footer-left">
+            <span className="dash-footer-logo">APPEX.ERP</span>
+            <span className="dash-footer-version">Enterprise Suite · v2026.4.0</span>
+            <span className="dash-footer-divider">|</span>
+            <span className="dash-footer-uptime">
+              <span className="uptime-dot" /> Todos los sistemas operativos (99.99% Uptime)
+            </span>
+          </div>
+
+          <div className="dash-footer-right">
+            <span>© 2026 APPEX Technologies SRL. Todos los derechos reservados.</span>
+          </div>
+        </footer>
+      </div>
     </div>
   )
 }
+
 

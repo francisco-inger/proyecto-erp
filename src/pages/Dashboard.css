@@ -658,6 +658,425 @@
   display: block;
 }
 
+/* ── Sección Institucional & Pie de Página Corporativo ── */
+.dash-corporate-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.dash-corporate-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dash-corporate-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-corporate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #EFF6FF;
+  color: #2563EB;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  width: fit-content;
+}
+
+.dash-corporate-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.dash-corporate-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+/* Grilla Misión y Visión */
+.dash-mv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dash-mv-card {
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.dash-mv-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.dash-mv-card.mission {
+  background: linear-gradient(145deg, #F0FDF4 0%, #FFFFFF 100%);
+  border: 1px solid #BBF7D0;
+}
+
+.dash-mv-card.vision {
+  background: linear-gradient(145deg, #EFF6FF 0%, #FFFFFF 100%);
+  border: 1px solid #BFDBFE;
+}
+
+.dash-mv-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-mv-icon {
+  font-size: 24px;
+}
+
+.dash-mv-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.dash-mv-card.mission .dash-mv-tag {
+  background: #DCFCE7;
+  color: #166534;
+}
+.dash-mv-card.vision .dash-mv-tag {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.dash-mv-heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.dash-mv-text {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+/* Valores Corporativos */
+.dash-values-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 18px;
+}
+
+.dash-values-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-values-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1E3A8A;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-values-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.dash-val-item {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 140ms ease;
+}
+.dash-val-item:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.dash-val-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.dash-val-icon-box.blue   { background: #EFF6FF; color: #2563EB; }
+.dash-val-icon-box.green  { background: #ECFDF5; color: #059669; }
+.dash-val-icon-box.purple { background: #F5F3FF; color: #7C3AED; }
+.dash-val-icon-box.orange { background: #FFFBEB; color: #D97706; }
+.dash-val-icon-box.pink   { background: #FDF2F8; color: #DB2777; }
+
+.dash-val-content strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 3px;
+}
+.dash-val-content p {
+  margin: 0;
+  font-size: 11px;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+/* Grilla de Ubicación y Contacto */
+.dash-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dash-location-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dash-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+.dash-status-pill.green { background: #ECFDF5; color: #059669; }
+.dash-status-pill.blue  { background: #EFF6FF; color: #2563EB; }
+
+.dash-location-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dash-location-address-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.dash-location-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.dash-location-info strong {
+  display: block;
+  font-size: 13px;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+.dash-location-info p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
+}
+.dash-location-postal {
+  font-size: 11px;
+  color: #94A3B8;
+  display: block;
+}
+
+.dash-sedes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dash-sede-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.dash-sede-chip.active {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  font-weight: 700;
+}
+
+.sede-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3B82F6;
+}
+
+.dash-location-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.dash-maps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+.dash-maps-btn:hover {
+  background: #1D4ED8;
+  text-decoration: none;
+}
+
+/* Contacto */
+.dash-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dash-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.dash-contact-icon {
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-contact-label {
+  display: block;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.dash-contact-val {
+  display: block;
+  font-size: 12px;
+  color: #0F172A;
+  margin-top: 1px;
+}
+
+/* Footer Bar */
+.dash-footer-bar {
+  background: #0F172A;
+  color: #94A3B8;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.dash-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dash-footer-logo {
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+  font-size: 13px;
+}
+
+.dash-footer-version {
+  color: #60A5FA;
+  font-weight: 600;
+}
+
+.dash-footer-divider {
+  color: #334155;
+}
+
+.dash-footer-uptime {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #34D399;
+  font-weight: 500;
+}
+
+.uptime-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 6px #10B981;
+}
+
+.dash-footer-right {
+  color: #64748B;
+  font-size: 11px;
+}
+
 /* Responsivo */
 @media (max-width: 1200px) {
   .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); }
@@ -665,6 +1084,9 @@
   .dash-summary-row { grid-template-columns: repeat(2, 1fr); }
   .dash-bottom-grid { grid-template-columns: 1fr; }
   .dash-quick-grid { grid-template-columns: repeat(3, 1fr); }
+  .dash-mv-grid { grid-template-columns: 1fr; }
+  .dash-values-grid { grid-template-columns: repeat(3, 1fr); }
+  .dash-location-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
@@ -672,5 +1094,8 @@
   .dash-summary-row { grid-template-columns: 1fr; }
   .dash-quick-grid { grid-template-columns: repeat(2, 1fr); }
   .dash-int-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-values-grid { grid-template-columns: 1fr; }
+  .dash-footer-bar { flex-direction: column; align-items: flex-start; }
 }
+
 
