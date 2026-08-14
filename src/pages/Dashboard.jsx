@@ -288,24 +288,52 @@ function CategoryDonutChart({ categories }) {
 }
 
 // ─── Chatbot Widget ───────────────────────────────────────────────────────────
+import { sendMessageToGroq, generateDirectDbResponse } from '../modules/chatbot/services/groqService'
 
 function ChatbotWidget() {
   const [msgs, setMsgs] = useState([
-    { from: 'bot', text: '¡Hola! Soy tu asistente inteligente. ¿En qué puedo ayudarte hoy?' }
+    {
+      from: 'bot',
+      text: '¡Hola! Bienvenido a **APPEX Enterprise Suite** 🤖. Soy tu Asistente Virtual Inteligente.\n\n🌟 **Nuestros Servicios Disponibles:**\n• 🛒 **Ventas & Facturación DGII (e-CF)**: Comprobantes B01, B02, cobros y cotizaciones.\n• 🛍️ **Compras & Proveedores**: Órdenes de compra y control de recepción.\n• 📦 **Inventario Multialmacén**: Existencias en vivo y kardex contable.\n• 👥 **CRM Comercial**: Pipeline y gestión de clientes.\n• 💳 **Finanzas & Bancos**: Flujo de caja y tesorería.\n• 🌐 **Integraciones**: WhatsApp Business API y SMTP.\n\n¿En qué te puedo colaborar o qué datos deseas consultar hoy?'
+    }
   ])
   const [input, setInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
   const bottomRef = useRef(null)
 
-  const send = (text) => {
-    if (!text.trim()) return
-    const userMsg = { from: 'user', text }
-    const botMsg = { from: 'bot', text: `Procesando "${text}"... Generando resumen en tiempo real.` }
-    setMsgs((m) => [...m, userMsg, botMsg])
+  const send = async (text) => {
+    const q = (text || input).trim()
+    if (!q || isTyping) return
+
+    const userMsg = { from: 'user', text: q }
+    setMsgs((m) => [...m, userMsg])
     setInput('')
+    setIsTyping(true)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+
+    try {
+      const res = await sendMessageToGroq(q, msgs.map(m => ({ type: m.from === 'bot' ? 'bot' : 'user', text: m.text })))
+      const botMsg = {
+        from: 'bot',
+        text: res.text || generateDirectDbResponse(q)
+      }
+      setMsgs((m) => [...m, botMsg])
+    } catch (_) {
+      const fallback = generateDirectDbResponse(q)
+      setMsgs((m) => [...m, { from: 'bot', text: fallback }])
+    } finally {
+      setIsTyping(false)
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    }
   }
 
-  const quickActions = ['Resumen de ventas', 'Top productos', 'Clientes nuevos', 'Estado de inventario']
+  const quickActions = [
+    '¿Qué servicios ofrecen?',
+    'Resumen de ventas',
+    'Estado de inventario',
+    'Balance financiero',
+    'Nuestros clientes CRM'
+  ]
 
   return (
     <div className="card dash-chatbot-card">
@@ -313,10 +341,10 @@ function ChatbotWidget() {
         <div className="dash-chatbot-title">
           <span className="dash-chatbot-icon">🤖</span>
           <div>
-            <strong>Asistente IA / Chatbot</strong>
+            <strong>Asistente IA & Portafolio de Servicios</strong>
           </div>
         </div>
-        <span className="dash-chatbot-online">● En línea</span>
+        <span className="dash-chatbot-online">● En línea (24/7)</span>
       </div>
 
       <div className="dash-chatbot-body">
@@ -324,9 +352,19 @@ function ChatbotWidget() {
           {msgs.map((m, i) => (
             <div key={i} className={`dash-chatbot-bubble ${m.from}`}>
               {m.from === 'bot' && <span className="dash-bot-avatar">🤖</span>}
-              <div className="dash-bubble-text">{m.text}</div>
+              <div className="dash-bubble-text" style={{ whiteSpace: 'pre-line', fontSize: 12, lineHeight: 1.45 }}>
+                {m.text}
+              </div>
             </div>
           ))}
+          {isTyping && (
+            <div className="dash-chatbot-bubble bot">
+              <span className="dash-bot-avatar">🤖</span>
+              <div className="dash-bubble-text" style={{ color: '#64748B', fontStyle: 'italic', fontSize: 11 }}>
+                Consultando base de datos y analizando respuesta...
+              </div>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 
@@ -345,9 +383,10 @@ function ChatbotWidget() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send(input)}
-          placeholder="Escribe tu pregunta..."
+          placeholder="Escribe tu pregunta o consulta de servicios..."
+          disabled={isTyping}
         />
-        <button className="dash-send-btn" onClick={() => send(input)}>
+        <button className="dash-send-btn" onClick={() => send(input)} disabled={isTyping || !input.trim()}>
           ➤
         </button>
       </div>

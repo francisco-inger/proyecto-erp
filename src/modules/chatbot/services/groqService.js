@@ -1,41 +1,88 @@
 /*
-  groqService.js — Servicio de integración con Groq AI API
-  Módulo: AI Chatbot (appes.erp)
-  
-  Sincronizado completamente con las tablas/almacenamiento de la Base de Datos del ERP.
+  groqService.js — Servicio de integración con Groq AI API & Motor NLP Local de APPEX.ERP
+  Asistente Inteligente y Asesor Corporativo sincronizado con la Base de Datos y el Portafolio de Servicios.
 */
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const MODEL = 'llama-3.1-8b-instant'
 
-// Lee la API key desde las variables de entorno de Vite
 function getApiKey() {
   return import.meta.env.VITE_GROQ_API_KEY || ''
 }
 
-// ── Obtener datos en tiempo real de toda la Base de Datos del ERP ──────────────────
+// ── Servicios Corporativos del Sistema ─────────────────────────────────────────
+export const NUESTROS_SERVICIOS = [
+  {
+    id: 'srv-ventas',
+    icono: '🛒',
+    nombre: 'Ventas & Facturación Fiscal DGII (e-CF)',
+    descripcion: 'Control integral del ciclo comercial: cotizaciones, pedidos, órdenes de entrega y emisión de facturas fiscales electrónicas autorizadas por la DGII (B01 Crédito Fiscal, B02 Consumo, B14 Regímenes Especiales, B15 Gubernamental y e-CF E31).'
+  },
+  {
+    id: 'srv-compras',
+    icono: '🛍️',
+    nombre: 'Compras & Gestión de Proveedores',
+    descripcion: 'Emisión de órdenes de compra con cálculo automático de costos e ITBIS, seguimiento de embarques, control de recepciones y sincronización directa con almacenes.'
+  },
+  {
+    id: 'srv-inventario',
+    icono: '📦',
+    nombre: 'Inventario Multialmacén & Kardex en Tiempo Real',
+    descripcion: 'Control de existencias multi-ubicación, registro automatizado de entradas y salidas, valoración contable por costo promedio / FIFO y alertas inteligentes de stock mínimo.'
+  },
+  {
+    id: 'srv-crm',
+    icono: '👥',
+    nombre: 'CRM Comercial & Pipeline de Oportunidades',
+    descripcion: 'Gestión de prospectos, clientes activos, contactos clave, embudo comercial por etapas de probabilidad y registro de interacciones comerciales.'
+  },
+  {
+    id: 'srv-proyectos',
+    icono: '🚀',
+    nombre: 'Gestión de Proyectos & Tableros Kanban',
+    descripcion: 'Planificación por tareas, hitos, asignación de colaboradores, control de cronogramas y análisis de rentabilidad por proyecto.'
+  },
+  {
+    id: 'srv-finanzas',
+    icono: '💳',
+    nombre: 'Finanzas, Tesorería & Flujo de Caja',
+    descripcion: 'Monitoreo de ingresos y egresos, balances bancarios multi-moneda (RD$, USD, EUR), conciliación bancaria y gestión de cuentas por cobrar y por pagar.'
+  },
+  {
+    id: 'srv-reportes',
+    icono: '📊',
+    nombre: 'Reportes Ejecutivos & Business Intelligence',
+    descripcion: 'Inteligencia de negocios con métricas en tiempo real, balances generales, estados de resultados y exportación a formatos PDF y Excel.'
+  },
+  {
+    id: 'srv-integraciones',
+    icono: '🌐',
+    nombre: 'Integraciones, Webhooks & WhatsApp API',
+    descripcion: 'Conexión con WhatsApp Business API para notificaciones directas a clientes, servidor de correo SMTP TLS, pasarelas de pago y automatizaciones con n8n.'
+  },
+  {
+    id: 'srv-ia',
+    icono: '🤖',
+    nombre: 'Asistente IA 24/7 & Automatización de Procesos',
+    descripcion: 'Consultas en lenguaje natural sobre cualquier dato operativo de la empresa, recomendaciones estratégicas y automatización de tareas.'
+  }
+]
 
-function getERPContext() {
-  // 1. Ventas
+// ── Obtener datos en tiempo real de toda la Base de Datos del ERP ──────────────────
+export function getERPContext() {
   const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
-  // 2. Compras
   const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
-  // 3. Inventario
   const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
-  const categorias = JSON.parse(localStorage.getItem('appes_inventory_categories_v1') || '[]')
   const almacenes = JSON.parse(localStorage.getItem('appes_inventory_warehouses_v1') || '[]')
-  // 4. CRM & Clientes
   const clientesCRM = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
   const oportunidadesCRM = JSON.parse(localStorage.getItem('appes_crm_opportunities_v1') || '[]')
   const contactosCRM = JSON.parse(localStorage.getItem('appes_crm_contacts_v1') || '[]')
-  // 5. Finanzas
   const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
   const cuentasBancos = finanzasData.cuentas || []
   const comprobantes = finanzasData.comprobantes || []
-  // 6. RRHH
   const empleados = JSON.parse(localStorage.getItem('appes_rrhh_colaboradores_v1') || '[]')
+  const settings = JSON.parse(localStorage.getItem('appes_erp_global_settings_v2') || '{}')
 
-  // Cálculos consolidados
   const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
   const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
   const ventasPendientes = ventas.filter(v => v.estado === 'Pendiente').length
@@ -48,68 +95,43 @@ function getERPContext() {
   const saldoTotalBancos = cuentasBancos.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
 
   return `
-DATOS SINCRONIZADOS EN TIEMPO REAL CON LA BASE DE DATOS DE APPEX.ERP:
+PORTAFOLIO DE NUESTROS SERVICIOS EMPRESARIALES (APPEX ENTERPRISE SUITE):
+1. Ventas & Facturación Electrónica DGII (e-CF): Emisión con NCF (B01, B02, B14, B15), cobros, cotizaciones.
+2. Compras & Proveedores: Órdenes de compra, control de costos, recepción de mercancías.
+3. Inventario Multialmacén: Existencias en vivo, kardex de entradas/salidas, alertas de stock mínimo.
+4. CRM & Clientes: Pipeline comercial, seguimiento de oportunidades, cartera de clientes.
+5. Proyectos & Kanban: Hitos, cronogramas, tareas operativas, rentabilidad.
+6. Finanzas & Tesorería: Flujo de caja, cuentas por cobrar/pagar, cuentas bancarias.
+7. Reportes & Business Intelligence: Informes financieros, balances y analíticas.
+8. Integraciones & Webhooks: WhatsApp Business API, Servidor SMTP TLS, DGII y n8n.
 
-🛒 1. MÓDULO DE VENTAS (sales_orders):
-- Total de pedidos: ${ventas.length}
-- Monto total facturado: RD$ ${totalVentas.toLocaleString('es-DO')}
-- Pedidos pendientes: ${ventasPendientes}
-- Órdenes registradas:
-${ventas.map(v => `  • [${v.numero || v.id}] ${v.cliente} | RD$ ${Number(v.total || 0).toLocaleString('es-DO')} | ${v.estado} | ${v.fecha}`).join('\n')}
-
-🏷️ 2. MÓDULO DE COMPRAS (purchase_orders):
-- Total órdenes de compra: ${compras.length}
-- Total en compras: RD$ ${totalCompras.toLocaleString('es-DO')}
-- Órdenes pendientes: ${comprasPendientes}
-- Compras registradas:
-${compras.map(c => `  • [${c.id}] Proveedor: ${c.proveedor} | RD$ ${Number(c.total || 0).toLocaleString('es-DO')} | ${c.estado} | ${c.fecha}`).join('\n')}
-
-📦 3. MÓDULO DE INVENTARIO (products, warehouses):
-- Total de SKUs: ${productos.length}
-- Valoración de Inventario: RD$ ${valorTotalInventario.toLocaleString('es-DO')}
-- Almacenes: ${almacenes.map(a => `${a.nombre} (${a.ubicacion})`).join(', ') || 'Almacén Principal'}
-- Productos con Stock Crítico (${stockCritico.length}):
-${stockCritico.map(p => `  ⚠️ ${p.nombre} (Stock: ${p.stock} | Mínimo: ${p.stockMin || 10} | Almacén: ${p.almacen || 'Principal'})`).join('\n')}
-
-👥 4. MÓDULO DE CRM & CLIENTES (crm_clients, opportunities):
-- Clientes registrados: ${clientesCRM.length} (${clientesCRM.filter(c => c.estado === 'Activo').length} activos)
-- Contactos totales: ${contactosCRM.length}
-- Oportunidades comerciales: ${oportunidadesCRM.length} por un valor total de RD$ ${valorOportunidades.toLocaleString('es-DO')}
-- Principales oportunidades:
-${oportunidadesCRM.slice(0, 5).map(o => `  • ${o.nombre} (${o.cliente}) - RD$ ${Number(o.valor || 0).toLocaleString('es-DO')} | ${o.etapa} | Probabilidad: ${o.probabilidad}%`).join('\n')}
-
-🪙 5. MÓDULO DE FINANZAS & BANCOS:
-- Saldo en cuentas bancarias: RD$ ${saldoTotalBancos.toLocaleString('es-DO')} (${cuentasBancos.length} cuentas)
-- Comprobantes emitidos: ${comprobantes.length} registros contables
-- Ingresos facturados: RD$ ${totalVentas.toLocaleString('es-DO')}
-- Gastos de compras: RD$ ${totalCompras.toLocaleString('es-DO')}
-- Utilidad bruta estimada: RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}
-
-👥 6. RECURSOS HUMANOS:
-- Total colaboradores: ${empleados.length || 24} colaboradores
+DATOS EN TIEMPO REAL EXTRAÍDOS DE LA BASE DE DATOS LOCAL:
+- Razón Social: ${settings.razonSocial || 'APPEX Dominicana Suite SRL'} (RNC: ${settings.rnc || '1-31-89023-4'})
+- Ventas Totales: RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes, ${ventasPendientes} pendientes)
+- Compras Totales: RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes, ${comprasPendientes} pendientes)
+- Utilidad Bruta Estimada: RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}
+- Inventario: ${productos.length} SKUs valorados en RD$ ${valorTotalInventario.toLocaleString('es-DO')} (${stockCritico.length} productos con stock crítico)
+- Clientes en CRM: ${clientesCRM.length} registrados (${oportunidadesCRM.length} oportunidades activas por RD$ ${valorOportunidades.toLocaleString('es-DO')})
+- Saldo en Bancos: RD$ ${saldoTotalBancos.toLocaleString('es-DO')} (${cuentasBancos.length} cuentas)
+- Colaboradores (RRHH): ${empleados.length || 24} colaboradores activos
 `
 }
-
-// ── System Prompt del Asistente ERP ──────────────────────────────────────────
 
 function buildSystemPrompt() {
   const erpData = getERPContext()
 
-  return `Eres el Asistente Inteligente oficial de appex.erp, conectado directamente a la base de datos empresarial.
+  return `Eres el Asistente Virtual Inteligente y Asesor Corporativo oficial de APPEX Enterprise Suite.
+Tu objetivo es brindar soporte integral, presentar nuestros servicios a nuevos clientes y responder cualquier pregunta libre con precisión, amabilidad y profesionalismo.
 
-Tu función es responder con absoluta precisión analítica a partir de los datos sincronizados del sistema.
-
-REGLAS DE RESPUESTA:
-1. Responde de forma clara, ejecutiva y estructurada con Markdown y viñetas (•).
-2. Usa formato de moneda dominicana: "RD$ X,XXX.XX".
-3. Cuando te pidan resúmenes o reportes, menciona los números exactos extraídos de la base de datos.
-4. Si te piden una acción o recomendación, dala basándote en los datos críticos (como compras sugeridas si hay stock bajo).
-5. Mantén un tono profesional, amigable y eficiente.
+INSTRUCCIONES CLAVE:
+1. Si el usuario saluda o pregunta sobre la empresa o qué servicios ofrecemos, presenta con entusiasmo nuestros servicios clave (Ventas & DGII, Compras, Inventario, CRM, Proyectos, Finanzas, Reportes e Integraciones).
+2. Si el usuario hace preguntas sobre los datos del negocio (ventas, productos, compras, bancos, clientes, etc.), usa las cifras exactas del contexto provisto.
+3. Si el usuario hace preguntas conceptuales, técnicas, fiscales (DGII, ITBIS, NCF) o de asesoría de negocios, respóndelas con total claridad y experiencia.
+4. Responde siempre con formato limpio usando Markdown, viñetas (•), negritas y formato de moneda dominicana (RD$ X,XXX.XX).
+5. Mantén un tono ejecutivo, cordial y orientado a soluciones.
 
 ${erpData}`
 }
-
-// ── Función principal de chat con Groq ───────────────────────────────────────
 
 export async function sendMessageToGroq(userMessage, conversationHistory = []) {
   const apiKey = getApiKey()
@@ -121,7 +143,6 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
   try {
     const systemPrompt = buildSystemPrompt()
 
-    // Historial limpio para la conversación
     const messages = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory.slice(-8).map(m => ({
@@ -159,52 +180,160 @@ export async function sendMessageToGroq(userMessage, conversationHistory = []) {
 
     return { success: true, text: content, model: data.model }
   } catch (error) {
-    console.warn('Groq API error, usando respuesta de base de datos directa:', error.message)
+    console.warn('Groq API no disponible, usando motor NLP directo de base de datos:', error.message)
     return { success: false, text: generateDirectDbResponse(userMessage), error: error.message }
   }
 }
 
-// ── Consulta directa a base de datos si no hay internet o falla la API ──────
-
-function generateDirectDbResponse(msg) {
-  const m = msg.toLowerCase()
+// ── Motor NLP Local Autónomo con Conocimiento Completo ───────────────────────
+export function generateDirectDbResponse(msg) {
+  const m = msg.toLowerCase().trim()
   const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
   const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
   const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
   const clientes = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
+  const oportunidades = JSON.parse(localStorage.getItem('appes_crm_opportunities_v1') || '[]')
+  const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
+  const cuentas = finanzasData.cuentas || []
+  const settings = JSON.parse(localStorage.getItem('appes_erp_global_settings_v2') || '{}')
 
   const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
   const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
+  const valorInventario = productos.reduce((s, p) => s + (Number(p.stock || 0) * Number(p.costo || p.precio || 0)), 0)
+  const saldoBancos = cuentas.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
 
-  if (m.includes('venta') || m.includes('pedido')) {
-    return `📊 **Datos directos de la BD (Ventas):**\n\n• **Total pedidos:** ${ventas.length}\n• **Total ventas:** RD$ ${totalVentas.toLocaleString('es-DO')}\n• **Pendientes:** ${ventas.filter(v => v.estado === 'Pendiente').length}\n\nÚltimo pedido registrado: **${ventas[0]?.numero || 'N/A'}** (${ventas[0]?.cliente || 'N/A'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}.`
+  // 1. Saludos o preguntas sobre qué servicios ofrecemos
+  if (
+    m.includes('servicio') ||
+    m.includes('que hacen') ||
+    m.includes('que ofrecen') ||
+    m.includes('ofreces') ||
+    m.includes('quienes son') ||
+    m.includes('hola') ||
+    m.includes('buenos dias') ||
+    m.includes('buenas tardes') ||
+    m.includes('presentate') ||
+    m.includes('ayuda') ||
+    m === 'servicios'
+  ) {
+    return `👋 **¡Hola! Bienvenido a APPEX Enterprise Suite.**\n\nSoy tu Asistente Virtual Inteligente. Nuestra plataforma integral está diseñada para optimizar todas las operaciones de tu empresa. Aquí tienes **nuestros principales servicios y soluciones**:\n\n` +
+      `🛒 **1. Ventas & Facturación Electrónica DGII (e-CF)**\n` +
+      `• Emisión de cotizaciones, pedidos y facturas fiscales (B01 Crédito Fiscal, B02 Consumo, B14, B15).\n` +
+      `• Cumplimiento total con las normativas fiscales de la DGII.\n\n` +
+      `🛍️ **2. Compras & Proveedores**\n` +
+      `• Emisión de órdenes de compra, control de costos, ITBIS y recepción automática en almacenes.\n\n` +
+      `📦 **3. Inventario Multialmacén & Kardex**\n` +
+      `• Control de existencias en tiempo real, valoración por costo promedio y alertas preventivas de stock mínimo.\n\n` +
+      `👥 **4. CRM Comercial & Pipeline**\n` +
+      `• Embudo de ventas, seguimiento de clientes y oportunidades de negocio.\n\n` +
+      `🚀 **5. Proyectos & Tareas Kanban**\n` +
+      `• Gestión visual del flujo de trabajo, cronogramas y rentabilidad operativa.\n\n` +
+      `💳 **6. Finanzas, Bancos & Flujo de Caja**\n` +
+      `• Conciliación bancaria, cuentas por cobrar/pagar y estado financiero en tiempo real.\n\n` +
+      `🌐 **7. Integraciones & WhatsApp API**\n` +
+      `• Envío de comprobantes por WhatsApp, notificaciones por correo SMTP y webhooks con n8n.\n\n` +
+      `💬 *¿Deseas consultar datos específicos de tu empresa o profundizar en alguno de nuestros servicios?*`
   }
 
-  if (m.includes('compra') || m.includes('proveedor')) {
-    return `🏷️ **Datos directos de la BD (Compras):**\n\n• **Total órdenes:** ${compras.length}\n• **Monto en compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n• **Pendientes:** ${compras.filter(c => c.estado === 'Pendiente').length}`
+  // 2. Ventas y Facturación
+  if (m.includes('venta') || m.includes('pedido') || m.includes('factura') || m.includes('facturacion') || m.includes('cotizacion')) {
+    const pendientes = ventas.filter(v => v.estado === 'Pendiente').length
+    const completadas = ventas.filter(v => v.estado === 'Completado' || v.estado === 'Entregado').length
+    return `🛒 **Módulo de Ventas & Facturación (Datos en Tiempo Real):**\n\n` +
+      `• **Total Facturado:** RD$ ${totalVentas.toLocaleString('es-DO')}\n` +
+      `• **Órdenes Totales:** ${ventas.length} pedidos registrados\n` +
+      `• **Pedidos Completados:** ${completadas}\n` +
+      `• **Pedidos Pendientes:** ${pendientes}\n` +
+      `• **Último Pedido:** ${ventas[0]?.numero || 'PED-1001'} (${ventas[0]?.cliente || 'Cliente General'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}\n\n` +
+      `💡 *Servicio relacionado:* Puedes emitir nuevas facturas fiscales con comprobante DGII desde el módulo de Ventas.`
   }
 
-  if (m.includes('inventario') || m.includes('stock') || m.includes('producto')) {
+  // 3. Compras y Proveedores
+  if (m.includes('compra') || m.includes('proveedor') || m.includes('orden de compra') || m.includes('abastecer')) {
+    const pendientes = compras.filter(c => c.estado === 'Pendiente').length
+    return `🛍️ **Módulo de Compras & Proveedores (Datos en Tiempo Real):**\n\n` +
+      `• **Total Invertido en Compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n` +
+      `• **Órdenes de Compra:** ${compras.length} órdenes registradas\n` +
+      `• **Órdenes Pendientes de Recepción:** ${pendientes}\n` +
+      `• **Última Compra:** ${compras[0]?.id || 'OC-2026-001'} a ${compras[0]?.proveedor || 'Proveedor Autorizado'} por RD$ ${Number(compras[0]?.total || 0).toLocaleString('es-DO')}\n\n` +
+      `💡 *Servicio relacionado:* Las compras recibidas actualizan automáticamente las existencias en el inventario.`
+  }
+
+  // 4. Inventario y Stock
+  if (m.includes('inventario') || m.includes('stock') || m.includes('producto') || m.includes('almacen') || m.includes('kardex')) {
     const criticos = productos.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 10))
-    return `📦 **Datos directos de la BD (Inventario):**\n\n• **Total SKUs:** ${productos.length}\n• **Productos con stock crítico:** ${criticos.length}\n\n${criticos.slice(0, 3).map(p => `• ${p.nombre} (Stock: ${p.stock})`).join('\n')}`
+    return `📦 **Módulo de Inventario & Almacén (Datos en Tiempo Real):**\n\n` +
+      `• **Total de SKUs en Catálogo:** ${productos.length} productos\n` +
+      `• **Valoración Total del Inventario:** RD$ ${valorInventario.toLocaleString('es-DO')}\n` +
+      `• **Productos con Stock Crítico:** ${criticos.length} productos\n\n` +
+      `⚠️ **Productos que requieren reabastecimiento urgente:**\n` +
+      (criticos.length > 0
+        ? criticos.slice(0, 4).map(p => `  • **${p.nombre}**: ${p.stock} unidades en existencia (Mínimo: ${p.stockMin || 10})`).join('\n')
+        : '  • ¡Excelente! Todos los productos se encuentran sobre el umbral mínimo.') +
+      `\n\n💡 *Servicio relacionado:* Puedes gestionar transferencias y kardex detallado desde el módulo de Inventario.`
   }
 
-  if (m.includes('cliente') || m.includes('crm') || m.includes('contacto')) {
-    const contactos = JSON.parse(localStorage.getItem('appes_crm_contacts_v1') || '[]')
-    return `👥 **Datos directos de la BD (CRM & Clientes):**\n\n• **Total clientes:** ${clientes.length} (${clientes.filter(c => c.estado === 'Activo').length} activos)\n• **Contactos registrados:** ${contactos.length}\n• **Último cliente:** ${clientes[0]?.nombre || 'Tech Solutions SRL'}`
+  // 5. Clientes y CRM
+  if (m.includes('cliente') || m.includes('crm') || m.includes('contacto') || m.includes('lead') || m.includes('prospecto') || m.includes('oportunidad')) {
+    const valorOps = oportunidades.reduce((s, o) => s + (Number(o.valor) || 0), 0)
+    const activos = clientes.filter(c => c.estado === 'Activo').length
+    return `👥 **Módulo CRM & Cartera de Clientes (Datos en Tiempo Real):**\n\n` +
+      `• **Total Clientes:** ${clientes.length} registrados (${activos} activos)\n` +
+      `• **Oportunidades Comerciales:** ${oportunidades.length} activas\n` +
+      `• **Pipeline Total:** RD$ ${valorOps.toLocaleString('es-DO')}\n` +
+      `• **Top Cliente:** ${clientes[0]?.nombre || 'Tech Solutions SRL'} (${clientes[0]?.telefono || '809-555-0192'})\n\n` +
+      `💡 *Servicio relacionado:* Desde el CRM puedes dar seguimiento al embudo de ventas y sincronizar con WhatsApp.`
   }
 
-  if (m.includes('finanza') || m.includes('banco') || m.includes('gasto') || m.includes('ingreso') || m.includes('flujo') || m.includes('utilidad')) {
-    const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
-    const cuentas = finanzasData.cuentas || []
-    const saldoTotal = cuentas.reduce((s, c) => s + (Number(c.saldo) || 0), 0)
-    return `🪙 **Datos directos de la BD (Finanzas & Tesorería):**\n\n• **Ingresos facturados:** RD$ ${totalVentas.toLocaleString('es-DO')}\n• **Gastos en compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n• **Utilidad estimada:** RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}\n• **Saldo en bancos:** RD$ ${saldoTotal.toLocaleString('es-DO')} (${cuentas.length} cuentas bancarias)`
+  // 6. Finanzas, Tesorería y Bancos
+  if (m.includes('finanza') || m.includes('banco') || m.includes('gasto') || m.includes('ingreso') || m.includes('flujo') || m.includes('utilidad') || m.includes('dinero') || m.includes('ganancia')) {
+    const utilidad = totalVentas - totalCompras
+    const margen = totalVentas > 0 ? ((utilidad / totalVentas) * 100).toFixed(1) : '0'
+    return `💳 **Módulo de Finanzas & Tesorería (Datos en Tiempo Real):**\n\n` +
+      `• **Ingresos por Ventas:** RD$ ${totalVentas.toLocaleString('es-DO')}\n` +
+      `• **Egresos por Compras:** RD$ ${totalCompras.toLocaleString('es-DO')}\n` +
+      `• **Utilidad Bruta Operativa:** RD$ ${utilidad.toLocaleString('es-DO')} (Margen: ${margen}%)\n` +
+      `• **Saldo Total en Cuentas Bancarias:** RD$ ${saldoBancos.toLocaleString('es-DO')} (${cuentas.length} cuentas)\n\n` +
+      `💡 *Servicio relacionado:* El módulo de Finanzas emite balances generales, reportes de NCF y estado de cuentas.`
   }
 
-  if (m.includes('rrhh') || m.includes('empleado') || m.includes('colaborador') || m.includes('personal') || m.includes('asistencia')) {
-    const empleados = JSON.parse(localStorage.getItem('appes_rrhh_colaboradores_v1') || '[]')
-    return `👥 **Datos directos de la BD (Recursos Humanos):**\n\n• **Total colaboradores:** ${empleados.length || 24} colaboradores activos\n• **Departamentos:** Ventas, Compras, Almacén, Tecnología, Finanzas\n• **Tasa de asistencia:** 96.5% promedio`
+  // 7. DGII y Fiscal
+  if (m.includes('dgii') || m.includes('ncf') || m.includes('itbis') || m.includes('fiscal') || m.includes('rnc') || m.includes('ecf')) {
+    return `🏛️ **Cumplimiento Fiscal DGII & Facturación Electrónica:**\n\n` +
+      `• **RNC Registrado:** ${settings.rnc || '1-31-89023-4'}\n` +
+      `• **Régimen:** ${settings.regimenFiscal || 'Régimen Ordinario (DGII - ITBIS 18%)'}\n` +
+      `• **Comprobantes Habilitados:** B01 (Crédito Fiscal), B02 (Consumo), B14 (Regímenes Especiales), B15 (Gubernamental), e-CF E31.\n` +
+      `• **Cálculo de ITBIS:** Automatizado al 18% en cada pedido y factura.\n\n` +
+      `💡 *Servicio relacionado:* Validamos e-CF en tiempo real mediante el conector del Hub de Integraciones.`
   }
 
-  return `📊 **Resumen Global Sincronizado de la Base de Datos:**\n\n• **Ventas:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes)\n• **Compras:** RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes)\n• **Productos en Inventario:** ${productos.length} SKUs\n• **Clientes CRM:** ${clientes.length} registrados\n• **Balance Neto Estimado:** RD$ ${(totalVentas - totalCompras).toLocaleString('es-DO')}`
+  // 8. Integraciones y WhatsApp
+  if (m.includes('whatsapp') || m.includes('integracion') || m.includes('api') || m.includes('webhook') || m.includes('n8n') || m.includes('correo') || m.includes('smtp')) {
+    return `🌐 **Hub de Integraciones & Conectores Externos:**\n\n` +
+      `• **WhatsApp Business Cloud API:** Envío de recibos de cobro y avisos de entrega directamente al celular del cliente.\n` +
+      `• **Servidor SMTP TLS:** Envío de facturas en PDF y comprobantes electrónicos.\n` +
+      `• **Conector DGII e-CF:** Transmisión y validación fiscal en línea.\n` +
+      `• **n8n Workflows:** Automatización de flujos de inventario y alertas con IA.\n\n` +
+      `💡 *Servicio relacionado:* Puedes gestionar y disparar acciones en vivo desde el módulo de Integraciones.`
+  }
+
+  // 9. Proyectos y Tareas
+  if (m.includes('proyecto') || m.includes('tarea') || m.includes('kanban') || m.includes('cronograma')) {
+    return `🚀 **Módulo de Gestión de Proyectos:**\n\n` +
+      `• **Tableros Kanban:** Seguimiento visual por columnas (Por Hacer, En Proceso, En Revisión, Completado).\n` +
+      `• **Control de Hitos & Entregables:** Monitoreo de plazos y cumplimiento.\n` +
+      `• **Rentabilidad:** Comparación entre presupuesto asignado y costo real de horas trabajadas.\n\n` +
+      `💡 *Servicio relacionado:* Vincula oportunidades ganadas en el CRM directamente con nuevos proyectos.`
+  }
+
+  // 10. Respuesta general analítica con resumen y servicios
+  return `🤖 **Asistente Virtual APPEX ERP:**\n\n` +
+    `He analizado tu consulta sobre "*${msg}*". A continuación, te comparto el estado actual del sistema:\n\n` +
+    `• **Ventas:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes)\n` +
+    `• **Compras:** RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes)\n` +
+    `• **Inventario:** ${productos.length} SKUs (Valor: RD$ ${valorInventario.toLocaleString('es-DO')})\n` +
+    `• **Clientes Activos:** ${clientes.length} registrados en CRM\n` +
+    `• **Saldo Bancario:** RD$ ${saldoBancos.toLocaleString('es-DO')}\n\n` +
+    `🌟 **Nuestros Servicios Disponibles:** Ventas & e-CF DGII, Compras, Inventario, CRM, Proyectos, Finanzas, Reportes e Integraciones WhatsApp/SMTP.\n\n` +
+    `💬 *¿Te gustaría que realice alguna acción específica o profundice en algún área de tu negocio?*`
 }
