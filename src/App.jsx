@@ -15,6 +15,7 @@
 import 'modules/ventas'
 import 'modules/crm'
 import 'modules/rrhh-inventario'
+import 'modules/rrhh-inventario/rrhh.index'
 import 'modules/chatbot'
 import 'modules/plugin-manager'
 import 'modules/compras'

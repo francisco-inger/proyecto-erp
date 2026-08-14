@@ -9,6 +9,7 @@ const MODULE_ICONS = {
   ventas:          '🛒',
   compras:         '🛍️',
   'rrhh-inventario': '📦',
+  rrhh:            '👤',
   crm:             '👥',
   finanzas:        '💲',
   proyectos:       '📁',
@@ -24,6 +25,7 @@ const MODULE_NAMES = {
   chatbot: 'AI Chatbot',
   crm: 'Clientes (CRM)',
   reportes: 'Reportes & Analytics',
+  rrhh: 'RRHH',
 }
 
 const SUBMENUS = {
@@ -47,7 +49,7 @@ const SUBMENUS = {
   ],
 }
 
-const MODULE_ORDER = ['ventas','compras','rrhh-inventario','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager']
+const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager']
 
 export function Sidebar() {
   const { user } = useAuth()
@@ -63,6 +65,9 @@ export function Sidebar() {
   useEffect(() => {
     if (location.pathname.includes('inventario') || location.pathname.includes('rrhh-inventario')) {
       setOpenSubmenus((prev) => ({ ...prev, 'rrhh-inventario': true }))
+    }
+    if (location.pathname === '/rrhh' || location.pathname.startsWith('/rrhh?')) {
+      setOpenSubmenus((prev) => ({ ...prev, rrhh: true }))
     }
   }, [location.pathname])
 
@@ -109,7 +114,8 @@ export function Sidebar() {
                   <div
                     className={`sidebar-link sidebar-parent-link ${isParentActive ? 'active-parent' : ''}`}
                     onClick={() => {
-                      if (!isParentActive) navigate(`${mod.path}?tab=Resumen`)
+                      const defaultTab = mod.id === 'rrhh' ? 'Resumen RRHH' : 'Resumen'
+                      if (!isParentActive) navigate(`${mod.path}?tab=${encodeURIComponent(defaultTab)}`)
                       setOpenSubmenus((prev) => ({ ...prev, [mod.id]: true }))
                     }}
                   >
