@@ -3,3 +3,9 @@ dist
 .env
 .DS_Store
 .env.local
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
