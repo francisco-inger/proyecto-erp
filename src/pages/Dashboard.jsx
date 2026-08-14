@@ -148,19 +148,20 @@ function MainSalesChart() {
 
 // ─── Mini Donut Chart SVG ─────────────────────────────────────────────────────
 
-function CategoryDonutChart() {
-  const categories = [
-    { label: 'Productos', pct: 45, color: '#2563EB' },
-    { label: 'Servicios', pct: 25, color: '#059669' },
-    { label: 'Suscripciones', pct: 20, color: '#D97706' },
-    { label: 'Otros', pct: 10, color: '#94A3B8' },
+function CategoryDonutChart({ categories }) {
+  const defaultCats = [
+    { label: 'Medicamentos', pct: 45, color: '#2563EB' },
+    { label: 'Equipos Médicos', pct: 25, color: '#059669' },
+    { label: 'Insumos', pct: 20, color: '#D97706' },
+    { label: 'Suplementos', pct: 10, color: '#7C3AED' },
   ]
+  const cats = (categories && categories.length > 0) ? categories : defaultCats
 
   const R = 48, cx = 65, cy = 65
   const circumference = 2 * Math.PI * R
   let offset = 0
 
-  const arcs = categories.map((cat) => {
+  const arcs = cats.map((cat) => {
     const dash = (cat.pct / 100) * circumference
     const gap = circumference - dash
     const strokeDashoffset = -offset
@@ -172,7 +173,7 @@ function CategoryDonutChart() {
         cy={cy}
         r={R}
         fill="none"
-        stroke={cat.color}
+        stroke={cat.color || '#2563EB'}
         strokeWidth="18"
         strokeDasharray={`${dash} ${gap}`}
         strokeDashoffset={strokeDashoffset}
@@ -186,9 +187,9 @@ function CategoryDonutChart() {
         {arcs}
       </svg>
       <ul className="dash-donut-legend">
-        {categories.map((c) => (
+        {cats.map((c) => (
           <li key={c.label}>
-            <span className="dash-legend-dot" style={{ background: c.color }} />
+            <span className="dash-legend-dot" style={{ background: c.color || '#2563EB' }} />
             <span className="dash-legend-name">{c.label}</span>
             <span className="dash-legend-pct">{c.pct}%</span>
           </li>
@@ -279,6 +280,7 @@ export function Dashboard() {
   const [actividades, setActividades] = useState([])
   const [inventarioSummary, setInventarioSummary] = useState({ total: 1245, disponible: 890, stockBajo: 120, sinStock: 35 })
   const [topProductos, setTopProductos] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [financieroSummary, setFinancieroSummary] = useState({
     ingresos: { value: 1250000 },
     gastos: { value: 850000 },
@@ -286,37 +288,45 @@ export function Dashboard() {
     margen: { value: 32 },
   })
 
-  const [salesSparkData] = useState([
+  const [salesSparkData, setSalesSparkData] = useState([
     { valor: 80000 }, { valor: 95000 }, { valor: 88000 }, { valor: 110000 },
     { valor: 105000 }, { valor: 125000 }, { valor: 140000 }
   ])
-  const [ordersSparkData] = useState([
+  const [ordersSparkData, setOrdersSparkData] = useState([
     { valor: 280 }, { valor: 290 }, { valor: 310 }, { valor: 300 },
     { valor: 320 }, { valor: 315 }, { valor: 340 }
   ])
-  const [clientsSparkData] = useState([
+  const [clientsSparkData, setClientsSparkData] = useState([
     { valor: 1050 }, { valor: 1100 }, { valor: 1120 }, { valor: 1180 },
     { valor: 1200 }, { valor: 1220 }, { valor: 1245 }
   ])
-  const [profitSparkData] = useState([
+  const [profitSparkData, setProfitSparkData] = useState([
     { valor: 210000 }, { valor: 220000 }, { valor: 215000 }, { valor: 235000 },
     { valor: 240000 }, { valor: 245000 }, { valor: 250000 }
   ])
 
   const refreshAll = async () => {
     try {
-      const [kpiRes, actRes, invRes, topRes, finRes] = await Promise.all([
+      const [kpiRes, actRes, invRes, topRes, finRes, catRes] = await Promise.all([
         dashboardService.getKpis(),
         dashboardService.getActividades(),
         dashboardService.getInventario(),
         dashboardService.getTopProductos(),
         dashboardService.getFinanciero(),
+        dashboardService.getCategorias(),
       ])
-      if (kpiRes) setKpis(kpiRes)
+      if (kpiRes) {
+        setKpis(kpiRes)
+        if (kpiRes.salesSpark) setSalesSparkData(kpiRes.salesSpark)
+        if (kpiRes.ordersSpark) setOrdersSparkData(kpiRes.ordersSpark)
+        if (kpiRes.clientsSpark) setClientsSparkData(kpiRes.clientsSpark)
+        if (kpiRes.profitSpark) setProfitSparkData(kpiRes.profitSpark)
+      }
       if (actRes) setActividades(actRes)
       if (invRes) setInventarioSummary(invRes)
       if (topRes) setTopProductos(topRes)
       if (finRes) setFinancieroSummary(finRes)
+      if (catRes) setCategorias(catRes)
     } catch (e) {
       console.warn('[Dashboard] Error fetching dynamic data:', e)
     }
@@ -568,7 +578,7 @@ export function Dashboard() {
           <div className="dash-card-header">
             <strong>Ventas por Categoría</strong>
           </div>
-          <CategoryDonutChart />
+          <CategoryDonutChart categories={categorias} />
         </div>
 
         {/* Bloque 3: Chatbot IA */}
