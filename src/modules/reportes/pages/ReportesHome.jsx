@@ -223,18 +223,24 @@ function Sparkline({ isUp = true }) {
 export function ReportesHome() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isRecalculating, setIsRecalculating] = useState(false)
   const [period, setPeriod] = useState('Este Mes (Mayo 2025)')
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
     load()
-  }, [])
+  }, [period])
 
   const load = async () => {
-    setLoading(true)
-    const reportData = await reportesService.getReportesData()
+    setIsRecalculating(true)
+    const mult = period === 'Último Trimestre' ? 3 : period === 'Año Fiscal 2025' ? 12 : 1
+    const reportData = await reportesService.getReportesData(period, mult)
     setData(reportData)
     setLoading(false)
+    setTimeout(() => {
+      setIsRecalculating(false)
+      showToastMsg('⚡ Métricas y reportes recalculados con la Base de Datos')
+    }, 300)
   }
 
   const showToastMsg = (msg) => {
@@ -251,14 +257,15 @@ export function ReportesHome() {
 
   const handlePeriodChange = (newPeriod) => {
     setPeriod(newPeriod)
-    showToastMsg(`Filtro aplicado: ${newPeriod} 📅`)
-    load()
+    showToastMsg(`Período actualizado: ${newPeriod} 📅`)
   }
 
   if (loading || !data) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>
-        <p>Cargando analítica y sincronizando con la base de datos...</p>
+      <div style={{ padding: 60, textAlign: 'center', color: '#64748B' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
+        <p style={{ fontWeight: 600, fontSize: 16, color: '#1E293B' }}>Sincronizando y recalculando analítica con la Base de Datos...</p>
+        <span style={{ fontSize: 13, color: '#94A3B8' }}>Consultando Ventas, Finanzas, Compras e Inventario</span>
       </div>
     )
   }
@@ -364,21 +371,23 @@ export function ReportesHome() {
             </button>
             <button
               onClick={load}
+              disabled={isRecalculating}
               style={{
-                background: 'rgba(255, 255, 255, 0.15)',
+                background: isRecalculating ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.15)',
                 color: '#FFFFFF',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: 8,
                 padding: '8px 16px',
                 fontSize: 12,
                 fontWeight: 700,
-                cursor: 'pointer',
+                cursor: isRecalculating ? 'wait' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6
               }}
             >
-              🔄 Recalcular / Sincronizar
+              <span style={{ display: 'inline-block', transform: isRecalculating ? 'rotate(360deg)' : 'none', transition: 'transform 500ms ease' }}>🔄</span>
+              {isRecalculating ? 'Recalculando...' : 'Recalcular / Sincronizar'}
             </button>
             <button
               onClick={() => window.print()}
@@ -399,6 +408,73 @@ export function ReportesHome() {
               🖨️ Imprimir
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* ── Sub-barra interactiva de Filtro de Período y Estado de Sincronización ── */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: '#FFFFFF',
+        padding: '12px 18px',
+        borderRadius: 14,
+        border: '1px solid #E2E8F0',
+        marginBottom: 18,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        flexWrap: 'wrap',
+        gap: 12
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>
+            📅 Período de Analítica:
+          </span>
+          <select
+            value={period}
+            onChange={(e) => handlePeriodChange(e.target.value)}
+            style={{
+              background: '#F8FAFC',
+              border: '1px solid #CBD5E1',
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#0F172A',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            <option value="Este Mes (Mayo 2025)">📅 Este Mes (Mayo 2025)</option>
+            <option value="Último Trimestre">📅 Último Trimestre (Q1 2025)</option>
+            <option value="Año Fiscal 2025">📅 Año Fiscal 2025 (Completo)</option>
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '4px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+            Base de Datos Sincronizada
+          </span>
+          <button
+            onClick={load}
+            disabled={isRecalculating}
+            style={{
+              background: '#2563EB',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 8,
+              padding: '7px 14px',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: isRecalculating ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 2px 6px rgba(37,99,235,0.3)'
+            }}
+          >
+            ⚡ Recalcular Ahora
+          </button>
         </div>
       </div>
 

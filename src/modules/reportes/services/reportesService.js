@@ -7,7 +7,7 @@ import { rrhhInventarioService } from '../../rrhh-inventario/services/rrhhInvent
 import { integracionesService } from '../../integraciones/services/integraciones.service'
 
 export const reportesService = {
-  getReportesData: async (periodo = 'month') => {
+  getReportesData: async (periodo = 'Este Mes (Mayo 2025)', multiplier = 1) => {
     // 1. Obtener datos de Finanzas
     let comprobantes = []
     let balanceTotal = 1250000
@@ -17,14 +17,17 @@ export const reportesService = {
       balanceTotal = finanzasData.cuentas?.reduce((acc, c) => acc + (c.saldo || 0), 0) || 1250000
     } catch (_) {}
 
-    // Calcular ingresos y gastos reales
-    const ingresosReales = comprobantes
+    // Calcular ingresos y gastos reales aplicando multiplicador de período
+    const baseIngresos = comprobantes
       .filter(c => c.tipo?.includes('Ingreso') || c.tipo === 'FV' || c.tipo === 'Venta')
       .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 1250000
 
-    const gastosReales = comprobantes
+    const baseGastos = comprobantes
       .filter(c => c.tipo?.includes('Egreso') || c.tipo?.includes('Gasto') || c.tipo === 'EG' || c.tipo === 'Compra' || c.tipo === 'Nómina')
       .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 850000
+
+    const ingresosReales = Math.round(baseIngresos * multiplier)
+    const gastosReales = Math.round(baseGastos * multiplier)
 
     const utilidadNeta = ingresosReales - gastosReales
     const margenGanancia = ingresosReales > 0 ? Math.round((utilidadNeta / ingresosReales) * 100) : 32
