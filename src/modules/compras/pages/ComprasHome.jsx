@@ -170,76 +170,137 @@ export function ComprasHome() {
 
   return (
     <div className="compras-container">
-      {/* ── Encabezado Principal ── */}
-      <div className="compras-header-row">
-        <div className="compras-title-box">
-          <div className="compras-title-row">
-            <span className="compras-tag-icon">🏷️</span>
-            <h1 className="compras-main-title">Compras</h1>
-            <button className="compras-gear-btn" title="Configuración de compras">⚙</button>
-          </div>
-          <p className="compras-subtitle">Gestión de órdenes de compra y proveedores.</p>
-        </div>
+      {/* ── Banner Hero Panorámico de Compras (Misma Secuencia de Color Azul Real) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 20,
+      }}>
+        {/* Imagen de fondo panorámica de compras y cadena de suministro */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_compras_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
 
-        <div className="compras-header-actions">
-          <div className="compras-btn-split">
-            <button className="compras-btn-split-main" onClick={() => setShowCreateModal(true)}>
-              + Nueva Orden
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <span>🛍️</span> PANEL DE CONTROL · COMPRAS & CADENA DE SUMINISTRO
+          </div>
+
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Control de Compras y Proveedores
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Gestiona adquisiciones corporativas, emisión de órdenes de compra (OC), control de embarques y catálogo de proveedores.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(totalComprasMes > 0 ? totalComprasMes : 850000)}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Compras Acumuladas</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{totalOrdenesMes}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Órdenes Totales</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{proveedoresActivos}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Proveedores Homologados</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>{ordenesPendientes}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>En Tránsito / Pendientes</div>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              + Nueva Orden de Compra
             </button>
-            <button className="compras-btn-split-arrow" onClick={() => setShowCreateModal(true)}>
-              ▾
+            <button
+              onClick={handleExportCSV}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              📄 Exportar a CSV
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4 KPI Cards Superiores ── */}
-      <div className="compras-kpi-grid">
-        {/* KPI 1 */}
-        <div className="compras-kpi-card" onClick={() => setActiveTab('Todas')} style={{ cursor: 'pointer' }}>
-          <div className="compras-kpi-icon-box blue">
-            🛒
-          </div>
-          <div className="compras-kpi-content">
-            <span className="compras-kpi-label">Órdenes este mes</span>
-            <h3 className="compras-kpi-value">{totalOrdenesMes}</h3>
-            <span className="compras-kpi-trend up">↑ 20% vs mes anterior</span>
-          </div>
-        </div>
-
-        {/* KPI 2 */}
-        <div className="compras-kpi-card">
-          <div className="compras-kpi-icon-box green">
-            💲
-          </div>
-          <div className="compras-kpi-content">
-            <span className="compras-kpi-label">Total compras este mes</span>
-            <h3 className="compras-kpi-value">{money(totalComprasMes > 0 ? totalComprasMes : 1250000)}</h3>
-            <span className="compras-kpi-trend up">↑ 18% vs mes anterior</span>
-          </div>
-        </div>
-
-        {/* KPI 3 */}
-        <div className="compras-kpi-card" onClick={() => setActiveTab('Pendientes')} style={{ cursor: 'pointer' }}>
-          <div className="compras-kpi-icon-box orange">
-            📦
-          </div>
-          <div className="compras-kpi-content">
-            <span className="compras-kpi-label">Órdenes pendientes</span>
-            <h3 className="compras-kpi-value">{ordenesPendientes || 3}</h3>
-            <span className="compras-kpi-trend down">● 25% vs mes anterior</span>
-          </div>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="compras-kpi-card">
-          <div className="compras-kpi-icon-box purple">
-            👥
-          </div>
-          <div className="compras-kpi-content">
-            <span className="compras-kpi-label">Proveedores activos</span>
-            <h3 className="compras-kpi-value">{proveedoresActivos}</h3>
-            <span className="compras-kpi-trend up">↑ 12% vs mes anterior</span>
+            <button
+              onClick={() => window.print()}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🖨️ Imprimir
+            </button>
           </div>
         </div>
       </div>
