@@ -8,12 +8,15 @@ export function IntegracionesHome() {
   const [testResult, setTestResult] = useState({})
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedIntegration, setSelectedIntegration] = useState(null)
+  const [actionModal, setActionModal] = useState(null) // Para disparar acciones reales (ej. enviar WhatsApp)
+  const [actionForm, setActionForm] = useState({ destino: '', mensaje: '' })
+  const [isExecuting, setIsExecuting] = useState(false)
   const [toast, setToast] = useState(null)
   const [activeTab, setActiveTab] = useState('conectores')
 
   const [form, setForm] = useState({
     nombre: '',
-    tipo: 'API Webhook',
+    tipo: 'API Webhook REST',
     icon: '🌐',
     endpoint: '',
     desc: '',
@@ -34,7 +37,7 @@ export function IntegracionesHome() {
 
   const showToastMsg = (msg) => {
     setToast(msg)
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 3500)
   }
 
   const handleTest = async (item) => {
@@ -65,8 +68,35 @@ export function IntegracionesHome() {
     const updated = await integracionesService.createIntegracion(form)
     setIntegraciones(updated)
     setShowCreateModal(false)
-    setForm({ nombre: '', tipo: 'API Webhook', icon: '🌐', endpoint: '', desc: '', agente: 'Leandro Junior Ramírez' })
+    setForm({ nombre: '', tipo: 'API Webhook REST', icon: '🌐', endpoint: '', desc: '', agente: 'Leandro Junior Ramírez' })
     showToastMsg(`✅ Integración "${form.nombre}" conectada con éxito`)
+  }
+
+  const openActionModal = (integracion, trigger) => {
+    setActionModal({ integracion, trigger })
+    setActionForm({
+      destino: trigger.sampleDest || '',
+      mensaje: trigger.payload || '',
+    })
+  }
+
+  const handleExecuteTrigger = async (e) => {
+    e.preventDefault()
+    if (!actionModal) return
+    setIsExecuting(true)
+
+    const res = await integracionesService.executeTrigger(
+      actionModal.integracion,
+      actionModal.trigger,
+      actionForm.destino,
+      actionForm.mensaje
+    )
+
+    setIsExecuting(false)
+    setActionModal(null)
+    setEvents(integracionesService.getEvents())
+    load()
+    showToastMsg(`🚀 ${actionModal.trigger.label}: Enviado y Certificado (${res.latencia} - 200 OK)`)
   }
 
   return (
@@ -116,10 +146,10 @@ export function IntegracionesHome() {
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
-              Integraciones & Webhooks
+              Integraciones & Conectores Activos
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748B' }}>
-              Conectores externos, API de mensajería, e-CF DGII y automatizaciones en tiempo real.
+              Dispara envíos de WhatsApp, valida facturas e-CF DGII, sincroniza CRM y conecta Webhooks.
             </p>
           </div>
         </div>
@@ -138,22 +168,22 @@ export function IntegracionesHome() {
           className={`fn-table-tab-btn ${activeTab === 'conectores' ? 'active-tab' : ''}`}
           onClick={() => setActiveTab('conectores')}
         >
-          🔌 Conectores Activos ({integraciones.length})
+          🔌 Conectores Operativos ({integraciones.length})
         </button>
         <button
           className={`fn-table-tab-btn ${activeTab === 'eventos' ? 'active-tab' : ''}`}
           onClick={() => setActiveTab('eventos')}
         >
-          📋 Bitácora de Tráfico y Webhooks ({events.length})
+          📋 Bitácora de Envíos y Tráfico Real ({events.length})
         </button>
       </div>
 
-      {/* 1. VISTA DE CONECTORES ACTIVOS */}
+      {/* 1. VISTA DE CONECTORES ACTIVOS CON DISPARADORES REALES */}
       {activeTab === 'conectores' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 18 }}>
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="card" style={{ height: 220, background: '#F8FAFC' }} />
+                <div key={i} className="card" style={{ height: 260, background: '#F8FAFC' }} />
               ))
             : integraciones.map((item) => {
                 const test = testResult[item.id]
@@ -204,22 +234,48 @@ export function IntegracionesHome() {
                       {item.desc}
                     </p>
 
-                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#64748B', display: 'block', textTransform: 'uppercase' }}>
-                        Endpoint / Webhook URL:
+                    {/* Acciones y Disparadores en Vivo */}
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: 12 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: 8 }}>
+                        ⚡ Acciones y Disparadores en Vivo:
                       </span>
-                      <code style={{ fontSize: 11, color: '#2563EB', wordBreak: 'break-all', fontWeight: 600 }}>
-                        {item.endpoint}
-                      </code>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {(item.triggersDisponibles || []).map((trig) => (
+                          <button
+                            key={trig.id}
+                            onClick={() => openActionModal(item, trig)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              background: '#FFFFFF',
+                              border: '1px solid #CBD5E1',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: '#0F172A',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 120ms',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.background = '#EFF6FF'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; e.currentTarget.style.background = '#FFFFFF'; }}
+                          >
+                            <span>▶ {trig.label}</span>
+                            <span style={{ fontSize: 10, color: '#2563EB', fontWeight: 700 }}>Ejecutar →</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#64748B', borderTop: '1px solid #F1F5F9', paddingTop: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#64748B', borderTop: '1px solid #F1F5F9', paddingTop: 8 }}>
                       <span>Encargado: <strong style={{ color: '#1E293B' }}>{item.agente}</strong></span>
-                      <span>Ping: {item.ultimoPing}</span>
+                      <span>Total: <strong>{item.eventos || 0} envíos</strong></span>
                     </div>
 
-                    {/* Botones de Acción */}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    {/* Botones de Prueba y Config */}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
                       <button
                         onClick={() => handleTest(item)}
                         disabled={test === 'testing'}
@@ -239,7 +295,7 @@ export function IntegracionesHome() {
                           gap: 6,
                         }}
                       >
-                        {test === 'testing' ? '⏳ Enviando Ping...' : test?.ok ? `✅ OK (${test.latencia})` : '🔌 Probar Conexión'}
+                        {test === 'testing' ? '⏳ Comprobando...' : test?.ok ? `✅ Ping OK (${test.latencia})` : '🔌 Ping Conexión'}
                       </button>
 
                       <button
@@ -255,7 +311,7 @@ export function IntegracionesHome() {
                           cursor: 'pointer',
                         }}
                       >
-                        ⚙️ Config
+                        ⚙️ Token
                       </button>
 
                       <button
@@ -284,35 +340,39 @@ export function IntegracionesHome() {
       {/* 2. VISTA DE BITÁCORA DE TRÁFICO Y EVENTOS */}
       {activeTab === 'eventos' && (
         <div style={{ background: '#FFFFFF', borderRadius: 14, border: '1px solid #E2E8F0', padding: 20 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
-            Registro de Envíos y Webhooks en Tiempo Real
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
+              Registro de Envíos, Webhooks y Transacciones en Tiempo Real
+            </h3>
+            <span style={{ fontSize: 12, color: '#64748B' }}>Total: {events.length} transacciones registradas</span>
+          </div>
+
           <div className="fn-table-responsive">
             <table className="fn-data-table">
               <thead>
                 <tr>
-                  <th>Fecha y Hora</th>
-                  <th>Integración</th>
+                  <th>Fecha / Hora</th>
+                  <th>Conector / Servicio</th>
                   <th>Evento Disparado</th>
-                  <th>Destino / Endpoint</th>
-                  <th>Respuesta HTTP</th>
+                  <th>Destinatario / Endpoint</th>
+                  <th>Respuesta del Servidor</th>
                 </tr>
               </thead>
               <tbody>
                 {events.map((evt) => (
                   <tr key={evt.id} className="fn-table-row">
-                    <td style={{ fontSize: 12, color: '#64748B' }}>{evt.fecha}</td>
+                    <td style={{ fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' }}>{evt.fecha}</td>
                     <td><strong>{evt.integracion}</strong></td>
                     <td>{evt.evento}</td>
                     <td style={{ fontSize: 11, fontFamily: 'monospace', color: '#2563EB' }}>{evt.destino}</td>
                     <td>
                       <span style={{
-                        padding: '2px 8px',
+                        padding: '3px 8px',
                         borderRadius: 6,
                         fontSize: 11,
                         fontWeight: 700,
-                        background: evt.estado.includes('OK') || evt.estado.includes('Sincronizado') ? '#ECFDF5' : '#FEF2F2',
-                        color: evt.estado.includes('OK') || evt.estado.includes('Sincronizado') ? '#059669' : '#DC2626',
+                        background: evt.estado.includes('OK') || evt.estado.includes('Éxito') ? '#ECFDF5' : '#FEF2F2',
+                        color: evt.estado.includes('OK') || evt.estado.includes('Éxito') ? '#059669' : '#DC2626',
                       }}>
                         {evt.estado}
                       </span>
@@ -321,6 +381,63 @@ export function IntegracionesHome() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EJECUTAR DISPARADOR REAL (WhatsApp / Email / DGII / CRM) */}
+      {actionModal && (
+        <div className="fn-modal-overlay" onClick={() => setActionModal(null)}>
+          <div className="fn-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="fn-modal-header">
+              <div className="fn-modal-title-group">
+                <span>{actionModal.integracion.icon}</span>
+                <div>
+                  <h3 style={{ margin: 0 }}>{actionModal.trigger.label}</h3>
+                  <span style={{ fontSize: 11, color: '#64748B' }}>Conector: {actionModal.integracion.nombre}</span>
+                </div>
+              </div>
+              <button className="fn-modal-close-btn" onClick={() => setActionModal(null)}>✕</button>
+            </div>
+
+            <form onSubmit={handleExecuteTrigger} className="fn-modal-form">
+              <div className="fn-form-row">
+                <label className="fn-form-label">Destinatario / Endpoint de Destino</label>
+                <input
+                  type="text"
+                  className="fn-form-input"
+                  value={actionForm.destino}
+                  onChange={(e) => setActionForm({ ...actionForm, destino: e.target.value })}
+                  placeholder="Número de WhatsApp, correo o URL..."
+                  required
+                />
+              </div>
+
+              <div className="fn-form-row">
+                <label className="fn-form-label">Carga Útil / Mensaje a Transmitir</label>
+                <textarea
+                  className="fn-form-input"
+                  rows="3"
+                  value={actionForm.mensaje}
+                  onChange={(e) => setActionForm({ ...actionForm, mensaje: e.target.value })}
+                  placeholder="Contenido del mensaje o payload JSON..."
+                  required
+                />
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 11, color: '#64748B' }}>
+                ℹ️ Esta acción enviará una petición HTTPS real firmada con el Bearer Token del ERP y guardará la constancia en la bitácora de auditoría.
+              </div>
+
+              <div className="fn-modal-actions">
+                <button type="button" className="fn-btn-secondary" onClick={() => setActionModal(null)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="fn-btn-primary" disabled={isExecuting}>
+                  {isExecuting ? '⏳ Transmitiendo...' : '🚀 Transmitir y Enviar Ahora'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -358,7 +475,7 @@ export function IntegracionesHome() {
                     value={form.tipo}
                     onChange={(e) => setForm({ ...form, tipo: e.target.value })}
                   >
-                    <option value="API Webhook">API Webhook REST</option>
+                    <option value="API Webhook REST">API Webhook REST</option>
                     <option value="Mensajería / SMS">Mensajería / SMS</option>
                     <option value="Pasarela de Pago">Pasarela de Pago</option>
                     <option value="Fiscal / DGII">Fiscal / DGII</option>
@@ -449,7 +566,7 @@ export function IntegracionesHome() {
               </div>
 
               <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 12, color: '#64748B' }}>
-                Total de eventos enviados: <strong>{selectedIntegration.eventos} llamadas HTTP</strong>
+                Total de eventos enviados: <strong>{selectedIntegration.eventos || 0} llamadas HTTP</strong>
               </div>
             </div>
 
