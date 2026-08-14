@@ -1,8 +1,5 @@
-/*
-  ComprasHome.jsx — Módulo de Compras (APPEX.ERP)
-  Gestión integral de compras, proveedores, órdenes de compra y acciones contextuales.
-*/
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './ComprasHome.css'
 
@@ -178,26 +175,36 @@ export function ComprasHome() {
     categoria: '',
   })
   const [toast, setToast] = useState(null)
+  const [invProducts, setInvProducts] = useState([])
 
   const [form, setForm] = useState({
     proveedor: '',
     rnc: '',
     categoria: 'Insumos Generales',
     condicionPago: 'Crédito 30 días',
+    productoId: '',
+    itemDesc: 'Adquisición de insumos y materiales operativos',
+    itemCant: 1,
+    itemPrecioUnitario: 0,
     total: '',
     fecha: new Date().toLocaleDateString('es-DO'),
     estado: 'Pendiente',
     entregado: '—',
     notas: '',
-    itemDesc: 'Adquisición de insumos y materiales operativos',
-    itemCant: 1,
   })
 
   // Cargar órdenes y escuchar sincronizaciones en tiempo real
   useEffect(() => {
     setOrdenes(getStoredCompras())
+    inventarioService.listProducts().then(p => {
+      if (p && p.length > 0) setInvProducts(p)
+    }).catch(() => {})
+
     const unsubscribe = erpSync.subscribe(() => {
       setOrdenes(getStoredCompras())
+      inventarioService.listProducts().then(p => {
+        if (p && p.length > 0) setInvProducts(p)
+      }).catch(() => {})
     })
     return () => unsubscribe()
   }, [])
@@ -276,10 +283,7 @@ export function ComprasHome() {
     e.preventDefault()
     if (!form.proveedor || !form.total) return
 
-    const totalVal = Number(form.total)
-    const count = ordenes.length + 1
-    const pad = count < 10 ? `00${count}` : count < 100 ? `0${count}` : `${count}`
-    const today = new Date().toLocaleDateString('es-DO')
+    const selectedInvProd = invProducts.find(p => p.id === form.productoId || p.nombre === form.itemDesc)
 
     const newOrden = {
       id: `OC-${pad}`,
@@ -294,9 +298,13 @@ export function ComprasHome() {
       notas: form.notas || 'Orden de compra generada desde panel de adquisiciones.',
       items: [
         {
+          productoId: form.productoId || selectedInvProd?.id,
+          codigo: selectedInvProd?.codigo || 'OC-ITEM-01',
           descripcion: form.itemDesc || 'Insumos / Servicios Adquiridos',
           cantidad: Number(form.itemCant) || 1,
-          precioUnitario: totalVal / (Number(form.itemCant) || 1)
+          precioUnitario: Number(form.itemPrecioUnitario) > 0
+            ? Number(form.itemPrecioUnitario)
+            : totalVal / (Number(form.itemCant) || 1)
         }
       ]
     }
@@ -313,13 +321,15 @@ export function ComprasHome() {
       rnc: '',
       categoria: 'Insumos Generales',
       condicionPago: 'Crédito 30 días',
+      productoId: '',
+      itemDesc: 'Adquisición de insumos y materiales operativos',
+      itemCant: 1,
+      itemPrecioUnitario: 0,
       total: '',
       fecha: new Date().toLocaleDateString('es-DO'),
       estado: 'Pendiente',
       entregado: '—',
       notas: '',
-      itemDesc: 'Adquisición de insumos y materiales operativos',
-      itemCant: 1,
     })
   }
 
@@ -1121,7 +1131,59 @@ export function ComprasHome() {
                   </div>
                 </div>
 
+                {/* Selector de Producto de Inventario */}
+                {invProducts.length > 0 && (
+                  <div className="compras-form-group">
+                    <label>Producto de Inventario (Opcional - Para reposición de stock)</label>
+                    <select
+                      value={form.productoId}
+                      onChange={e => {
+                        const pid = e.target.value
+                        const prod = invProducts.find(p => p.id === pid)
+                        if (prod) {
+                          const cost = Number(prod.costo || prod.precio * 0.6 || 50)
+                          const cant = Number(form.itemCant || 1)
+                          setForm(f => ({
+                            ...f,
+                            productoId: prod.id,
+                            itemDesc: prod.nombre,
+                            itemPrecioUnitario: cost,
+                            total: (cost * cant).toFixed(2),
+                            categoria: prod.categoria || f.categoria
+                          }))
+                        } else {
+                          setForm(f => ({ ...f, productoId: '' }))
+                        }
+                      }}
+                    >
+                      <option value="">-- Seleccionar producto para reposición automática --</option>
+                      {invProducts.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} · Costo Ref: {money(p.costo || p.precio * 0.6 || 50)} (Stock actual: {p.stock} uds.)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="compras-form-row">
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Cantidad</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.itemCant}
+                      onChange={e => {
+                        const cant = Math.max(1, Number(e.target.value) || 1)
+                        const cost = Number(form.itemPrecioUnitario) || 0
+                        setForm(f => ({
+                          ...f,
+                          itemCant: cant,
+                          total: cost > 0 ? (cost * cant).toFixed(2) : f.total
+                        }))
+                      }}
+                    />
+                  </div>
                   <div className="compras-form-group" style={{ flex: 1 }}>
                     <label>Total Orden (RD$) *</label>
                     <input
@@ -1133,6 +1195,9 @@ export function ComprasHome() {
                       onChange={e => setForm(f => ({ ...f, total: e.target.value }))}
                     />
                   </div>
+                </div>
+
+                <div className="compras-form-row">
                   <div className="compras-form-group" style={{ flex: 1 }}>
                     <label>Fecha de Emisión</label>
                     <input

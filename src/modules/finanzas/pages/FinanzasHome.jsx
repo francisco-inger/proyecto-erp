@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { finanzasService } from '../services/finanzasService'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { KpiCards } from '../components/KpiCards'
 import { CashFlowChart } from '../components/CashFlowChart'
 import { ExpensesDonutChart } from '../components/ExpensesDonutChart'
@@ -23,12 +24,17 @@ export function FinanzasHome() {
   const rawTab = searchParams.get('tab') || 'Resumen'
   const activeTabLower = rawTab.trim().toLowerCase()
 
+  const loadData = async () => {
+    const initial = await finanzasService.getData()
+    setData(initial)
+  }
+
   useEffect(() => {
-    const load = async () => {
-      const initial = await finanzasService.getData()
-      setData(initial)
-    }
-    load()
+    loadData()
+    const unsubscribe = erpSync.subscribe(() => {
+      loadData()
+    })
+    return () => unsubscribe()
   }, [searchParams])
 
   const handleSaveComprobante = async (nuevo) => {

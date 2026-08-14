@@ -4,6 +4,8 @@
 */
 import { useState, useEffect, useMemo } from 'react'
 import { ventasService } from '../services/ventas.service'
+import { crmService } from '../../crm/services/crm.service'
+import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './VentasHome.css'
 
@@ -22,8 +24,17 @@ export function VentasHome() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [toast, setToast] = useState(null)
 
+  // Integraciones con otros módulos
+  const [crmClients, setCrmClients] = useState([])
+  const [invProducts, setInvProducts] = useState([])
+
   const [form, setForm] = useState({
     cliente: '',
+    selectedClientMode: 'select', // 'select' | 'manual'
+    productoId: '',
+    productoNombre: '',
+    cantidad: 1,
+    precioUnitario: 0,
     total: '',
     fecha: new Date().toISOString().slice(0, 10),
     observaciones: '',
@@ -39,10 +50,20 @@ export function VentasHome() {
   }, [])
 
   const loadOrders = async () => {
-    const data = await ventasService.listOrders()
-    setOrders(data)
-    if (data.length > 0 && !selectedId) {
-      setSelectedId(data[0].id)
+    try {
+      const [data, clients, products] = await Promise.all([
+        ventasService.listOrders(),
+        crmService.listClients().catch(() => []),
+        inventarioService.listProducts().catch(() => []),
+      ])
+      setOrders(data)
+      if (clients && clients.length > 0) setCrmClients(clients)
+      if (products && products.length > 0) setInvProducts(products)
+      if (data.length > 0 && !selectedId) {
+        setSelectedId(data[0].id)
+      }
+    } catch (err) {
+      console.warn('[VentasHome] Error loading synchronized data:', err)
     }
   }
 
@@ -82,23 +103,75 @@ export function VentasHome() {
   const ventasAcumuladas = orders.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0)
   const clientesUnicos = new Set(orders.map(o => o.cliente)).size
 
+  // Selección de Producto del Inventario
+  const handleSelectProduct = (prodNameOrId) => {
+    const prod = invProducts.find(p => String(p.id) === String(prodNameOrId) || p.nombre === prodNameOrId)
+    if (prod) {
+      const pUnit = Number(prod.precio) || 100
+      const cant = Number(form.cantidad) || 1
+      setForm(f => ({
+        ...f,
+        productoId: prod.id,
+        productoNombre: prod.nombre,
+        precioUnitario: pUnit,
+        total: (pUnit * cant).toFixed(2),
+      }))
+    } else {
+      setForm(f => ({
+        ...f,
+        productoId: '',
+        productoNombre: prodNameOrId,
+      }))
+    }
+  }
+
+  const handleQtyChange = (qty) => {
+    const cant = Math.max(1, Number(qty) || 1)
+    const pUnit = Number(form.precioUnitario) || 0
+    setForm(f => ({
+      ...f,
+      cantidad: cant,
+      total: pUnit > 0 ? (pUnit * cant).toFixed(2) : f.total,
+    }))
+  }
+
   // Manejador para crear nuevo pedido
   const handleCreateOrder = async (e) => {
     e.preventDefault()
     if (!form.cliente || !form.total) return
-    const newOrd = await ventasService.createOrder({
+
+    const selectedInvProd = invProducts.find(p => p.id === form.productoId || p.nombre === form.productoNombre)
+
+    const orderPayload = {
       cliente: form.cliente,
       total: Number(form.total),
       fecha: form.fecha,
       observaciones: form.observaciones,
       estado: form.estado,
-    })
+      items: form.productoNombre ? [
+        {
+          id: form.productoId || 'item-1',
+          producto: form.productoNombre,
+          codigo: selectedInvProd?.codigo || 'PROD-01',
+          cantidad: Number(form.cantidad) || 1,
+          precio: Number(form.precioUnitario) || Number(form.total),
+          subtotal: Number(form.total),
+        }
+      ] : undefined
+    }
+
+    const newOrd = await ventasService.createOrder(orderPayload)
     await loadOrders()
     setSelectedId(newOrd.id)
     setShowCreateModal(false)
-    showToastMsg(`Pedido creado exitosamente para ${form.cliente}`)
+    showToastMsg(`✅ Pedido ${newOrd.numero} creado y sincronizado con Inventario, CRM y Finanzas`)
     setForm({
       cliente: '',
+      selectedClientMode: 'select',
+      productoId: '',
+      productoNombre: '',
+      cantidad: 1,
+      precioUnitario: 0,
       total: '',
       fecha: new Date().toISOString().slice(0, 10),
       observaciones: '',
@@ -541,17 +614,118 @@ export function VentasHome() {
             </div>
             <form onSubmit={handleCreateOrder}>
               <div className="ventas-modal-body">
+                {/* Selector de Cliente vinculado a CRM */}
                 <div className="ventas-form-group">
-                  <label>Cliente *</label>
-                  <input
-                    required
-                    placeholder="Ej: Farmacia Los Hidalgos"
-                    value={form.cliente}
-                    onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <label style={{ margin: 0 }}>Cliente (CRM) *</label>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                      onClick={() => setForm(f => ({ ...f, selectedClientMode: f.selectedClientMode === 'select' ? 'manual' : 'select' }))}
+                    >
+                      {form.selectedClientMode === 'select' ? '+ Escribir manual' : '← Elegir de CRM'}
+                    </button>
+                  </div>
+
+                  {form.selectedClientMode === 'select' && crmClients.length > 0 ? (
+                    <select
+                      required
+                      value={form.cliente}
+                      onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))}
+                      style={{ padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 8, width: '100%', fontSize: 13 }}
+                    >
+                      <option value="">-- Seleccione cliente de CRM --</option>
+                      {crmClients.map(c => (
+                        <option key={c.id} value={c.nombre}>
+                          {c.nombre} {c.contacto ? `(${c.contacto})` : ''} · {c.sector || 'Cliente'}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      required
+                      placeholder="Ej: Farmacia Los Hidalgos / Centro Médico"
+                      value={form.cliente}
+                      onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))}
+                    />
+                  )}
                 </div>
+
+                {/* Selector de Producto vinculado a Inventario */}
+                {invProducts.length > 0 && (
+                  <div className="ventas-form-group">
+                    <label>Producto del Inventario (Opcional)</label>
+                    <select
+                      value={form.productoId || form.productoNombre}
+                      onChange={e => handleSelectProduct(e.target.value)}
+                      style={{ padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 8, width: '100%', fontSize: 13 }}
+                    >
+                      <option value="">-- Seleccionar producto para vincular stock --</option>
+                      {invProducts.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} · {money(p.precio)} (Stock: {p.stock} uds.)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Fila Cantidad y Precio Unitario */}
+                {form.productoNombre && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                    <div className="ventas-form-group" style={{ marginBottom: 0 }}>
+                      <label>Cantidad (uds.)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={form.cantidad}
+                        onChange={e => handleQtyChange(e.target.value)}
+                      />
+                    </div>
+                    <div className="ventas-form-group" style={{ marginBottom: 0 }}>
+                      <label>Precio Unitario (RD$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.precioUnitario}
+                        onChange={e => {
+                          const p = Number(e.target.value) || 0
+                          setForm(f => ({ ...f, precioUnitario: p, total: (p * Number(f.cantidad || 1)).toFixed(2) }))
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Stock badge indicator */}
+                {form.productoId && (
+                  (() => {
+                    const prod = invProducts.find(p => p.id === form.productoId)
+                    const stock = prod ? Number(prod.stock) : 0
+                    const cant = Number(form.cantidad) || 1
+                    const hasStock = stock >= cant
+                    return (
+                      <div style={{
+                        background: hasStock ? '#ECFDF5' : '#FEF2F2',
+                        border: `1px solid ${hasStock ? '#A7F3D0' : '#FECACA'}`,
+                        color: hasStock ? '#065F46' : '#991B1B',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        marginBottom: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span>📦 <strong>Almacén:</strong> {hasStock ? 'Stock Disponible' : 'Stock Insuficiente'}</span>
+                        <strong>{stock} uds. disponibles</strong>
+                      </div>
+                    )
+                  })()
+                )}
+
                 <div className="ventas-form-group">
-                  <label>Total (RD$) *</label>
+                  <label>Total Pedido (RD$) *</label>
                   <input
                     required
                     type="number"
@@ -584,7 +758,7 @@ export function VentasHome() {
                 <div className="ventas-form-group">
                   <label>Observaciones</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     placeholder="Detalles o notas del pedido..."
                     value={form.observaciones}
                     onChange={e => setForm(f => ({ ...f, observaciones: e.target.value }))}

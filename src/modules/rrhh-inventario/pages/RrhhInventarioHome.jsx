@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { inventarioService } from '../services/rrhhInventario.service'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './InventarioHome.css'
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -317,9 +318,13 @@ export function RrhhInventarioHome() {
     nombre: '', porcentaje: 10, cantidad: 50, color: '#2563EB'
   })
 
-  // Carga inicial de datos
+  // Carga inicial y escucha de eventos de sincronización del ERP
   useEffect(() => {
     loadAll()
+    const unsubscribe = erpSync.subscribe(() => {
+      loadAll()
+    })
+    return () => unsubscribe()
   }, [])
 
   const loadAll = async () => {

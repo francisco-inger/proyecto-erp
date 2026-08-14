@@ -7,6 +7,7 @@
 */
 import { useState, useEffect } from 'react'
 import { crmService } from '../services/crm.service'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './CrmHome.css'
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -183,9 +184,13 @@ export function CrmHome() {
     tipo: 'call', titulo: '', sub: '', hora: 'Hoy, 11:00 a. m.'
   })
 
-  // Carga inicial
+  // Carga inicial y suscripción a eventos de sincronización del ERP
   useEffect(() => {
     loadAllData()
+    const unsubscribe = erpSync.subscribe(() => {
+      loadAllData()
+    })
+    return () => unsubscribe()
   }, [])
 
   const loadAllData = async () => {
