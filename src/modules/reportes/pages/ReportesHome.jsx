@@ -267,35 +267,138 @@ export function ReportesHome() {
 
   return (
     <div className="rep-container">
-      {/* ── Encabezado Principal ── */}
-      <div className="rep-header-row">
-        <div className="rep-title-box">
-          <div className="rep-title-row">
-            <span style={{ fontSize: 22 }}>📊</span>
-            <h1 className="rep-main-title">Reportes & Analytics</h1>
+      {/* ── Banner Hero Panorámico de Reportes & Analytics (Misma Secuencia de Color Azul Real) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 20,
+      }}>
+        {/* Imagen de fondo panorámica de analítica y business intelligence */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <span>📊</span> PANEL DE CONTROL · BUSINESS INTELLIGENCE & ANALYTICS
           </div>
-          <p className="rep-subtitle">Datos en tiempo real consolidados de Ventas, Finanzas, Inventario y Compras.</p>
-        </div>
 
-        <div className="rep-header-actions">
-          <select
-            value={period}
-            onChange={(e) => handlePeriodChange(e.target.value)}
-            className="rep-date-picker-btn"
-            style={{ cursor: 'pointer', outline: 'none', border: '1px solid #CBD5E1', padding: '7px 12px', borderRadius: 8 }}
-          >
-            <option value="Este Mes (Mayo 2025)">📅 01 - 30 May, 2025 (Mes Actual)</option>
-            <option value="Último Trimestre">📅 Q1 2025 (Ene - Mar)</option>
-            <option value="Año Completo 2025">📅 Año Fiscal 2025</option>
-          </select>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Reportes Ejecutivos & Analítica Global
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Consolidado en tiempo real con cruce analítico de Ventas, Finanzas, Inventario Multialmacén y Compras.
+          </p>
 
-          <button className="rep-outline-btn" onClick={load}>
-            🔄 Sincronizar
-          </button>
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(kpis.ingresosTotales)}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ingresos Consolidados</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(kpis.gastosTotales)}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Gastos Totales</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>{money(kpis.utilidadNeta)}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Utilidad Neta</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>{kpis.margenGanancia}%</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Margen Operativo</div>
+            </div>
+          </div>
 
-          <button className="rep-btn-primary" onClick={handleExportPDF}>
-            📥 Exportar PDF / Imprimir
-          </button>
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleExportPDF}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              📥 Exportar PDF Oficial
+            </button>
+            <button
+              onClick={load}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🔄 Recalcular / Sincronizar
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🖨️ Imprimir
+            </button>
+          </div>
         </div>
       </div>
 
