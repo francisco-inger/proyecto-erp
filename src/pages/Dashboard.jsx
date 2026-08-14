@@ -4,7 +4,7 @@
   Muestra KPIs con Sparklines, gráfico de ventas suavizado, ventas por categoría (Donut),
   asistente IA/Chatbot, actividades, inventario, top productos, financiero, integraciones y acciones rápidas.
 */
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useAuth } from '../core/auth/AuthContext'
 import { dashboardService } from './dashboardService'
 import { erpSync } from '../core/sync/erpSyncEngine'
