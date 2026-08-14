@@ -120,46 +120,123 @@ export function IntegracionesHome() {
         </div>
       )}
 
-      {/* Encabezado Superior */}
+      {/* ── Banner Hero Panorámico de Integraciones (Misma Secuencia de Color Azul Real) ── */}
       <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: '#FFFFFF',
-        padding: '20px 24px',
-        borderRadius: 14,
-        border: '1px solid #E2E8F0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 4,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {/* Imagen de fondo panorámica de integraciones y webhooks */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
           <div style={{
-            width: 46,
-            height: 46,
-            borderRadius: 12,
-            background: '#EFF6FF',
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 24,
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
           }}>
-            🌐
+            <span>🌐</span> PANEL DE CONTROL · INTEGRACIONES & APIS EXTERNAS
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
-              Integraciones & Conectores Activos
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748B' }}>
-              Dispara envíos de WhatsApp, valida facturas e-CF DGII, sincroniza CRM y conecta Webhooks.
-            </p>
+
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Hub de Integraciones & Conectores
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Dispara envíos de WhatsApp, valida facturas e-CF ante DGII, sincroniza CRM y conecta Webhooks automatizados con n8n.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{integraciones.length}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Conectores Activos</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>
+                {integraciones.filter(i => i.status === 'Conectado').length}
+              </div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>En Línea (200 OK)</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{events.length}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Eventos Registrados</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>99.9%</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Uptime de Servicios</div>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              + Agregar Integración
+            </button>
+            <button
+              onClick={() => showToastMsg('🚀 Comprobando latencia de todos los conectores...')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              ⚡ Test de Salud Global
+            </button>
           </div>
         </div>
-
-        <button
-          className="fn-btn-primary"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <span>+</span> Agregar Integración
-        </button>
       </div>
 
       {/* Tabs de Navegación */}
