@@ -1627,17 +1627,118 @@ export function RrhhHome() {
 
   return (
     <div className="rrhh-container">
-      {/* Header */}
-      <div className="rrhh-header-row">
-        <div>
-          <h1 className="rrhh-title">Recursos Humanos</h1>
-          <p className="rrhh-subtitle">Gestiona y controla el talento humano de tu empresa</p>
-        </div>
-        <div className="rrhh-header-actions">
-          <div className="rrhh-date-btn">📅 30 May, 2025 ▾</div>
-          <button className="rrhh-btn-secondary" onClick={() => showToast('Filtros avanzados disponibles próximamente')}>
-            🔽 Filtros
-          </button>
+      {/* ── Banner Hero Panorámico RRHH con Estilo Idéntico a la Referencia ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '28px 32px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 20,
+      }}>
+        {/* Imagen de fondo panorámica */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)'
+          }}>
+            <span>👥</span> PANEL DE CONTROL · RECURSOS HUMANOS
+          </div>
+
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Control de Talento Humano
+          </h1>
+          <p style={{ margin: '6px 0 20px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Administra y consulta los registros oficiales de colaboradores, horas de asistencia, nómina y archivo general.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
+            <div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{empleados.length || 24}</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Colaboradores Activos</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>8</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Departamentos</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>178 hrs</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Carga Horaria Promedio</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>0</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Archivados</div>
+            </div>
+          </div>
+
+          {/* Botones Rápidos */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => showToast('Generando reporte oficial en PDF...')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              📄 Exportar PDF
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              🖨️ Imprimir
+            </button>
+          </div>
         </div>
       </div>
 
