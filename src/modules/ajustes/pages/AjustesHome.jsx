@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { SeguridadView } from '../components/SeguridadView'
+import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
 import './AjustesHome.css'
 
 const TABS = [
@@ -460,6 +461,10 @@ export function AjustesHome() {
       {(activeTab === 'Seguridad' || activeTab === 'Usuarios y Roles') && !search ? (
         <div style={{ marginTop: 20 }}>
           <SeguridadView onShowToast={showToast} />
+        </div>
+      ) : activeTab === 'Sistema' && !search ? (
+        <div style={{ marginTop: 20 }}>
+          <PlanEmpresarialView onShowToast={showToast} />
         </div>
       ) : (
         /* ── Secciones de Ajustes ── */
