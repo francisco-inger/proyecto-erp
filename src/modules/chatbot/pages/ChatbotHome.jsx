@@ -224,6 +224,119 @@ export function ChatbotHome() {
 
   return (
     <div className="chat-page">
+      {/* ── Banner Hero Panorámico de AI Chatbot (Misma Secuencia de Color Azul Real) ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
+        borderRadius: 20,
+        padding: '26px 30px',
+        color: '#FFFFFF',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
+        marginBottom: 16,
+      }}>
+        {/* Imagen de fondo panorámica de inteligencia artificial */}
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '55%',
+          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          opacity: 0.35,
+          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 750 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.12)',
+            color: '#93C5FD',
+            padding: '4px 12px',
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+            marginBottom: 10,
+            backdropFilter: 'blur(4px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <span>✨</span> PANEL DE CONTROL · ASISTENTE COGNITIVO GROQ AI
+          </div>
+
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            Asistente Inteligente & NLP
+          </h1>
+          <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#CBD5E1', lineHeight: 1.5, maxWidth: 580 }}>
+            Consulta métricas, genera reportes instantáneos y analiza ventas, inventario y finanzas en lenguaje natural.
+          </p>
+
+          {/* Estadísticas en vivo estilo referencia */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{sessions.length} Sesiones</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Historial Guardado</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>Groq LLaMA 3.3</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Modelo NLP Activo</div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>11 Módulos</div>
+              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Contexto Conectado</div>
+            </div>
+          </div>
+
+          {/* Botones de Acción */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowHistoryModal(true)}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              }}
+            >
+              🕐 Historial de Chats ({sessions.length})
+            </button>
+            <button
+              onClick={handleNewChat}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              ✨ Nuevo Chat
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* ── Panel Izquierdo (Principal) ── */}
       <div className="chat-main">
         {/* Breadcrumb y Título */}
