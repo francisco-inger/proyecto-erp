@@ -60,7 +60,7 @@ const SUBMENUS = {
   ],
 }
 
-const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager']
+const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager','ajustes']
 
 export function Sidebar() {
   const { user } = useAuth()
