@@ -4,16 +4,16 @@ import { useAuth } from '../AuthContext'
 import './Login.css'
 
 const MAX_INTENTOS = 3
-const BLOQUEO_SEGUNDOS = 120 // 2 minutos
+const BLOQUEO_SEGUNDOS = 120
 
 export function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [email, setEmail] = useState('admin@appes.com')
+  const [password, setPassword] = useState('Admin2024!')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [intentos, setIntentos] = useState(0)
   const [bloqueado, setBloqueado] = useState(false)
   const [tiempoRestante, setTiempoRestante] = useState(BLOQUEO_SEGUNDOS)
@@ -21,7 +21,6 @@ export function Login() {
 
   const timerRef = useRef(null)
 
-  // Restaurar estado de bloqueo persistente al recargar
   useEffect(() => {
     const stored = localStorage.getItem('erp_login_block')
     if (stored) {
@@ -36,7 +35,6 @@ export function Login() {
     }
   }, [])
 
-  // Countdown timer cuando está bloqueado
   useEffect(() => {
     if (!bloqueado) return
 
@@ -91,143 +89,151 @@ export function Login() {
 
   const minutos = String(Math.floor(tiempoRestante / 60)).padStart(2, '0')
   const segundos = String(tiempoRestante % 60).padStart(2, '0')
-  const progreso = ((BLOQUEO_SEGUNDOS - tiempoRestante) / BLOQUEO_SEGUNDOS) * 100
 
   return (
-    <div className="auth-shell">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <img
-            src="/branding/logo_appex.jpg"
-            alt="APPEX Logo"
-            style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain', background: '#FFFFFF', padding: 2, boxShadow: '0 4px 14px rgba(37,99,235,0.4)', border: '1px solid rgba(255,255,255,0.2)' }}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span className="auth-logo-text">APPEX<span>.ERP</span></span>
-            <span style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Sistema Integral de Gestión</span>
-          </div>
-        </div>
-
-        <h1 className="auth-title">Iniciar sesión</h1>
-        <p className="auth-subtitle">Accede con tus credenciales corporativas registradas en el sistema.</p>
-
-        {/* ── ESTADO BLOQUEADO ── */}
-        {bloqueado ? (
-          <div className="bloqueo-container">
-            <div className="bloqueo-icon">🔒</div>
-            <h2 className="bloqueo-titulo">Acceso temporalmente bloqueado</h2>
-            <p className="bloqueo-desc">
-              Has superado el número máximo de intentos fallidos ({MAX_INTENTOS}).
-              <br/>Por seguridad, el acceso se ha bloqueado temporalmente.
-            </p>
-
-            <div className="countdown-circle">
-              <svg viewBox="0 0 120 120" className="countdown-svg">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(239,68,68,0.15)" strokeWidth="8"/>
-                <circle
-                  cx="60" cy="60" r="52" fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 52}`}
-                  strokeDashoffset={`${2 * Math.PI * 52 * (progreso / 100)}`}
-                  transform="rotate(-90 60 60)"
-                  style={{ transition: 'stroke-dashoffset 1s linear' }}
-                />
-              </svg>
-              <div className="countdown-text">
-                <span className="countdown-time">{minutos}:{segundos}</span>
-                <span className="countdown-label">restantes</span>
+    <div className="auth-split-wrapper">
+      {/* ── Panel Izquierdo: Formulario ── */}
+      <div className="auth-split-form-side">
+        <div>
+          {/* Logo Corporativo */}
+          <div className="auth-split-brand">
+            <img
+              src="/branding/logo_appex.jpg"
+              alt="APPEX Logo"
+              className="auth-split-logo-img"
+            />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+                APPEX<span style={{ color: '#2563EB' }}>.ERP</span>
+              </div>
+              <div style={{ fontSize: 10, color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Sistema de Gestión Empresarial
               </div>
             </div>
-
-            <div className="bloqueo-barra-wrap">
-              <div className="bloqueo-barra">
-                <div className="bloqueo-barra-fill" style={{ width: `${progreso}%` }}/>
-              </div>
-              <p className="bloqueo-pie">El formulario se desbloqueará automáticamente cuando el cronómetro llegue a cero.</p>
-            </div>
           </div>
-        ) : (
-          /* ── FORMULARIO NORMAL ── */
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="field">
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="tunombre@appes.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={loading}
-                autoComplete="email"
-                required
-              />
-            </div>
 
-            <div className="field">
-              <label htmlFor="password">Contraseña</label>
-              <div className="field-password-wrap">
+          <h1 className="auth-split-title">Sistema de Gestión Empresarial</h1>
+          <p className="auth-split-sub">Panel de Control Administrativo — Acceso Seguro</p>
+
+          {/* Estado de Bloqueo */}
+          {bloqueado ? (
+            <div className="auth-split-lockout">
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+              <strong style={{ display: 'block', fontSize: 15, marginBottom: 4 }}>Acceso Temporalmente Bloqueado</strong>
+              <p style={{ fontSize: 12, margin: '0 0 12px', color: '#7F1D1D' }}>
+                Has superado el límite de intentos ({MAX_INTENTOS}).
+              </p>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#DC2626' }}>
+                {minutos}:{segundos}
+              </div>
+              <small style={{ fontSize: 10, color: '#991B1B' }}>El formulario se reactivará automáticamente.</small>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="auth-split-field">
+                <label htmlFor="email">USUARIO</label>
                 <input
-                  id="password"
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="admin@appes.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   disabled={loading}
-                  autoComplete="current-password"
                   required
                 />
-                <button
-                  type="button"
-                  className="toggle-pass"
-                  onClick={() => setShowPass(v => !v)}
-                  tabIndex={-1}
-                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {showPass ? '🙈' : '👁️'}
-                </button>
               </div>
-            </div>
 
-            {error && (
-              <div className="auth-error">
-                <span>⚠️</span>
-                <span>{error}</span>
+              <div className="auth-split-field">
+                <label htmlFor="password">CONTRASEÑA</label>
+                <div className="auth-split-pass-wrap">
+                  <input
+                    id="password"
+                    type={showPass ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="auth-split-toggle-pass"
+                    onClick={() => setShowPass(v => !v)}
+                    tabIndex={-1}
+                    aria-label="Ver u ocultar contraseña"
+                  >
+                    {showPass ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
-            )}
 
-            {intentos > 0 && !error && (
-              <div className="auth-intentos">
-                {MAX_INTENTOS - intentos} intento(s) restante(s) antes del bloqueo
-              </div>
-            )}
+              {error && (
+                <div style={{
+                  background: '#FEF2F2',
+                  border: '1px solid #FECACA',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  fontSize: 12,
+                  color: '#DC2626',
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  <span>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
 
-            <button
-              className="btn btn-primary auth-btn"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="auth-spinner">
-                  <span className="spinner-dot"/>Verificando…
-                </span>
-              ) : 'Entrar al sistema'}
-            </button>
+              <button
+                type="submit"
+                className="auth-split-btn-primary"
+                disabled={loading}
+              >
+                <span>🔒</span>
+                {loading ? 'Validando...' : 'Iniciar Sesión'}
+              </button>
+            </form>
+          )}
 
-            <div className="auth-hint">
-              <p>
-                <strong>💡 Usuarios de prueba:</strong><br/>
-                <code>admin@appes.com</code> / <code>Admin2024!</code><br/>
-                <code>francisco@appes.com</code> / <code>Francisco123!</code>
-              </p>
-            </div>
-          </form>
-        )}
+          {/* Separador */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            margin: '22px 0 16px',
+            color: '#94A3B8',
+            fontSize: 11,
+            fontWeight: 600
+          }}>
+            <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+            <span>¿No tienes cuenta?</span>
+            <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+          </div>
 
-        <p className="auth-footer">
-          ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
-        </p>
+          <Link to="/register" className="auth-split-btn-outline">
+            <span>👤</span> Registrar Nuevo Usuario
+          </Link>
+        </div>
+
+        {/* Footer legal */}
+        <div style={{ paddingTop: 20, textAlign: 'center', fontSize: 11, color: '#94A3B8' }}>
+          Sistema de Gestión Empresarial v2.0 · Sesión segura con JWT
+        </div>
+      </div>
+
+      {/* ── Panel Derecho: Hero con Imagen Corporativa y Mensaje ── */}
+      <div className="auth-split-hero-side">
+        <div className="auth-split-hero-overlay" />
+        <div className="auth-split-hero-content">
+          <h2 className="auth-split-hero-title">
+            Sistema de Gestión y Control Empresarial.
+          </h2>
+          <p className="auth-split-hero-desc">
+            Diseñado con visión, elegancia y precisión para una toma de decisiones inteligente y en tiempo real.
+          </p>
+        </div>
       </div>
     </div>
   )
