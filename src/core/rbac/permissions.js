@@ -18,6 +18,8 @@ export const ROLES = {
 // más los módulos marcados como "público" (ej. chatbot).
 export function canAccess(userRole, requiredRole) {
   if (!requiredRole) return true // módulo público dentro del ERP
-  if (userRole === ROLES.ADMIN) return true
-  return userRole === requiredRole
+  const uRole = String(userRole || '').toLowerCase()
+  const rRole = String(requiredRole || '').toLowerCase()
+  if (uRole === 'admin') return true
+  return uRole === rRole
 }
