@@ -1638,17 +1638,17 @@ export function RrhhHome() {
         boxShadow: '0 10px 25px -5px rgba(30, 58, 138, 0.3)',
         marginBottom: 20,
       }}>
-        {/* Imagen de fondo panorámica */}
+        {/* Imagen de fondo panorámica de Recursos Humanos y Talento */}
         <div style={{
           position: 'absolute',
           right: 0,
           top: 0,
           bottom: 0,
           width: '55%',
-          backgroundImage: 'url(/branding/banner_enterprise_panoramic.jpg)',
+          backgroundImage: 'url(/branding/banner_rrhh_panoramic.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center right',
-          opacity: 0.35,
+          opacity: 0.38,
           maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 40%, transparent 100%)',
           pointerEvents: 'none'
