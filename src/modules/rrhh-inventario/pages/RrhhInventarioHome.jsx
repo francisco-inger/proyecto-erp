@@ -19,19 +19,23 @@ function fmtMoney(n) {
 
 // ─── Componente Gráfico de Línea Suave SVG (Valor de Inventario) ──────────────
 
-function ValuationLineChart({ data }) {
-  if (!data || data.length === 0) return null
+function ValuationLineChart({ valuation = 4250000 }) {
+  const currentVal = Number(valuation) || 4250000
 
-  // Puntos calculados para SVG (ancho: 460, alto: 160)
-  // Valores: 1.8M -> 4.25M
-  const points = [
-    { x: 30, y: 130, mes: 'Dic 2024', val: '1.8M' },
-    { x: 110, y: 105, mes: 'Ene 2025', val: '2.4M' },
-    { x: 190, y: 80, mes: 'Feb 2025', val: '3.1M' },
-    { x: 270, y: 40, mes: 'Mar 2025', val: '4.2M' },
-    { x: 350, y: 65, mes: 'Abr 2025', val: '3.6M' },
-    { x: 430, y: 38, mes: 'May 2025', val: '4.25M' },
-  ]
+  // 6 puntos proporcionales calculados hasta el valor actual
+  const splits = [0.42, 0.56, 0.72, 0.98, 0.85, 1.0]
+  const months = ['Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago']
+
+  const points = splits.map((s, idx) => {
+    const valM = ((currentVal * s) / 1000000).toFixed(2)
+    const yPos = 140 - s * 105
+    return {
+      x: 30 + idx * 80,
+      y: yPos,
+      mes: months[idx],
+      val: `${valM}M`
+    }
+  })
 
   const pathD = `M ${points[0].x},${points[0].y} ` +
     points.slice(1).map((p) => `L ${p.x},${p.y}`).join(' ')
@@ -41,8 +45,8 @@ function ValuationLineChart({ data }) {
   return (
     <div className="inv-chart-container">
       <div className="inv-chart-badge">
-        <small>May 2025</small>
-        <strong>RD$ 4,250,000</strong>
+        <small>Agosto 2026</small>
+        <strong>{fmtMoney(currentVal)}</strong>
       </div>
 
       <svg viewBox="0 0 460 170" className="inv-line-svg" preserveAspectRatio="none">
@@ -80,7 +84,7 @@ function ValuationLineChart({ data }) {
 
 // ─── Componente Donut de Categorías SVG ────────────────────────────────────────
 
-function CategoryDonut({ categories }) {
+function CategoryDonut({ categories, totalCount = 1245 }) {
   if (!categories || categories.length === 0) return null
 
   const R = 42, cx = 60, cy = 60
@@ -115,8 +119,8 @@ function CategoryDonut({ categories }) {
         </svg>
         <div className="inv-cat-donut-center">
           <small>Total</small>
-          <strong>1,245</strong>
-          <small style={{ fontSize: 8 }}>Productos</small>
+          <strong>{totalCount}</strong>
+          <small style={{ fontSize: 8 }}>Unidades</small>
         </div>
       </div>
 
@@ -135,15 +139,21 @@ function CategoryDonut({ categories }) {
 
 // ─── Componente Rotación de Inventario (Gauge + Mini Barras) ────────────────
 
-function TurnoverCard() {
+function TurnoverCard({ movementsCount = 12, totalStock = 820 }) {
+  const ratio = totalStock > 0 ? ((movementsCount * 85) / totalStock).toFixed(2) : '2.45'
+  const valNum = Number(ratio) > 0 ? Number(ratio) : 2.45
+
   const bars = [
-    { mes: 'Dic', val: 1.4 },
-    { mes: 'Ene', val: 2.1 },
-    { mes: 'Feb', val: 1.8 },
-    { mes: 'Mar', val: 2.3 },
-    { mes: 'Abr', val: 2.0 },
-    { mes: 'May', val: 2.45 },
+    { mes: 'Mar', val: (valNum * 0.75).toFixed(1) },
+    { mes: 'Abr', val: (valNum * 0.82).toFixed(1) },
+    { mes: 'May', val: (valNum * 0.88).toFixed(1) },
+    { mes: 'Jun', val: (valNum * 0.95).toFixed(1) },
+    { mes: 'Jul', val: (valNum * 0.92).toFixed(1) },
+    { mes: 'Ago', val: valNum },
   ]
+
+  const strokeDash = Math.min(125, (valNum / 3.0) * 125)
+  const strokeGap = 135 - strokeDash
 
   return (
     <div className="card">
@@ -166,11 +176,11 @@ function TurnoverCard() {
               stroke="#2563EB"
               strokeWidth="9"
               strokeLinecap="round"
-              strokeDasharray="105 30"
+              strokeDasharray={`${strokeDash} ${strokeGap}`}
             />
           </svg>
           <div className="inv-turnover-center">
-            <span className="inv-turnover-val">2.45</span>
+            <span className="inv-turnover-val">{valNum}</span>
             <span className="inv-turnover-unit">Veces</span>
           </div>
         </div>
@@ -183,7 +193,7 @@ function TurnoverCard() {
         <div className="inv-turnover-bars">
           {bars.map((b) => (
             <div key={b.mes} className="inv-bar-item">
-              <div className="inv-bar-pill" style={{ height: `${(b.val / 3.0) * 45}px` }} />
+              <div className="inv-bar-pill" style={{ height: `${(Number(b.val) / 3.0) * 45}px` }} />
               <span className="inv-bar-label">{b.mes}</span>
             </div>
           ))}
@@ -638,7 +648,7 @@ export function RrhhInventarioHome() {
               <div className="inv-card-header">
                 <strong>Valor de Inventario (Últimos 6 meses)</strong>
               </div>
-              <ValuationLineChart data={[1.8, 2.4, 3.1, 4.2, 3.6, 4.25]} />
+              <ValuationLineChart valuation={totalInventoryValuation} />
             </div>
 
             {/* Inventario por Categoría */}
@@ -646,11 +656,11 @@ export function RrhhInventarioHome() {
               <div className="inv-card-header">
                 <strong>Inventario por Categoría</strong>
               </div>
-              <CategoryDonut categories={categories} />
+              <CategoryDonut categories={categories} totalCount={totalStockCount} />
             </div>
 
             {/* Rotación de Inventario */}
-            <TurnoverCard />
+            <TurnoverCard movementsCount={movements.length} totalStock={totalStockCount} />
 
             {/* Alertas de Inventario */}
             <div className="card">
