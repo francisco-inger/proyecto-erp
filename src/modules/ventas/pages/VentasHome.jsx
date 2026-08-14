@@ -4,6 +4,7 @@
 */
 import { useState, useEffect, useMemo } from 'react'
 import { ventasService } from '../services/ventas.service'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './VentasHome.css'
 
 function money(val) {
@@ -15,7 +16,7 @@ function money(val) {
 
 export function VentasHome() {
   const [orders, setOrders] = useState([])
-  const [selectedId, setSelectedId] = useState('1')
+  const [selectedId, setSelectedId] = useState(null)
   const [statusFilter, setStatusFilter] = useState('Todos')
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -31,6 +32,10 @@ export function VentasHome() {
 
   useEffect(() => {
     loadOrders()
+    const unsubscribe = erpSync.subscribe(() => {
+      loadOrders()
+    })
+    return () => unsubscribe()
   }, [])
 
   const loadOrders = async () => {

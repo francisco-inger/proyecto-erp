@@ -1,4 +1,5 @@
 import { apiClient } from '../../../core/api/apiClient'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 
 const STORAGE_KEY = 'ventas_orders_v1'
 
@@ -48,6 +49,7 @@ export const ventasService = {
     }
     const updated = [newOrder, ...current]
     saveLocalOrders(updated)
+    erpSync.syncSaleOrder(newOrder, 'create')
     return newOrder
   },
 
@@ -57,8 +59,31 @@ export const ventasService = {
       if (res) return res
     } catch (_) {}
     const current = getLocalOrders()
-    const updated = current.map(o => o.id === id ? { ...o, estado } : o)
+    let updatedObj = null
+    const updated = current.map(o => {
+      if (o.id === id) {
+        const item = { ...o, estado }
+        updatedObj = item
+        return item
+      }
+      return o
+    })
     saveLocalOrders(updated)
-    return updated.find(o => o.id === id)
+    if (updatedObj) {
+      erpSync.syncSaleOrder(updatedObj, 'status_change')
+    }
+    return updatedObj
   },
-}
+
+  deleteOrder: async (id) => {
+    const current = getLocalOrders()
+    const target = current.find(o => o.id === id)
+    const updated = current.filter(o => o.id !== id)
+    saveLocalOrders(updated)
+    if (target) {
+      erpSync.syncSaleOrder(target, 'delete')
+    }
+    return updated
+  }
+}
+

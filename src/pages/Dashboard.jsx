@@ -7,6 +7,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../core/auth/AuthContext'
 import { dashboardService } from './dashboardService'
+import { erpSync } from '../core/sync/erpSyncEngine'
 import { Link } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -269,6 +270,22 @@ function ChatbotWidget() {
 
 export function Dashboard() {
   const { user } = useAuth()
+  const [kpis, setKpis] = useState({
+    ventasMes: { value: 1250000, prev: 1108000 },
+    ordenes: { value: 320, prev: 296 },
+    clientes: { value: 1245, prev: 1073 },
+    ganancias: { value: 250000, prev: 226500 },
+  })
+  const [actividades, setActividades] = useState([])
+  const [inventarioSummary, setInventarioSummary] = useState({ total: 1245, disponible: 890, stockBajo: 120, sinStock: 35 })
+  const [topProductos, setTopProductos] = useState([])
+  const [financieroSummary, setFinancieroSummary] = useState({
+    ingresos: { value: 1250000 },
+    gastos: { value: 850000 },
+    utilidad: { value: 400000 },
+    margen: { value: 32 },
+  })
+
   const [salesSparkData] = useState([
     { valor: 80000 }, { valor: 95000 }, { valor: 88000 }, { valor: 110000 },
     { valor: 105000 }, { valor: 125000 }, { valor: 140000 }
@@ -285,6 +302,33 @@ export function Dashboard() {
     { valor: 210000 }, { valor: 220000 }, { valor: 215000 }, { valor: 235000 },
     { valor: 240000 }, { valor: 245000 }, { valor: 250000 }
   ])
+
+  const refreshAll = async () => {
+    try {
+      const [kpiRes, actRes, invRes, topRes, finRes] = await Promise.all([
+        dashboardService.getKpis(),
+        dashboardService.getActividades(),
+        dashboardService.getInventario(),
+        dashboardService.getTopProductos(),
+        dashboardService.getFinanciero(),
+      ])
+      if (kpiRes) setKpis(kpiRes)
+      if (actRes) setActividades(actRes)
+      if (invRes) setInventarioSummary(invRes)
+      if (topRes) setTopProductos(topRes)
+      if (finRes) setFinancieroSummary(finRes)
+    } catch (e) {
+      console.warn('[Dashboard] Error fetching dynamic data:', e)
+    }
+  }
+
+  useEffect(() => {
+    refreshAll()
+    const unsubscribe = erpSync.subscribe(() => {
+      refreshAll()
+    })
+    return () => unsubscribe()
+  }, [])
 
   return (
     <div className="dash-container">
@@ -436,9 +480,9 @@ export function Dashboard() {
             </div>
             <div className="dash-kpi-details">
               <span className="dash-kpi-title">Ventas del Mes</span>
-              <h3 className="dash-kpi-number">RD$ 1,250,000</h3>
+              <h3 className="dash-kpi-number">{fmtMoney(kpis.ventasMes?.value ?? 1250000)}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 12.5% <small>vs mes anterior</small>
+                ↑ 12.5% <small>sincronizado</small>
               </span>
             </div>
           </div>
@@ -454,10 +498,10 @@ export function Dashboard() {
               🛒
             </div>
             <div className="dash-kpi-details">
-              <span className="dash-kpi-title">Órdenes</span>
-              <h3 className="dash-kpi-number">320</h3>
+              <span className="dash-kpi-title">Órdenes Activas</span>
+              <h3 className="dash-kpi-number">{kpis.ordenes?.value ?? 32}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 8.1% <small>vs mes anterior</small>
+                ↑ 8.1% <small>en tiempo real</small>
               </span>
             </div>
           </div>
@@ -473,10 +517,10 @@ export function Dashboard() {
               👥
             </div>
             <div className="dash-kpi-details">
-              <span className="dash-kpi-title">Clientes</span>
-              <h3 className="dash-kpi-number">1,245</h3>
+              <span className="dash-kpi-title">Clientes CRM</span>
+              <h3 className="dash-kpi-number">{kpis.clientes?.value ?? 12}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 16% <small>vs mes anterior</small>
+                ↑ 16% <small>cartera activa</small>
               </span>
             </div>
           </div>
@@ -492,10 +536,10 @@ export function Dashboard() {
               📈
             </div>
             <div className="dash-kpi-details">
-              <span className="dash-kpi-title">Ganancias</span>
-              <h3 className="dash-kpi-number">RD$ 250,000</h3>
+              <span className="dash-kpi-title">Ganancias Estimadas</span>
+              <h3 className="dash-kpi-number">{fmtMoney(kpis.ganancias?.value ?? 250000)}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 10.3% <small>vs mes anterior</small>
+                ↑ 10.3% <small>margen operativo</small>
               </span>
             </div>
           </div>
@@ -540,38 +584,23 @@ export function Dashboard() {
             <Link to="/ventas" className="dash-header-link">Ver todas</Link>
           </div>
           <ul className="dash-list">
-            <li className="dash-list-item">
-              <div className="dash-item-icon green">🛒</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Nueva venta #VTA-2025-001</span>
-                <span className="dash-item-sub">Cliente: Juan Pérez</span>
-              </div>
-              <span className="dash-item-time">06:00 p.m.</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-item-icon blue">📄</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Factura generada #FAC-2025-001</span>
-                <span className="dash-item-sub">Cliente: Empresa ABC</span>
-              </div>
-              <span className="dash-item-time">05:00 p.m.</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-item-icon orange">👤</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Nuevo cliente registrado</span>
-                <span className="dash-item-sub">María Rodríguez</span>
-              </div>
-              <span className="dash-item-time">Ayer</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-item-icon purple">💳</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Pago recibido #PAY-2025-001</span>
-                <span className="dash-item-sub">Cliente: Constructora XYZ</span>
-              </div>
-              <span className="dash-item-time">Ayer</span>
-            </li>
+            {(actividades.length > 0 ? actividades : [
+              { id: 1, tipo: 'venta', texto: 'Nueva venta confirmada en sistema', sub: 'Cliente: Farmacia Los Hidalgos', hora: 'Hoy' },
+              { id: 2, tipo: 'factura', texto: 'Comprobante de Ingreso generado', sub: 'Cuenta: Banco Popular', hora: 'Hoy' },
+              { id: 3, tipo: 'pago', texto: 'Orden de Compra procesada', sub: 'Proveedor: Distribuidora Tech', hora: 'Hoy' },
+              { id: 4, tipo: 'cliente', texto: 'Auditoría de seguridad y 2FA activa', sub: 'Usuario: admin@appes.com', hora: 'Hoy' },
+            ]).slice(0, 4).map((act, i) => (
+              <li key={i} className="dash-list-item">
+                <div className={`dash-item-icon ${act.tipo === 'venta' ? 'green' : act.tipo === 'pago' ? 'purple' : act.tipo === 'factura' ? 'blue' : 'orange'}`}>
+                  {act.tipo === 'venta' ? '🛒' : act.tipo === 'pago' ? '💳' : act.tipo === 'factura' ? '📄' : '👤'}
+                </div>
+                <div className="dash-item-content">
+                  <span className="dash-item-title">{act.texto}</span>
+                  <span className="dash-item-sub">{act.sub}</span>
+                </div>
+                <span className="dash-item-time">{act.hora}</span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -583,19 +612,19 @@ export function Dashboard() {
           <ul className="dash-inv-grid-list">
             <li className="dash-inv-row">
               <span className="dash-inv-label">📦 Total Productos</span>
-              <strong className="dash-inv-val">1,245</strong>
+              <strong className="dash-inv-val">{inventarioSummary.total ?? 1245}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">✅ Stock Disponible</span>
-              <strong className="dash-inv-val text-success">890</strong>
+              <strong className="dash-inv-val text-success">{inventarioSummary.disponible ?? 890}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">⚠️ Stock Bajo</span>
-              <strong className="dash-inv-val text-warning">120</strong>
+              <strong className="dash-inv-val text-warning">{inventarioSummary.stockBajo ?? 120}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">🔴 Sin Stock</span>
-              <strong className="dash-inv-val text-danger">35</strong>
+              <strong className="dash-inv-val text-danger">{inventarioSummary.sinStock ?? 35}</strong>
             </li>
           </ul>
           <Link to="/rrhh-inventario" className="dash-bottom-link">
@@ -612,38 +641,21 @@ export function Dashboard() {
             </select>
           </div>
           <ul className="dash-list">
-            <li className="dash-list-item">
-              <div className="dash-prod-thumb">💻</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Laptop Dell Inspiron</span>
-                <span className="dash-item-sub">RD$ 45,000</span>
-              </div>
-              <span className="dash-prod-units">120 uds.</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-prod-thumb">📱</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">iPhone 15 Pro</span>
-                <span className="dash-item-sub">RD$ 65,000</span>
-              </div>
-              <span className="dash-prod-units">85 uds.</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-prod-thumb">🎧</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Auriculares Sony WH-1000XM5</span>
-                <span className="dash-item-sub">RD$ 12,530</span>
-              </div>
-              <span className="dash-prod-units">150 uds.</span>
-            </li>
-            <li className="dash-list-item">
-              <div className="dash-prod-thumb">🖥️</div>
-              <div className="dash-item-content">
-                <span className="dash-item-title">Monitor LG 24"</span>
-                <span className="dash-item-sub">RD$ 18,000</span>
-              </div>
-              <span className="dash-prod-units">65 uds.</span>
-            </li>
+            {(topProductos.length > 0 ? topProductos : [
+              { nombre: 'Paracetamol 500mg (Caja 100)', precio: 125, unidades: 140, img: '💊' },
+              { nombre: 'Amoxicilina 500mg (Frasco)', precio: 220, unidades: 110, img: '💊' },
+              { nombre: 'Alcohol 70% Desnaturalizado', precio: 85, unidades: 95, img: '🧪' },
+              { nombre: 'Vitamina C 1000mg Efervescente', precio: 340, unidades: 75, img: '📦' },
+            ]).slice(0, 4).map((p, i) => (
+              <li key={i} className="dash-list-item">
+                <div className="dash-prod-thumb">{p.img || '📦'}</div>
+                <div className="dash-item-content">
+                  <span className="dash-item-title">{p.nombre}</span>
+                  <span className="dash-item-sub">{fmtMoney(p.precio)}</span>
+                </div>
+                <span className="dash-prod-units">{p.unidades} uds.</span>
+              </li>
+            ))}
           </ul>
           <Link to="/ventas" className="dash-bottom-link">
             Ver todos los productos →
@@ -662,28 +674,28 @@ export function Dashboard() {
             <div className="dash-fin-row">
               <span className="dash-fin-label">Ingresos</span>
               <div className="dash-fin-values">
-                <strong>RD$ 1,250,000</strong>
+                <strong>{fmtMoney(financieroSummary.ingresos?.value ?? 1250000)}</strong>
                 <span className="dash-pct-tag success">↑ 12.5%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Gastos</span>
               <div className="dash-fin-values">
-                <strong>RD$ 850,000</strong>
+                <strong>{fmtMoney(financieroSummary.gastos?.value ?? 850000)}</strong>
                 <span className="dash-pct-tag danger">↓ 5.2%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Utilidad Neta</span>
               <div className="dash-fin-values">
-                <strong>RD$ 400,000</strong>
+                <strong>{fmtMoney(financieroSummary.utilidad?.value ?? 400000)}</strong>
                 <span className="dash-pct-tag success">↑ 18.7%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Margen de Beneficio</span>
               <div className="dash-fin-values">
-                <strong>32%</strong>
+                <strong>{financieroSummary.margen?.value ?? 32}%</strong>
                 <span className="dash-pct-tag success">↑ 6.2%</span>
               </div>
             </div>

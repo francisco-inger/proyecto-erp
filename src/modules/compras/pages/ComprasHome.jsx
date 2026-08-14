@@ -3,6 +3,7 @@
   Gestión integral de compras, proveedores, órdenes de compra y acciones contextuales.
 */
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import './ComprasHome.css'
 
 const STORAGE_KEY = 'compras_orders_v1'
@@ -192,9 +193,13 @@ export function ComprasHome() {
     itemCant: 1,
   })
 
-  // Cargar órdenes
+  // Cargar órdenes y escuchar sincronizaciones en tiempo real
   useEffect(() => {
     setOrdenes(getStoredCompras())
+    const unsubscribe = erpSync.subscribe(() => {
+      setOrdenes(getStoredCompras())
+    })
+    return () => unsubscribe()
   }, [])
 
   // Cerrar menú contextual al hacer clic fuera
@@ -299,8 +304,10 @@ export function ComprasHome() {
     const updated = [newOrden, ...ordenes]
     setOrdenes(updated)
     saveStoredCompras(updated)
+    erpSync.syncPurchaseOrder(newOrden, 'create')
+
     setShowCreateModal(false)
-    showToastMsg(`✅ Orden ${newOrden.id} creada con éxito`)
+    showToastMsg(`✅ Orden ${newOrden.id} creada y sincronizada con Finanzas & Inventario`)
     setForm({
       proveedor: '',
       rnc: '',
@@ -321,21 +328,27 @@ export function ComprasHome() {
     e.preventDefault()
     if (!editingOrden) return
 
+    let editedSaved = null
     const updated = ordenes.map(o => {
       if (o.id === editingOrden.id) {
-        return {
+        const item = {
           ...editingOrden,
           total: Number(editingOrden.total),
           entregado: editingOrden.estado === 'Recibida' && (!editingOrden.entregado || editingOrden.entregado === '—')
             ? new Date().toLocaleDateString('es-DO')
             : editingOrden.estado !== 'Recibida' ? '—' : editingOrden.entregado
         }
+        editedSaved = item
+        return item
       }
       return o
     })
 
     setOrdenes(updated)
     saveStoredCompras(updated)
+    if (editedSaved) {
+      erpSync.syncPurchaseOrder(editedSaved, 'update')
+    }
     if (selectedOrden && selectedOrden.id === editingOrden.id) {
       setSelectedOrden(editingOrden)
     }
@@ -346,22 +359,29 @@ export function ComprasHome() {
   // Cambiar estado directo
   const handleChangeStatus = (id, newStatus) => {
     const today = new Date().toLocaleDateString('es-DO')
+    let updatedOrderObj = null
+
     const updated = ordenes.map(o => {
       if (o.id === id) {
-        return {
+        const item = {
           ...o,
           estado: newStatus,
           entregado: newStatus === 'Recibida' ? today : '—',
         }
+        updatedOrderObj = item
+        return item
       }
       return o
     })
     setOrdenes(updated)
     saveStoredCompras(updated)
+    if (updatedOrderObj) {
+      erpSync.syncPurchaseOrder(updatedOrderObj, 'status_change')
+    }
     if (selectedOrden && selectedOrden.id === id) {
       setSelectedOrden(prev => ({ ...prev, estado: newStatus, entregado: newStatus === 'Recibida' ? today : '—' }))
     }
-    showToastMsg(`Estado de ${id} actualizado a: ${newStatus}`)
+    showToastMsg(`Estado de ${id} actualizado a: ${newStatus} (Sincronizado)`)
   }
 
   // Eliminar orden
@@ -370,6 +390,7 @@ export function ComprasHome() {
     const updated = ordenes.filter(o => o.id !== deletingOrden.id)
     setOrdenes(updated)
     saveStoredCompras(updated)
+    erpSync.syncPurchaseOrder(deletingOrden, 'delete')
     if (selectedOrden && selectedOrden.id === deletingOrden.id) {
       setSelectedOrden(null)
     }

@@ -1,9 +1,5 @@
-/*
-  MÓDULO CRM · servicio
-  Propietaria: Ediana Tejada Ureña.
-  Provee almacenamiento reactivo (localStorage) y fallback con API para clientes, oportunidades, contactos y actividades.
-*/
 import { apiClient } from '../../../core/api/apiClient'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 
 const STORAGE_KEYS = {
   CLIENTS: 'appes_crm_clients_v1',
@@ -123,6 +119,7 @@ export const crmService = {
     }
     const updated = [newOpp, ...opps]
     setStored(STORAGE_KEYS.OPPORTUNITIES, updated)
+    erpSync.syncCrmOpportunity(newOpp)
     return newOpp
   },
 
@@ -135,10 +132,19 @@ export const crmService = {
       Negociación: 'warning',
       Cierre: 'success',
     }
-    const updated = opps.map((o) =>
-      o.id === id ? { ...o, etapa: newStage, etapaColor: colorMap[newStage] || 'blue' } : o
-    )
+    let updatedOpp = null
+    const updated = opps.map((o) => {
+      if (o.id === id) {
+        const item = { ...o, etapa: newStage, etapaColor: colorMap[newStage] || 'blue' }
+        updatedOpp = item
+        return item
+      }
+      return o
+    })
     setStored(STORAGE_KEYS.OPPORTUNITIES, updated)
+    if (updatedOpp) {
+      erpSync.syncCrmOpportunity(updatedOpp)
+    }
     return updated
   },
 
