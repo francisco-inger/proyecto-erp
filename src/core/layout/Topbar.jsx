@@ -17,10 +17,12 @@ export function Topbar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [toast, setToast] = useState(null)
 
   const searchInputRef = useRef(null)
   const notifRef = useRef(null)
+  const userMenuRef = useRef(null)
 
   // Notificaciones simuladas con datos en tiempo real
   const [notifications, setNotifications] = useState([
@@ -47,6 +49,7 @@ export function Topbar() {
         setShowNotifications(false)
         setShowHelp(false)
         setShowScanner(false)
+        setShowUserMenu(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -58,6 +61,9 @@ export function Topbar() {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifications(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -504,47 +510,122 @@ export function Topbar() {
           ⚙️
         </button>
 
-        {/* 5. Avatar de Usuario y Menú de Sesión */}
-        <div
-          onClick={logout}
-          title="Haz clic para cerrar sesión"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            cursor: 'pointer',
-            padding: '4px 10px',
-            borderRadius: 10,
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            transition: 'all 120ms ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#93C5FD' }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0' }}
-        >
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: 11,
-            boxShadow: '0 2px 4px rgba(37, 99, 235, 0.25)',
-          }}>
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AD'}
+        {/* 5. Avatar de Usuario y Menú de Perfil Desplegable */}
+        <div ref={userMenuRef} style={{ position: 'relative' }}>
+          <div
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            title="Ver opciones de cuenta"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+              padding: '5px 12px',
+              borderRadius: 10,
+              background: showUserMenu ? '#EFF6FF' : '#F8FAFC',
+              border: `1px solid ${showUserMenu ? '#93C5FD' : '#E2E8F0'}`,
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#93C5FD' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = showUserMenu ? '#EFF6FF' : '#F8FAFC'; e.currentTarget.style.borderColor = showUserMenu ? '#93C5FD' : '#E2E8F0' }}
+          >
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: 11,
+              boxShadow: '0 2px 4px rgba(37, 99, 235, 0.25)',
+            }}>
+              {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AD'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>
+                {user?.name ?? 'Administrador'}
+              </span>
+              <span style={{ fontSize: 10, color: '#64748B' }}>
+                {user?.email ?? 'admin@appes.com'}
+              </span>
+            </div>
+            <span style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2 }}>▾</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>
-              {user?.name ?? 'Anthony123'}
-            </span>
-            <span style={{ fontSize: 10, color: '#64748B' }}>
-              {user?.email ?? 'anthony123@gmail.com'}
-            </span>
-          </div>
+
+          {/* Menú Desplegable de Usuario */}
+          {showUserMenu && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: 250,
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: 12,
+                boxShadow: '0 15px 30px rgba(0,0,0,0.12)',
+                zIndex: 200,
+                overflow: 'hidden',
+                animation: 'fnFadeIn 120ms ease',
+              }}
+            >
+              <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{user?.name || 'Administrador'}</div>
+                <div style={{ fontSize: 11, color: '#64748B' }}>{user?.email || 'admin@appes.com'}</div>
+                <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EFF6FF', color: '#2563EB', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>
+                  👑 Rol: {user?.role ? user.role.toUpperCase() : 'ADMIN'}
+                </div>
+              </div>
+
+              <div style={{ padding: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  onClick={() => {
+                    navigate('/ajustes?tab=Seguridad')
+                    setShowUserMenu(false)
+                  }}
+                  className="fn-popover-item"
+                >
+                  <span>🛡️</span> Mi Seguridad y 2FA
+                </button>
+
+                <button
+                  onClick={() => {
+                    navigate('/ajustes?tab=General')
+                    setShowUserMenu(false)
+                  }}
+                  className="fn-popover-item"
+                >
+                  <span>⚙️</span> Ajustes de Cuenta
+                </button>
+
+                <button
+                  onClick={() => {
+                    navigate('/ajustes?tab=Sistema')
+                    setShowUserMenu(false)
+                  }}
+                  className="fn-popover-item"
+                >
+                  <span>💻</span> Diagnóstico del Sistema
+                </button>
+
+                <div className="fn-popover-divider" />
+
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    logout()
+                  }}
+                  className="fn-popover-item item-danger"
+                >
+                  <span>🚪</span> Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
