@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
-import { formatRNC, formatMoneyDOP } from '../../../core/utils/formatters'
+import { formatRNC, formatMoneyDOP, getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 import './ComprasHome.css'
 
 const STORAGE_KEY = 'compras_orders_v1'
@@ -58,15 +58,15 @@ const SEED_COMPRAS = [
   },
   {
     id: 'OC-004',
-    proveedor: 'Ferretería Industrial',
-    rnc: '1-02-78912-3',
+    proveedor: 'Maquinarias del Este',
+    rnc: '1-15-77889-0',
     fecha: '08/08/2026',
     total: 320000,
     estado: 'Recibida',
     entregado: '08/08/2026',
-    categoria: 'Mantenimiento & Herramientas',
-    condicionPago: 'Crédito 45 días',
-    notas: 'Herramientas de precisión y compresor de aire industrial.',
+    categoria: 'Maquinaria & Equipos',
+    condicionPago: 'Transferencia Bancaria',
+    notas: 'Equipos para nueva línea de ensamblaje en nave 3.',
     items: [
       { descripcion: 'Compresor de Aire Industrial 15 HP 500L', cantidad: 1, precioUnitario: 220000 },
       { descripcion: 'Set de Herramientas de Mantenimiento Pesado', cantidad: 4, precioUnitario: 25000 },
@@ -145,29 +145,13 @@ function money(val) {
 }
 
 function getStoredCompras() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed
-    }
-    
-    // Si es un cliente, su módulo de compras inicia limpio
-    const userRaw = localStorage.getItem('erp_user')
-    if (userRaw) {
-      const user = JSON.parse(userRaw)
-      if (user.role === 'CLIENTE' || user.role === 'cliente') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([]))
-        return []
-      }
-    }
-  } catch (_) {}
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_COMPRAS))
-  return SEED_COMPRAS
+  const tenantId = getActiveTenantId()
+  const defaultVal = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') ? SEED_COMPRAS : []
+  return getTenantData(STORAGE_KEY, defaultVal)
 }
 
 function saveStoredCompras(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  setTenantData(STORAGE_KEY, data)
 }
 
 export function ComprasHome() {

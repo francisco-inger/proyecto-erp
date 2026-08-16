@@ -237,13 +237,15 @@ function MainSalesChart({ period = 'Este mes' }) {
 // ─── Mini Donut Chart SVG ─────────────────────────────────────────────────────
 
 function CategoryDonutChart({ categories }) {
-  const defaultCats = [
-    { label: 'Medicamentos', pct: 45, color: '#2563EB' },
-    { label: 'Equipos Médicos', pct: 25, color: '#059669' },
-    { label: 'Insumos', pct: 20, color: '#D97706' },
-    { label: 'Suplementos', pct: 10, color: '#7C3AED' },
-  ]
-  const cats = (categories && categories.length > 0) ? categories : defaultCats
+  const cats = (categories && categories.length > 0) ? categories : []
+
+  if (cats.length === 0) {
+    return (
+      <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+        <span>📦</span> No hay ventas por categoría registradas aún
+      </div>
+    )
+  }
 
   const R = 48, cx = 65, cy = 65
   const circumference = 2 * Math.PI * R

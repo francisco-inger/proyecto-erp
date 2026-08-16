@@ -38,6 +38,68 @@ export function formatPhone(value) {
 }
 
 /**
+ * Obtiene el ID del Tenant (Empresa) del usuario actualmente en sesión.
+ * Si es el administrador original ('admin', 'usr-1', 'usr-2'), usa el espacio global 'admin'.
+ * Para cualquier usuario/empresa registrada, usa su ID único ('usr-XXX' o 'tenant_XXX').
+ */
+export function getActiveTenantId() {
+  try {
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      if (user.id) return user.id
+      if (user.email) return user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')
+    }
+  } catch (_) {}
+  return 'usr-admin-global'
+}
+
+/**
+ * Genera una clave de almacenamiento con prefijo de tenant para garantizar aislamiento total
+ */
+export function getTenantKey(baseKey) {
+  const tenantId = getActiveTenantId()
+  return `tenant_${tenantId}_${baseKey}`
+}
+
+/**
+ * Lee datos aislados por empresa. Si no existen, devuelve el valor por defecto provisto (ej. [])
+ */
+export function getTenantData(baseKey, defaultValue = []) {
+  try {
+    const key = getTenantKey(baseKey)
+    const raw = localStorage.getItem(key)
+    if (raw) return JSON.parse(raw)
+    
+    // Si el usuario es el administrador general y no hay datos con prefijo, permitir fallback si existe
+    const tenantId = getActiveTenantId()
+    if (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') {
+      const legacyRaw = localStorage.getItem(baseKey)
+      if (legacyRaw) return JSON.parse(legacyRaw)
+    }
+  } catch (_) {}
+  return defaultValue
+}
+
+/**
+ * Guarda datos aislados estrictamente para la empresa en sesión
+ */
+export function setTenantData(baseKey, data) {
+  try {
+    const key = getTenantKey(baseKey)
+    localStorage.setItem(key, JSON.stringify(data))
+    
+    // Si es admin principal también sincronizar legacy
+    const tenantId = getActiveTenantId()
+    if (tenantId === 'usr-1' || tenantId === 'usr-2') {
+      localStorage.setItem(baseKey, JSON.stringify(data))
+    }
+  } catch (err) {
+    console.error(`Error saving tenant data for ${baseKey}:`, err)
+  }
+}
+
+/**
  * Obtiene los datos fiscales y corporativos de la empresa asociada al usuario actual o ajustes globales
  */
 export function getEmpresaActiva() {
@@ -45,15 +107,19 @@ export function getEmpresaActiva() {
     const userRaw = localStorage.getItem('erp_user')
     const user = userRaw ? JSON.parse(userRaw) : null
 
-    // 1. Si existe configuración de empresa guardada
-    const rawSettings = localStorage.getItem('appes_erp_global_settings_v2')
-    const settings = rawSettings ? JSON.parse(rawSettings) : {}
+    // 1. Si existe configuración de empresa guardada para este tenant
+    const settings = getTenantData('appes_erp_global_settings_v2', null) || (() => {
+      try {
+        const raw = localStorage.getItem('appes_erp_global_settings_v2')
+        return raw ? JSON.parse(raw) : {}
+      } catch (_) { return {} }
+    })()
 
-    const nombreEmpresa = settings.razonSocial || settings.nombreComercial || user?.departamento || user?.name || 'APPEX Dominicana SRL'
-    const rnc = settings.rnc || '1-31-89023-4'
-    const telefono = settings.telefono || settings.telefonoPrincipal || '(809) 555-0100'
-    const direccion = settings.direccion || settings.direccionFiscal || 'Santo Domingo, República Dominicana'
-    const email = settings.emailCorporativo || settings.emailContacto || user?.email || 'contacto@empresa.com'
+    const nombreEmpresa = settings.razonSocial || settings.nombreComercial || user?.departamento || user?.name || 'Mi Empresa'
+    const rnc = settings.rnc || '1-31-00000-0'
+    const telefono = settings.telefono || settings.telefonoPrincipal || '(809) 000-0000'
+    const direccion = settings.direccion || settings.direccionFiscal || 'República Dominicana'
+    const email = settings.emailCorporativo || settings.emailContacto || user?.email || 'contacto@empresa.do'
 
     return {
       razonSocial: nombreEmpresa,

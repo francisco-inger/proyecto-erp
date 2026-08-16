@@ -1,5 +1,6 @@
 import { apiClient } from '../../../core/api/apiClient'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 
 const STORAGE_KEYS = {
   CLIENTS: 'appes_crm_clients_v1',
@@ -41,31 +42,13 @@ const DEFAULT_ACTIVITIES = [
 ]
 
 function getStored(key, def) {
-  try {
-    const val = localStorage.getItem(key)
-    if (val) return JSON.parse(val)
-
-    // Si es un cliente, iniciar limpio en clientes y prospectos
-    const userRaw = localStorage.getItem('erp_user')
-    if (userRaw) {
-      const user = JSON.parse(userRaw)
-      if (user.role === 'CLIENTE' || user.role === 'cliente') {
-        localStorage.setItem(key, JSON.stringify([]))
-        return []
-      }
-    }
-    return def
-  } catch {
-    return def
-  }
+  const tenantId = getActiveTenantId()
+  const defaultVal = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') ? def : []
+  return getTenantData(key, defaultVal)
 }
 
 function setStored(key, val) {
-  try {
-    localStorage.setItem(key, JSON.stringify(val))
-  } catch (e) {
-    console.error('Error saving CRM storage:', e)
-  }
+  setTenantData(key, val)
 }
 
 export const crmService = {

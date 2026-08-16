@@ -1,4 +1,5 @@
 import { apiClient } from '../../../core/api/apiClient'
+import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 
 const STORAGE_KEY = 'appes_erp_finanzas_data_v3'
 
@@ -474,20 +475,24 @@ export const finanzasService = {
       console.warn('Error sincronizando datos cruzados entre módulos', e)
     }
 
-    // Sincronización con almacenamiento local de Finanzas
+    // Sincronización con almacenamiento local de Finanzas por Tenant
     try {
-      const local = localStorage.getItem(STORAGE_KEY)
+      const tenantId = getActiveTenantId()
+      const isGlobalAdmin = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global')
+      const emptyState = { cuentas: [], comprobantes: [], presupuestos: [], conciliaciones: [] }
+      const defaultState = isGlobalAdmin ? INITIAL_FINANZAS_DATA : emptyState
+      
+      const local = getTenantData(STORAGE_KEY, null)
       if (local) {
-        const parsed = JSON.parse(local)
-        if (parsed.cuentas) cuentas = parsed.cuentas
-        if (parsed.comprobantes) {
-          // Fusionar comprobantes locales con los generados por sincronización cruzada
-          const idsExistentes = new Set(parsed.comprobantes.map(c => c.id))
-          const nuevosCruzados = comprobantes.filter(c => !idsExistentes.has(c.id))
-          comprobantes = [...parsed.comprobantes, ...nuevosCruzados]
-        }
-        if (parsed.presupuestos) presupuestos = parsed.presupuestos
-        if (parsed.conciliaciones) conciliaciones = parsed.conciliaciones
+        if (local.cuentas) cuentas = local.cuentas
+        if (local.comprobantes) comprobantes = local.comprobantes
+        if (local.presupuestos) presupuestos = local.presupuestos
+        if (local.conciliaciones) conciliaciones = local.conciliaciones
+      } else {
+        cuentas = defaultState.cuentas || []
+        comprobantes = defaultState.comprobantes || []
+        presupuestos = defaultState.presupuestos || []
+        conciliaciones = defaultState.conciliaciones || []
       }
     } catch (e) {
       console.warn('Error en storage', e)
@@ -501,7 +506,7 @@ export const finanzasService = {
 
   saveData: (data) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+      setTenantData(STORAGE_KEY, data)
     } catch (e) {
       console.error('Error al guardar datos de finanzas', e)
     }

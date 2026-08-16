@@ -1,5 +1,6 @@
 import { apiClient } from '../../../core/api/apiClient'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 
 const STORAGE_KEY = 'ventas_orders_v1'
 
@@ -12,26 +13,13 @@ const SEED_ORDERS = [
 ]
 
 function getLocalOrders() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-    
-    // Si es un cliente nuevo, su lista de ventas debe iniciar vacía
-    const userRaw = localStorage.getItem('erp_user')
-    if (userRaw) {
-      const user = JSON.parse(userRaw)
-      if (user.role === 'CLIENTE' || user.role === 'cliente') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([]))
-        return []
-      }
-    }
-  } catch (_) {}
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ORDERS))
-  return SEED_ORDERS
+  const tenantId = getActiveTenantId()
+  const defaultVal = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') ? SEED_ORDERS : []
+  return getTenantData(STORAGE_KEY, defaultVal)
 }
 
 function saveLocalOrders(orders) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
+  setTenantData(STORAGE_KEY, orders)
 }
 
 export const ventasService = {

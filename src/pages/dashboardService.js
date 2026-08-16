@@ -3,6 +3,7 @@
   con la base de datos real del ERP (Ventas, Compras, Inventario, CRM, Finanzas y Auditoría).
 */
 import { apiClient } from 'core/api/apiClient'
+import { getTenantData, getActiveTenantId } from '../core/utils/formatters'
 
 export const dashboardService = {
   /**
@@ -15,48 +16,36 @@ export const dashboardService = {
     } catch (_) {}
 
     try {
-      const rawFinanzas = localStorage.getItem('appes_erp_finanzas_data_v3') || localStorage.getItem('appes_finanzas_data_v1')
-      const rawVentas = localStorage.getItem('ventas_orders_v1')
-      const rawCrm = localStorage.getItem('appes_crm_clients_v1')
+      const vtas = getTenantData('ventas_orders_v1', [])
+      const fin = getTenantData('appes_erp_finanzas_data_v3', { comprobantes: [], cuentas: [] })
+      const crm = getTenantData('appes_crm_clients_v1', [])
 
       let totalVentas = 0
       let totalOrdenes = 0
       let totalClientes = 0
 
-      if (rawVentas) {
-        const vtas = JSON.parse(rawVentas)
-        if (Array.isArray(vtas) && vtas.length > 0) {
-          totalOrdenes = vtas.length
-          totalVentas = vtas.reduce((acc, v) => acc + (Number(v.total) || 0), 0)
-        }
+      if (Array.isArray(vtas) && vtas.length > 0) {
+        totalOrdenes = vtas.length
+        totalVentas = vtas.reduce((acc, v) => acc + (Number(v.total) || 0), 0)
       }
 
-      if (rawFinanzas && totalVentas === 0) {
-        const fin = JSON.parse(rawFinanzas)
-        if (fin.comprobantes) {
-          const ingresos = fin.comprobantes
-            .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
-          if (ingresos > 0) totalVentas = ingresos
-        }
+      if (fin && fin.comprobantes && totalVentas === 0) {
+        const ingresos = fin.comprobantes
+          .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
+          .reduce((s, c) => s + (Number(c.monto) || 0), 0)
+        if (ingresos > 0) totalVentas = ingresos
       }
 
-      if (rawCrm) {
-        const crm = JSON.parse(rawCrm)
-        if (Array.isArray(crm)) {
-          totalClientes = crm.length
-        }
+      if (Array.isArray(crm)) {
+        totalClientes = crm.length
       }
 
       // Calcular ganancias a partir del margen financiero
       let totalGastos = 0
-      if (rawFinanzas) {
-        const fin = JSON.parse(rawFinanzas)
-        if (fin.comprobantes) {
-          totalGastos = fin.comprobantes
-            .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
-        }
+      if (fin && fin.comprobantes) {
+        totalGastos = fin.comprobantes
+          .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
+          .reduce((s, c) => s + (Number(c.monto) || 0), 0)
       }
 
       const totalGanancias = Math.max(0, totalVentas - totalGastos)
@@ -152,24 +141,21 @@ export const dashboardService = {
     return []
   },
 
-  /** Inventario: totales de stock reales de la base de datos. */
+  /** Inventario: totales de stock reales de la base de datos del tenant. */
   async getInventario() {
     try {
-      const raw = localStorage.getItem('appes_inventory_products_v1')
-      if (raw) {
-        const products = JSON.parse(raw)
-        if (Array.isArray(products)) {
-          const totalStock = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
-          const stockBajoCount = products.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 20) && Number(p.stock || 0) > 0).length
-          const sinStockCount = products.filter(p => Number(p.stock || 0) <= 0).length
-          const disponibleStock = products.filter(p => Number(p.stock || 0) > Number(p.stockMin || 20)).reduce((s, p) => s + Number(p.stock), 0)
+      const products = getTenantData('appes_inventory_products_v1', [])
+      if (Array.isArray(products) && products.length > 0) {
+        const totalStock = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
+        const stockBajoCount = products.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 20) && Number(p.stock || 0) > 0).length
+        const sinStockCount = products.filter(p => Number(p.stock || 0) <= 0).length
+        const disponibleStock = products.filter(p => Number(p.stock || 0) > Number(p.stockMin || 20)).reduce((s, p) => s + Number(p.stock), 0)
 
-          return {
-            total: totalStock,
-            disponible: disponibleStock > 0 ? disponibleStock : totalStock - stockBajoCount,
-            stockBajo: stockBajoCount,
-            sinStock: sinStockCount,
-          }
+        return {
+          total: totalStock,
+          disponible: disponibleStock > 0 ? disponibleStock : totalStock - stockBajoCount,
+          stockBajo: stockBajoCount,
+          sinStock: sinStockCount,
         }
       }
     } catch (_) {}
@@ -185,47 +171,41 @@ export const dashboardService = {
   /** Top productos calculados directamente de los registros de inventario y ventas. */
   async getTopProductos() {
     try {
-      const raw = localStorage.getItem('appes_inventory_products_v1')
-      if (raw) {
-        const products = JSON.parse(raw)
-        if (Array.isArray(products) && products.length > 0) {
-          return products.slice(0, 4).map(p => ({
-            nombre: p.nombre,
-            precio: p.precio || p.costo || 100,
-            unidades: p.stock || 0,
-            img: p.categoria === 'Medicamentos' ? '💊' : p.categoria === 'Tecnología & Hardware' ? '💻' : p.categoria === 'Suplementos' ? '🧪' : '📦'
-          }))
-        }
+      const products = getTenantData('appes_inventory_products_v1', [])
+      if (Array.isArray(products) && products.length > 0) {
+        return products.slice(0, 4).map(p => ({
+          nombre: p.nombre,
+          precio: p.precio || p.costo || 100,
+          unidades: p.stock || 0,
+          img: p.categoria === 'Medicamentos' ? '💊' : p.categoria === 'Tecnología & Hardware' ? '💻' : p.categoria === 'Suplementos' ? '🧪' : '📦'
+        }))
       }
     } catch (_) {}
 
     return []
   },
 
-  /** Resumen financiero real sincronizado con los comprobantes del ERP. */
+  /** Resumen financiero real sincronizado con los comprobantes del ERP del tenant. */
   async getFinanciero() {
     try {
-      const rawFinanzas = localStorage.getItem('appes_erp_finanzas_data_v3')
-      if (rawFinanzas) {
-        const fin = JSON.parse(rawFinanzas)
-        if (fin.comprobantes && Array.isArray(fin.comprobantes)) {
-          const ing = fin.comprobantes
-            .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
+      const fin = getTenantData('appes_erp_finanzas_data_v3', null)
+      if (fin && fin.comprobantes && Array.isArray(fin.comprobantes)) {
+        const ing = fin.comprobantes
+          .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
+          .reduce((s, c) => s + (Number(c.monto) || 0), 0)
 
-          const gas = fin.comprobantes
-            .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
+        const gas = fin.comprobantes
+          .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
+          .reduce((s, c) => s + (Number(c.monto) || 0), 0)
 
-          const ut = Math.max(0, ing - gas)
-          const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 0
+        const ut = Math.max(0, ing - gas)
+        const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 0
 
-          return {
-            ingresos:  { value: ing, prev: 0 },
-            gastos:    { value: gas, prev: 0 },
-            utilidad:  { value: ut, prev: 0 },
-            margen:    { value: Number(margen), prev: 0 },
-          }
+        return {
+          ingresos:  { value: ing, prev: 0 },
+          gastos:    { value: gas, prev: 0 },
+          utilidad:  { value: ut, prev: 0 },
+          margen:    { value: Number(margen), prev: 0 },
         }
       }
     } catch (_) {}
@@ -241,32 +221,24 @@ export const dashboardService = {
   /** Ventas por categoría calculadas dinámicamente desde el catálogo de inventario. */
   async getCategorias() {
     try {
-      const raw = localStorage.getItem('appes_inventory_products_v1')
-      if (raw) {
-        const products = JSON.parse(raw)
-        if (Array.isArray(products) && products.length > 0) {
-          const catMap = {}
-          products.forEach(p => {
-            const cat = p.categoria || 'General'
-            catMap[cat] = (catMap[cat] || 0) + (Number(p.stock) || 1)
-          })
-          const totalStock = Object.values(catMap).reduce((a, b) => a + b, 0) || 1
-          const palette = ['#2563EB', '#059669', '#D97706', '#7C3AED', '#EC4899']
+      const products = getTenantData('appes_inventory_products_v1', [])
+      if (Array.isArray(products) && products.length > 0) {
+        const catMap = {}
+        products.forEach(p => {
+          const cat = p.categoria || 'General'
+          catMap[cat] = (catMap[cat] || 0) + (Number(p.stock) || 1)
+        })
+        const totalStock = Object.values(catMap).reduce((a, b) => a + b, 0) || 1
+        const palette = ['#2563EB', '#059669', '#D97706', '#7C3AED', '#EC4899']
 
-          return Object.entries(catMap).slice(0, 4).map(([catName, count], idx) => ({
-            label: catName,
-            pct: Math.round((count / totalStock) * 100),
-            color: palette[idx % palette.length],
-          }))
-        }
+        return Object.entries(catMap).slice(0, 4).map(([catName, count], idx) => ({
+          label: catName,
+          pct: Math.round((count / totalStock) * 100),
+          color: palette[idx % palette.length],
+        }))
       }
     } catch (_) {}
 
-    return [
-      { label: 'Medicamentos', pct: 45, color: '#2563EB' },
-      { label: 'Equipos Médicos', pct: 25, color: '#059669' },
-      { label: 'Insumos', pct: 20, color: '#D97706' },
-      { label: 'Suplementos', pct: 10, color: '#7C3AED' },
-    ]
+    return []
   },
 }
