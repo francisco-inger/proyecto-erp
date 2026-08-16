@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import { validateStrongPassword } from '../../../core/utils/formatters'
 import './Login.css'
 
 export function Register() {
@@ -20,6 +21,13 @@ export function Register() {
     e.preventDefault()
     setError('')
     setSuccess('')
+
+    const passError = validateStrongPassword(form.password)
+    if (passError) {
+      setError(passError)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -121,17 +129,17 @@ export function Register() {
               </div>
 
               <div className="auth-split-field">
-                <label htmlFor="password">CONTRASEÑA</label>
+                <label htmlFor="password">CONTRASEÑA ROBUSTA *</label>
                 <div className="auth-split-pass-wrap">
                   <input
                     id="password"
                     type={showPass ? 'text' : 'password'}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mín. 8 caracteres (A-Z, a-z, 0-9, !@#)"
                     value={form.password}
                     onChange={update('password')}
                     disabled={loading}
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                   <button
                     type="button"
@@ -142,6 +150,29 @@ export function Register() {
                   >
                     {showPass ? '🙈' : '👁️'}
                   </button>
+                </div>
+                
+                {/* Indicadores en vivo de seguridad de contraseña */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 4,
+                  marginTop: 6,
+                  fontSize: 11,
+                  color: '#64748B'
+                }}>
+                  <span style={{ color: form.password.length >= 8 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                    {form.password.length >= 8 ? '✓' : '○'} Mín. 8 caracteres
+                  </span>
+                  <span style={{ color: /[A-Z]/.test(form.password) ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                    {/[A-Z]/.test(form.password) ? '✓' : '○'} 1 Mayúscula (A-Z)
+                  </span>
+                  <span style={{ color: /[0-9]/.test(form.password) ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                    {/[0-9]/.test(form.password) ? '✓' : '○'} 1 Número (0-9)
+                  </span>
+                  <span style={{ color: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(form.password) ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                    {/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(form.password) ? '✓' : '○'} 1 Especial (!@#$)
+                  </span>
                 </div>
               </div>
 

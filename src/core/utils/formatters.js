@@ -74,3 +74,57 @@ export function formatMoneyDOP(val) {
     maximumFractionDigits: 2,
   })
 }
+
+/**
+ * Valida si una contraseña cumple con las políticas de seguridad:
+ * - Mínimo 8 caracteres
+ * - Al menos 1 mayúscula
+ * - Al menos 1 minúscula
+ * - Al menos 1 número
+ * - Al menos 1 carácter especial (@, $, !, %, *, ?, &, #, ., -, _)
+ */
+export function validateStrongPassword(password) {
+  if (!password || password.length < 8) {
+    return 'La contraseña debe contener al menos 8 caracteres.'
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Debe contener al menos una letra mayúscula (A-Z).'
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Debe contener al menos una letra minúscula (a-z).'
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Debe contener al menos un número (0-9).'
+  }
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+    return 'Debe contener al menos un carácter especial (ej. !@#$%&*).'
+  }
+  return null // Válida
+}
+
+/**
+ * Formatea el número de tarjeta en bloques de 4 dígitos: "4242 4242 4242 4242"
+ */
+export function formatCardNumber(value) {
+  if (!value) return ''
+  const clean = String(value).replace(/\D/g, '').slice(0, 16)
+  return clean.replace(/(\d{4})(?=\d)/g, '$1 ')
+}
+
+/**
+ * Formatea la fecha de expiración de tarjeta: "MM/AA"
+ */
+export function formatCardExpiry(value) {
+  if (!value) return ''
+  const clean = String(value).replace(/\D/g, '').slice(0, 4)
+  if (clean.length <= 2) return clean
+  return `${clean.slice(0, 2)}/${clean.slice(2, 4)}`
+}
+
+/**
+ * Formatea el código CVC/CVV (máximo 4 dígitos numéricos)
+ */
+export function formatCardCVC(value) {
+  if (!value) return ''
+  return String(value).replace(/\D/g, '').slice(0, 4)
+}
