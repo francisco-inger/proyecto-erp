@@ -57,6 +57,7 @@ export const seguridadService = {
       id: `usr-${Date.now()}`,
       nombre: nuevo.nombre,
       email: nuevo.email,
+      password: nuevo.password || 'Acceso2026!',
       rol: nuevo.rol || 'VENTAS',
       estado: nuevo.estado || 'Activo',
       ultimoAcceso: 'Nunca',
@@ -65,7 +66,7 @@ export const seguridadService = {
     }
     const updated = [item, ...actuales]
     localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated))
-    seguridadService.registrarLog(`Creación de usuario: ${nuevo.email}`, 'Seguridad')
+    seguridadService.registrarLog(`Creación de usuario: ${nuevo.email} (Rol: ${item.rol})`, 'Seguridad')
     return updated
   },
 

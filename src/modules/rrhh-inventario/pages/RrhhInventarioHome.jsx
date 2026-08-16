@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { inventarioService } from '../services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 import './InventarioHome.css'
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -1418,17 +1419,20 @@ export function RrhhInventarioHome() {
                 </div>
 
                 <div className="inv-form-group">
-                  <label>Producto *</label>
-                  <select
+                  <EnterprisePicker
+                    label="Producto de Inventario"
                     required
                     value={movementForm.producto}
-                    onChange={(e) => setMovementForm({ ...movementForm, producto: e.target.value })}
-                  >
-                    <option value="">Seleccione un producto...</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.nombre}>{p.nombre} (Stock: {p.stock})</option>
-                    ))}
-                  </select>
+                    onChange={(val, item) => setMovementForm({ ...movementForm, producto: val, almacen: item?.almacen || movementForm.almacen })}
+                    items={products}
+                    displayField="nombre"
+                    subtitleField="categoria"
+                    filterField="categoria"
+                    filterLabel="Categoría"
+                    modalTitle="Catálogo de Productos · Movimiento de Inventario"
+                    icon="📦"
+                    placeholder="Escriba nombre o explore catálogo de inventario..."
+                  />
                 </div>
 
                 <div className="inv-form-grid-2">

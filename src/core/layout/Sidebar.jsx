@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router
 import { useAuth } from '../auth/AuthContext'
 import { canAccess } from '../rbac/permissions'
 import { getEnabledModules } from '../moduleRegistry'
+import { AdquisicionPlanesModal } from '../components/AdquisicionPlanesModal'
 
 /* Orden y íconos del sidebar, alineados al mockup del proyecto */
 const MODULE_ICONS = {
@@ -64,7 +65,7 @@ const SUBMENUS = {
 
 const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager','ajustes']
 
-export function Sidebar() {
+export function Sidebar({ isMobileOpen, onCloseMobile }) {
   const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ export function Sidebar() {
   const [openSubmenus, setOpenSubmenus] = useState({})
   const [showPlanModal, setShowPlanModal] = useState(false)
 
-  const all = getEnabledModules().filter((m) => canAccess(user?.role, m.requiredRole))
+  const all = getEnabledModules().filter((m) => canAccess(user?.role, m.id))
   const modules = [...all].sort((a, b) => {
     const ia = MODULE_ORDER.indexOf(a.id)
     const ib = MODULE_ORDER.indexOf(b.id)
@@ -90,9 +91,9 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
       <div className="sidebar-top">
-        <div className="sidebar-brand-container">
+        <div className="sidebar-brand-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="sidebar-brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
               src="/branding/logo_appex.jpg"
@@ -108,6 +109,17 @@ export function Sidebar() {
               </span>
             </div>
           </div>
+
+          {/* Botón de cierre en vista móvil */}
+          {onCloseMobile && (
+            <button
+              className="sidebar-mobile-close-btn"
+              onClick={onCloseMobile}
+              title="Cerrar Menú"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -193,35 +205,56 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Tarjeta inferior del plan empresarial */}
-      <div className="sidebar-plan-card">
-        <div className="sidebar-plan-header">
-          <div className="sidebar-plan-title">
-            <span className="sidebar-plan-crown">👑</span>
-            <strong>Plan Empresarial</strong>
-          </div>
-          <span className="sidebar-plan-badge">Avanzado</span>
-        </div>
+      {/* Tarjeta inferior del plan contratado */}
+      {(() => {
+        let activePlan = null
+        try {
+          const raw = localStorage.getItem('appes_active_plan_subscription_v1')
+          if (raw) activePlan = JSON.parse(raw)
+        } catch (_) {}
+        const planName = activePlan?.planNombre || 'Plan Enterprise Suite'
+        const planBadge = activePlan?.planBadge || 'Corporativo'
 
-        <div className="sidebar-plan-usage">
-          <div className="sidebar-plan-usage-label">
-            <span>Uso del sistema</span>
-            <strong>68%</strong>
-          </div>
-          <div className="sidebar-plan-progress-bg">
-            <div className="sidebar-plan-progress-fill" style={{ width: '68%' }} />
-          </div>
-        </div>
+        return (
+          <div className="sidebar-plan-card">
+            <div className="sidebar-plan-header">
+              <div className="sidebar-plan-title">
+                <span className="sidebar-plan-crown">👑</span>
+                <strong style={{ fontSize: 12 }}>{planName}</strong>
+              </div>
+              <span className="sidebar-plan-badge">{planBadge}</span>
+            </div>
 
-        <button
-          className="sidebar-plan-btn"
-          onClick={() => navigate('/ajustes?tab=Sistema')}
-          style={{ cursor: 'pointer' }}
-          title="Ver recursos, estado de base de datos y licencia"
-        >
-          Ver detalles
-        </button>
-      </div>
+            <div className="sidebar-plan-usage">
+              <div className="sidebar-plan-usage-label">
+                <span>{user?.role === 'cliente' ? 'Módulos de tu Plan' : 'Uso del sistema'}</span>
+                <strong>{modules.length} activos</strong>
+              </div>
+              <div className="sidebar-plan-progress-bg">
+                <div className="sidebar-plan-progress-fill" style={{ width: `${Math.min(100, (modules.length / 11) * 100)}%` }} />
+              </div>
+            </div>
+
+            <button
+              className="sidebar-plan-btn"
+              onClick={() => setShowPlanModal(true)}
+              style={{ cursor: 'pointer' }}
+              title="Ver planes disponibles, renovar o mejorar suscripción"
+            >
+              {user?.role === 'cliente' ? 'Mejorar mi Plan' : 'Gestionar Planes'}
+            </button>
+          </div>
+        )
+      })()}
+
+      {/* Modal interactivo de Adquisición de Planes */}
+      <AdquisicionPlanesModal
+        isOpen={showPlanModal}
+        onClose={() => setShowPlanModal(false)}
+        onPlanActivated={() => {
+          setShowPlanModal(false)
+        }}
+      />
     </aside>
   )
 }

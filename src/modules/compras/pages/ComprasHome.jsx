@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 import './ComprasHome.css'
 
 const STORAGE_KEY = 'compras_orders_v1'
@@ -1078,28 +1079,66 @@ export function ComprasHome() {
             </div>
             <form onSubmit={handleCreateOrden}>
               <div className="compras-modal-body">
+                {/* Selector de Proveedor con EnterprisePicker */}
+                <div className="compras-form-group">
+                  <EnterprisePicker
+                    label="Proveedor / Empresa Suplidora"
+                    required
+                    value={form.proveedor}
+                    onChange={(val, item) => {
+                      setForm(f => ({
+                        ...f,
+                        proveedor: val,
+                        rnc: item?.rnc || f.rnc,
+                        categoria: item?.categoria || f.categoria,
+                        condicionPago: item?.condicionPago || f.condicionPago
+                      }))
+                    }}
+                    items={SEED_COMPRAS.map(c => ({
+                      nombre: c.proveedor,
+                      rnc: c.rnc,
+                      categoria: c.categoria,
+                      condicionPago: c.condicionPago
+                    }))}
+                    displayField="nombre"
+                    subtitleField="categoria"
+                    filterField="categoria"
+                    filterLabel="Categoría"
+                    modalTitle="Directorio de Proveedores y Suplidores"
+                    icon="🏭"
+                    placeholder="Escriba nombre de proveedor o explore catálogo..."
+                    columns={[
+                      {
+                        header: 'Proveedor / Razón Social',
+                        render: (p) => (
+                          <div>
+                            <strong style={{ color: '#0F172A' }}>{p.nombre}</strong>
+                            <div style={{ fontSize: 11, color: '#64748B' }}>RNC: {p.rnc || '—'}</div>
+                          </div>
+                        )
+                      },
+                      {
+                        header: 'Categoría',
+                        render: (p) => <span style={{ color: '#2563EB', fontWeight: 600 }}>{p.categoria || 'Suministros'}</span>
+                      },
+                      {
+                        header: 'Término Habitual',
+                        render: (p) => <span style={{ color: '#059669', fontSize: 11 }}>{p.condicionPago || 'Crédito 30 días'}</span>
+                      }
+                    ]}
+                  />
+                </div>
+
                 <div className="compras-form-row">
-                  <div className="compras-form-group" style={{ flex: 2 }}>
-                    <label>Proveedor / Razón Social *</label>
-                    <input
-                      required
-                      placeholder="Ej: Distribuidora Tech SRL"
-                      value={form.proveedor}
-                      onChange={e => setForm(f => ({ ...f, proveedor: e.target.value }))}
-                    />
-                  </div>
-                  <div className="compras-form-group" style={{ flex: 1 }}>
-                    <label>RNC / Cédula</label>
+                  <div className="compras-form-group">
+                    <label>RNC / Identificación Tributaria</label>
                     <input
                       placeholder="1-31-89234-5"
                       value={form.rnc}
                       onChange={e => setForm(f => ({ ...f, rnc: e.target.value }))}
                     />
                   </div>
-                </div>
-
-                <div className="compras-form-row">
-                  <div className="compras-form-group" style={{ flex: 1 }}>
+                  <div className="compras-form-group">
                     <label>Categoría</label>
                     <select
                       value={form.categoria}
@@ -1116,7 +1155,10 @@ export function ComprasHome() {
                       <option value="Insumos Generales">Insumos Generales</option>
                     </select>
                   </div>
-                  <div className="compras-form-group" style={{ flex: 1 }}>
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
                     <label>Condición de Pago</label>
                     <select
                       value={form.condicionPago}
@@ -1129,17 +1171,26 @@ export function ComprasHome() {
                       <option value="Crédito 60 días">Crédito 60 días</option>
                     </select>
                   </div>
+                  <div className="compras-form-group">
+                    <label>Estado Inicial</label>
+                    <select
+                      value={form.estado}
+                      onChange={e => setForm(f => ({ ...f, estado: e.target.value }))}
+                    >
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="En Tránsito">En Tránsito</option>
+                      <option value="Recibida">Recibida</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* Selector de Producto de Inventario */}
+                {/* Selector de Producto de Inventario con EnterprisePicker */}
                 {invProducts.length > 0 && (
                   <div className="compras-form-group">
-                    <label>Producto de Inventario (Opcional - Para reposición de stock)</label>
-                    <select
-                      value={form.productoId}
-                      onChange={e => {
-                        const pid = e.target.value
-                        const prod = invProducts.find(p => p.id === pid)
+                    <EnterprisePicker
+                      label="Producto de Inventario (Reposición de Stock)"
+                      value={form.itemDesc}
+                      onChange={(val, prod) => {
                         if (prod) {
                           const cost = Number(prod.costo || prod.precio * 0.6 || 50)
                           const cant = Number(form.itemCant || 1)
@@ -1152,22 +1203,53 @@ export function ComprasHome() {
                             categoria: prod.categoria || f.categoria
                           }))
                         } else {
-                          setForm(f => ({ ...f, productoId: '' }))
+                          setForm(f => ({ ...f, productoId: '', itemDesc: val }))
                         }
                       }}
-                    >
-                      <option value="">-- Seleccionar producto para reposición automática --</option>
-                      {invProducts.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} · Costo Ref: {money(p.costo || p.precio * 0.6 || 50)} (Stock actual: {p.stock} uds.)
-                        </option>
-                      ))}
-                    </select>
+                      items={invProducts}
+                      displayField="nombre"
+                      subtitleField="categoria"
+                      filterField="categoria"
+                      filterLabel="Categoría"
+                      modalTitle="Catálogo de Productos para Reposición"
+                      icon="📦"
+                      placeholder="Escriba o seleccione producto a abastecer..."
+                      columns={[
+                        {
+                          header: 'Producto',
+                          render: (p) => (
+                            <div>
+                              <strong style={{ color: '#0F172A' }}>{p.nombre}</strong>
+                              <div style={{ fontSize: 11, color: '#64748B' }}>SKU: {p.codigo || 'PROD'} · {p.categoria}</div>
+                            </div>
+                          )
+                        },
+                        {
+                          header: 'Stock Actual',
+                          render: (p) => (
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              background: (p.stock || 0) > 5 ? '#DCFCE7' : '#FEE2E2',
+                              color: (p.stock || 0) > 5 ? '#166534' : '#991B1B'
+                            }}>
+                              {p.stock || 0} uds.
+                            </span>
+                          )
+                        },
+                        {
+                          header: 'Costo Compra',
+                          render: (p) => <strong style={{ color: '#059669' }}>{money(p.costo || p.precio * 0.6 || 50)}</strong>
+                        }
+                      ]}
+                    />
                   </div>
                 )}
 
                 <div className="compras-form-row">
-                  <div className="compras-form-group" style={{ flex: 1 }}>
+                  <div className="compras-form-group">
                     <label>Cantidad</label>
                     <input
                       type="number"
@@ -1184,8 +1266,8 @@ export function ComprasHome() {
                       }}
                     />
                   </div>
-                  <div className="compras-form-group" style={{ flex: 1 }}>
-                    <label>Total Orden (RD$) *</label>
+                  <div className="compras-form-group">
+                    <label>Total Orden (RD$)</label>
                     <input
                       required
                       type="number"
@@ -1198,7 +1280,7 @@ export function ComprasHome() {
                 </div>
 
                 <div className="compras-form-row">
-                  <div className="compras-form-group" style={{ flex: 1 }}>
+                  <div className="compras-form-group">
                     <label>Fecha de Emisión</label>
                     <input
                       type="text"
@@ -1207,26 +1289,14 @@ export function ComprasHome() {
                       onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
                     />
                   </div>
-                  <div className="compras-form-group" style={{ flex: 1 }}>
-                    <label>Estado Inicial</label>
-                    <select
-                      value={form.estado}
-                      onChange={e => setForm(f => ({ ...f, estado: e.target.value }))}
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="En Tránsito">En Tránsito</option>
-                      <option value="Recibida">Recibida</option>
-                    </select>
+                  <div className="compras-form-group">
+                    <label>Descripción de Artículos / Servicios</label>
+                    <input
+                      placeholder="Ej: Lote de repuestos y suministros autorizados"
+                      value={form.itemDesc}
+                      onChange={e => setForm(f => ({ ...f, itemDesc: e.target.value }))}
+                    />
                   </div>
-                </div>
-
-                <div className="compras-form-group">
-                  <label>Descripción de Artículos / Servicios</label>
-                  <input
-                    placeholder="Ej: Lote de repuestos y suministros autorizados"
-                    value={form.itemDesc}
-                    onChange={e => setForm(f => ({ ...f, itemDesc: e.target.value }))}
-                  />
                 </div>
 
                 <div className="compras-form-group">

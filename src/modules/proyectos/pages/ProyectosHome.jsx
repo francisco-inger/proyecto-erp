@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { proyectosService } from '../services/proyectos.service'
+import { crmService } from '../../crm/services/crm.service'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 
 const statusColor = {
   'En curso': '#2563EB',
@@ -25,6 +27,7 @@ function ProgressBar({ value }) {
 
 export function ProyectosHome() {
   const [proyectos, setProyectos] = useState([])
+  const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({
@@ -39,8 +42,12 @@ export function ProyectosHome() {
   }, [])
 
   const load = async () => {
-    const data = await proyectosService.getProyectos()
+    const [data, cls] = await Promise.all([
+      proyectosService.getProyectos(),
+      crmService.listClients().catch(() => [])
+    ])
     setProyectos(data)
+    if (cls && cls.length > 0) setClients(cls)
     setLoading(false)
   }
 
@@ -277,14 +284,19 @@ export function ProyectosHome() {
               </div>
 
               <div className="fn-form-row">
-                <label className="fn-form-label">Cliente</label>
-                <input
-                  type="text"
-                  className="fn-form-input"
-                  placeholder="Ej. Tech Solutions SRL"
-                  value={form.cliente}
-                  onChange={(e) => setForm({ ...form, cliente: e.target.value })}
+                <EnterprisePicker
+                  label="Cliente del Proyecto"
                   required
+                  value={form.cliente}
+                  onChange={(val) => setForm({ ...form, cliente: val })}
+                  items={clients}
+                  displayField="nombre"
+                  subtitleField="contacto"
+                  filterField="sector"
+                  filterLabel="Sector"
+                  modalTitle="Directorio de Clientes · Nuevo Proyecto"
+                  icon="🏢"
+                  placeholder="Escriba nombre o explore clientes de CRM..."
                 />
               </div>
 

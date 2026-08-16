@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react'
 import { crmService } from '../services/crm.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 import './CrmHome.css'
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -1310,13 +1311,19 @@ export function CrmHome() {
                   />
                 </div>
                 <div className="crm-form-group">
-                  <label>Cliente Asociado *</label>
-                  <input
+                  <EnterprisePicker
+                    label="Cliente Asociado"
                     required
-                    type="text"
-                    placeholder="Ej. Tech Solutions SRL"
                     value={oppForm.cliente}
-                    onChange={(e) => setOppForm({ ...oppForm, cliente: e.target.value })}
+                    onChange={(val) => setOppForm({ ...oppForm, cliente: val })}
+                    items={clients}
+                    displayField="nombre"
+                    subtitleField="sector"
+                    filterField="sector"
+                    filterLabel="Sector"
+                    modalTitle="Directorio de Clientes · Nueva Oportunidad"
+                    icon="🏢"
+                    placeholder="Escriba nombre o explore clientes de CRM..."
                   />
                 </div>
                 <div className="crm-form-group">
@@ -1386,13 +1393,19 @@ export function CrmHome() {
                   />
                 </div>
                 <div className="crm-form-group">
-                  <label>Empresa *</label>
-                  <input
+                  <EnterprisePicker
+                    label="Empresa / Cliente Asociado"
                     required
-                    type="text"
-                    placeholder="Ej. Distribuidora XYZ"
                     value={contactForm.empresa}
-                    onChange={(e) => setContactForm({ ...contactForm, empresa: e.target.value })}
+                    onChange={(val) => setContactForm({ ...contactForm, empresa: val })}
+                    items={clients}
+                    displayField="nombre"
+                    subtitleField="sector"
+                    filterField="sector"
+                    filterLabel="Sector"
+                    modalTitle="Directorio de Clientes CRM · Asignar Contacto"
+                    icon="🏢"
+                    placeholder="Escriba nombre o explore clientes de CRM..."
                   />
                 </div>
                 <div className="crm-form-group">

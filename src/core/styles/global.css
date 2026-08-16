@@ -418,6 +418,43 @@ button, input, select {
   z-index: 10;
 }
 
+.topbar-hamburger-btn {
+  display: none;
+  background: none;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 18px;
+  color: #1E293B;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.topbar-hamburger-btn:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.sidebar-mobile-close-btn {
+  display: none;
+  background: #F1F5F9;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-mobile-backdrop {
+  display: none;
+}
+
 .main-content {
   padding: var(--space-6);
   background: var(--color-bg-app);
@@ -426,4 +463,222 @@ button, input, select {
   overflow-x: hidden;
   box-sizing: border-box;
 }
+
+.app-shell-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN ADAPTATION (TELÉFONOS & TABLETS)
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 999;
+  }
+
+  .sidebar-mobile-close-btn {
+    display: flex;
+  }
+
+  .topbar {
+    padding: 0 14px;
+    height: 56px;
+  }
+
+  .topbar-hamburger-btn {
+    display: flex;
+  }
+
+  .topbar-search-wrapper {
+    width: auto !important;
+    max-width: 180px;
+  }
+
+  .topbar-search-wrapper input {
+    font-size: 11px !important;
+  }
+
+  .topbar-shortcut-pill {
+    display: none !important;
+  }
+
+  .main-content {
+    padding: 12px;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* Adaptación de grids universales de métricas y tarjetas */
+  .rrhh-kpi-grid,
+  .inv-kpi-grid,
+  .ventas-kpi-row,
+  .crm-kpi-grid,
+  .fn-kpi-grid,
+  .compras-kpi-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .rrhh-grid-3,
+  .rrhh-grid-2,
+  .rrhh-grid-half,
+  .ventas-grid-layout,
+  .compras-grid-layout,
+  .inv-grid-2,
+  .fn-grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Tablas responsivas con scroll táctil */
+  .rrhh-table-wrap,
+  .ventas-table-container,
+  .inv-table-container,
+  .compras-table-container,
+  .fn-table-container,
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modales universales estandarizados */
+  .fn-modal-card,
+  .rrhh-modal-box,
+  .ventas-modal-box,
+  .compras-modal-box,
+  .inv-modal-box,
+  .ep-modal-box,
+  .crm-modal-box {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 10px auto !important;
+    max-height: 90vh !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .fn-modal-body,
+  .rrhh-modal-body,
+  .ventas-modal-body,
+  .compras-modal-body,
+  .inv-modal-body,
+  .ep-modal-body,
+  .crm-modal-body {
+    padding: 16px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+  }
+
+  .rrhh-form-grid-2,
+  .fn-form-grid-2,
+  .inv-form-grid-2,
+  .compras-form-row,
+  .ventas-form-grid-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .rrhh-form-group,
+  .fn-form-row,
+  .inv-form-group,
+  .compras-form-group,
+  .ventas-form-group,
+  .crm-form-group {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ── Reglas globales de consistencia para todos los campos de formulario ── */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  line-height: 1.4 !important;
+}
+
+/* Modales en cualquier pantalla: estructura sin deformaciones */
+.fn-modal-card,
+.rrhh-modal-box,
+.ventas-modal-box,
+.compras-modal-box,
+.inv-modal-box,
+.ep-modal-box,
+.crm-modal-box {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.fn-modal-body,
+.rrhh-modal-body,
+.ventas-modal-body,
+.compras-modal-body,
+.inv-modal-body,
+.crm-modal-body {
+  overflow-y: auto;
+  max-height: 75vh;
+  box-sizing: border-box;
+}
+
+.ep-input-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ep-text-input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
 

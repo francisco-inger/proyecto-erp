@@ -517,11 +517,11 @@ export function Dashboard() {
               backdropFilter: 'blur(4px)',
               border: '1px solid rgba(255, 255, 255, 0.15)'
             }}>
-              <span>✦</span> PANEL DE CONTROL · APPEX ERP
+              <span>✦</span> {user?.role === 'cliente' ? 'PORTAL CLIENTE · APPEX ERP' : 'PANEL DE CONTROL ADMINISTRATIVO · APPEX ERP'}
             </div>
 
             <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-              Buenos días, <span style={{ color: '#60A5FA' }}>{user?.name || 'Administrador'}</span>
+              Buenos días, <span style={{ color: '#60A5FA' }}>{user?.name || 'Usuario'}</span>
             </h1>
             <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#CBD5E1', fontWeight: 500 }}>
               {new Date().toLocaleDateString('es-DO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -531,13 +531,13 @@ export function Dashboard() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(16, 185, 129, 0.2)', color: '#A7F3D0', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-                Conexión SQLite Activa
+                {user?.role === 'cliente' ? 'Suscripción Activa' : 'Conexión SQLite Activa'}
               </span>
               <span style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
-                Todos los 11 módulos en línea
+                {user?.role === 'cliente' ? 'Plataforma Corporativa Lista' : 'Todos los 11 módulos en línea'}
               </span>
               <span style={{ background: 'rgba(37, 99, 235, 0.3)', color: '#BFDBFE', border: '1px solid rgba(37, 99, 235, 0.5)', padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-                Ciclo Fiscal 2026
+                {user?.role === 'cliente' ? 'Licencia Corporativa 2026' : 'Ciclo Fiscal 2026'}
               </span>
             </div>
           </div>

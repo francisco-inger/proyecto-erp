@@ -187,19 +187,78 @@ export function SeguridadView({ onShowToast }) {
                     </td>
                     <td style={{ fontSize: 12, color: '#64748B' }}>{u.ultimoAcceso}</td>
                     <td>
-                      <span className="fn-badge-estado badge-estado-aprobado">
-                        ● {u.estado}
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '3px 8px',
+                          borderRadius: 6,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: u.estado === 'Activo' ? '#ECFDF5' : u.estado === 'Pendiente' ? '#FEF3C7' : '#FEF2F2',
+                          color: u.estado === 'Activo' ? '#059669' : u.estado === 'Pendiente' ? '#D97706' : '#DC2626',
+                        }}
+                      >
+                        ● {u.estado === 'Pendiente' ? 'Esperando Aprobación' : u.estado}
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <button
-                        className="fn-action-icon-btn"
-                        title="Eliminar usuario"
-                        onClick={() => handleDeleteUser(u.id, u.nombre)}
-                        style={{ color: '#DC2626' }}
-                      >
-                        🗑️
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        {u.estado === 'Pendiente' ? (
+                          <button
+                            onClick={async () => {
+                              const updated = await seguridadService.updateUsuario(u.id, { estado: 'Activo' })
+                              setUsuarios(updated)
+                              onShowToast(`Acceso concedido a ${u.nombre} ✅`)
+                            }}
+                            title="Conceder Acceso al Sistema"
+                            style={{
+                              background: '#2563EB',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: 6,
+                              padding: '4px 8px',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            ✓ Conceder Acceso
+                          </button>
+                        ) : (
+                          <button
+                            onClick={async () => {
+                              const nuevoEstado = u.estado === 'Activo' ? 'Inactivo' : 'Activo'
+                              const updated = await seguridadService.updateUsuario(u.id, { estado: nuevoEstado })
+                              setUsuarios(updated)
+                              onShowToast(`Estado de ${u.nombre} cambiado a ${nuevoEstado}`)
+                            }}
+                            title={u.estado === 'Activo' ? 'Bloquear/Desactivar acceso' : 'Reactivar acceso'}
+                            style={{
+                              background: u.estado === 'Activo' ? '#F1F5F9' : '#DCFCE7',
+                              color: u.estado === 'Activo' ? '#475569' : '#166534',
+                              border: '1px solid #CBD5E1',
+                              borderRadius: 6,
+                              padding: '3px 6px',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {u.estado === 'Activo' ? '🔒 Desactivar' : '🔓 Activar'}
+                          </button>
+                        )}
+
+                        <button
+                          className="fn-action-icon-btn"
+                          title="Eliminar usuario"
+                          onClick={() => handleDeleteUser(u.id, u.nombre)}
+                          style={{ color: '#DC2626' }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -404,30 +463,43 @@ export function SeguridadView({ onShowToast }) {
 
               <div className="fn-form-grid-2">
                 <div className="fn-form-row">
+                  <label className="fn-form-label">Contraseña Temporal</label>
+                  <input
+                    type="password"
+                    className="fn-form-input"
+                    placeholder="••••••••"
+                    value={userForm.password || ''}
+                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="fn-form-row">
                   <label className="fn-form-label">Rol del Sistema</label>
                   <select
                     className="fn-form-input"
                     value={userForm.rol}
                     onChange={(e) => setUserForm({ ...userForm, rol: e.target.value })}
                   >
-                    <option value="ADMIN">ADMIN (Acceso Total)</option>
-                    <option value="VENTAS">VENTAS</option>
-                    <option value="CRM">CRM</option>
-                    <option value="RRHH">RRHH</option>
+                    <option value="ADMIN">ADMIN (Acceso Total de Administrador)</option>
+                    <option value="CLIENTE">CLIENTE (Acceso a su Plan Contratado)</option>
+                    <option value="VENTAS">VENTAS (Módulo Comercial)</option>
+                    <option value="CRM">CRM (Gestión de Oportunidades)</option>
+                    <option value="RRHH">RRHH (Recursos Humanos)</option>
                     <option value="SOPORTE">SOPORTE</option>
                   </select>
                 </div>
+              </div>
 
-                <div className="fn-form-row">
-                  <label className="fn-form-label">Departamento</label>
-                  <input
-                    type="text"
-                    className="fn-form-input"
-                    placeholder="Ventas / Finanzas / TI"
-                    value={userForm.departamento}
-                    onChange={(e) => setUserForm({ ...userForm, departamento: e.target.value })}
-                  />
-                </div>
+              <div className="fn-form-row">
+                <label className="fn-form-label">Departamento / Empresa</label>
+                <input
+                  type="text"
+                  className="fn-form-input"
+                  placeholder="Ej: Dirección General / Tech Solutions SRL"
+                  value={userForm.departamento}
+                  onChange={(e) => setUserForm({ ...userForm, departamento: e.target.value })}
+                />
               </div>
 
               <div className="fn-modal-actions">

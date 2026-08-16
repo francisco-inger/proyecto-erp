@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { AdquisicionPlanesModal } from '../../../core/components/AdquisicionPlanesModal'
 
 export function PlanEmpresarialView({ onShowToast }) {
+  const [showPlansModal, setShowPlansModal] = useState(false)
   const [stats, setStats] = useState({
     storageUsedMB: 342,
     storageTotalGB: 50,
@@ -129,29 +131,53 @@ export function PlanEmpresarialView({ onShowToast }) {
             </div>
           </div>
 
-          {/* Botón de Descarga Backup */}
-          <button
-            onClick={handleDownloadBackup}
-            disabled={loadingAction === 'backup'}
-            style={{
-              background: '#2563EB',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: 8,
-              padding: '10px 18px',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
-              transition: 'all 120ms ease',
-            }}
-          >
-            <span>💾</span>
-            {loadingAction === 'backup' ? 'Generando dump...' : 'Descargar Backup Completo (.JSON)'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Botón Adquirir / Mejorar Plan */}
+            <button
+              onClick={() => setShowPlansModal(true)}
+              style={{
+                background: 'linear-gradient(135deg, #7C3AED 0%, #2563EB 100%)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '10px 18px',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)',
+                transition: 'all 120ms ease',
+              }}
+            >
+              <span>👑</span>
+              Ver y Adquirir Planes
+            </button>
+
+            {/* Botón de Descarga Backup */}
+            <button
+              onClick={handleDownloadBackup}
+              disabled={loadingAction === 'backup'}
+              style={{
+                background: '#FFFFFF',
+                color: '#0F172A',
+                border: '1px solid #CBD5E1',
+                borderRadius: 8,
+                padding: '10px 18px',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'all 120ms ease',
+              }}
+            >
+              <span>💾</span>
+              {loadingAction === 'backup' ? 'Generando...' : 'Backup (.JSON)'}
+            </button>
+          </div>
         </div>
 
         {/* Barra de Capacidad de Almacenamiento */}
@@ -383,6 +409,16 @@ export function PlanEmpresarialView({ onShowToast }) {
           </button>
         </div>
       </div>
+
+      {/* Modal interactivo de Adquisición de Planes */}
+      <AdquisicionPlanesModal
+        isOpen={showPlansModal}
+        onClose={() => setShowPlansModal(false)}
+        onPlanActivated={(activated) => {
+          onShowToast?.(`👑 ¡Plan ${activated.planNombre} adquirido y activado con éxito!`)
+          setShowPlansModal(false)
+        }}
+      />
     </div>
   )
 }

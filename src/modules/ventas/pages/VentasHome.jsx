@@ -7,6 +7,7 @@ import { ventasService } from '../services/ventas.service'
 import { crmService } from '../../crm/services/crm.service'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 import './VentasHome.css'
 
 function money(val) {
@@ -614,59 +615,114 @@ export function VentasHome() {
             </div>
             <form onSubmit={handleCreateOrder}>
               <div className="ventas-modal-body">
-                {/* Selector de Cliente vinculado a CRM */}
+                {/* Selector de Cliente vinculado a CRM con EnterprisePicker */}
                 <div className="ventas-form-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <label style={{ margin: 0 }}>Cliente (CRM) *</label>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                      onClick={() => setForm(f => ({ ...f, selectedClientMode: f.selectedClientMode === 'select' ? 'manual' : 'select' }))}
-                    >
-                      {form.selectedClientMode === 'select' ? '+ Escribir manual' : '← Elegir de CRM'}
-                    </button>
-                  </div>
-
-                  {form.selectedClientMode === 'select' && crmClients.length > 0 ? (
-                    <select
-                      required
-                      value={form.cliente}
-                      onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))}
-                      style={{ padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 8, width: '100%', fontSize: 13 }}
-                    >
-                      <option value="">-- Seleccione cliente de CRM --</option>
-                      {crmClients.map(c => (
-                        <option key={c.id} value={c.nombre}>
-                          {c.nombre} {c.contacto ? `(${c.contacto})` : ''} · {c.sector || 'Cliente'}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      required
-                      placeholder="Ej: Farmacia Los Hidalgos / Centro Médico"
-                      value={form.cliente}
-                      onChange={e => setForm(f => ({ ...f, cliente: e.target.value }))}
-                    />
-                  )}
+                  <EnterprisePicker
+                    label="Cliente (CRM)"
+                    required
+                    value={form.cliente}
+                    onChange={(val, item) => {
+                      setForm(f => ({ ...f, cliente: val }))
+                    }}
+                    items={crmClients}
+                    displayField="nombre"
+                    subtitleField="contacto"
+                    filterField="sector"
+                    filterLabel="Sector"
+                    modalTitle="Directorio de Clientes · Pedidos de Ventas"
+                    icon="🏢"
+                    placeholder="Escriba nombre de cliente o explore CRM..."
+                    columns={[
+                      {
+                        header: 'Cliente / Empresa',
+                        render: (c) => (
+                          <div>
+                            <strong style={{ color: '#0F172A' }}>{c.nombre}</strong>
+                            <div style={{ fontSize: 11, color: '#64748B' }}>{c.contacto || 'Sin contacto directo'}</div>
+                          </div>
+                        )
+                      },
+                      {
+                        header: 'Sector',
+                        render: (c) => <span style={{ color: '#2563EB', fontWeight: 600 }}>{c.sector || 'General'}</span>
+                      },
+                      {
+                        header: 'Contacto',
+                        render: (c) => (
+                          <div style={{ fontSize: 11, color: '#64748B' }}>
+                            <div>{c.email || '—'}</div>
+                            <div>{c.telefono || ''}</div>
+                          </div>
+                        )
+                      }
+                    ]}
+                  />
                 </div>
 
                 {/* Selector de Producto vinculado a Inventario */}
                 {invProducts.length > 0 && (
                   <div className="ventas-form-group">
-                    <label>Producto del Inventario (Opcional)</label>
-                    <select
-                      value={form.productoId || form.productoNombre}
-                      onChange={e => handleSelectProduct(e.target.value)}
-                      style={{ padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 8, width: '100%', fontSize: 13 }}
-                    >
-                      <option value="">-- Seleccionar producto para vincular stock --</option>
-                      {invProducts.map(p => (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} · {money(p.precio)} (Stock: {p.stock} uds.)
-                        </option>
-                      ))}
-                    </select>
+                    <EnterprisePicker
+                      label="Producto del Catálogo (Inventario)"
+                      value={form.productoNombre}
+                      onChange={(val, prod) => {
+                        if (prod) {
+                          const pUnit = Number(prod.precio) || 100
+                          const cant = Number(form.cantidad) || 1
+                          setForm(f => ({
+                            ...f,
+                            productoId: prod.id,
+                            productoNombre: prod.nombre,
+                            precioUnitario: pUnit,
+                            total: (pUnit * cant).toFixed(2)
+                          }))
+                        } else {
+                          setForm(f => ({
+                            ...f,
+                            productoId: '',
+                            productoNombre: val
+                          }))
+                        }
+                      }}
+                      items={invProducts}
+                      displayField="nombre"
+                      subtitleField="categoria"
+                      filterField="categoria"
+                      filterLabel="Categoría"
+                      modalTitle="Catálogo de Productos de Almacén"
+                      icon="📦"
+                      placeholder="Escriba o seleccione producto para enlazar stock..."
+                      columns={[
+                        {
+                          header: 'Producto',
+                          render: (p) => (
+                            <div>
+                              <strong style={{ color: '#0F172A' }}>{p.nombre}</strong>
+                              <div style={{ fontSize: 11, color: '#64748B' }}>SKU: {p.codigo || 'PROD'} · {p.categoria}</div>
+                            </div>
+                          )
+                        },
+                        {
+                          header: 'Stock Actual',
+                          render: (p) => (
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              background: (p.stock || 0) > 5 ? '#DCFCE7' : '#FEE2E2',
+                              color: (p.stock || 0) > 5 ? '#166534' : '#991B1B'
+                            }}>
+                              {p.stock || 0} unidades
+                            </span>
+                          )
+                        },
+                        {
+                          header: 'Precio Venta',
+                          render: (p) => <strong style={{ color: '#0F172A' }}>{money(p.precio)}</strong>
+                        }
+                      ]}
+                    />
                   </div>
                 )}
 

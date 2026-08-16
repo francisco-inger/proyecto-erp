@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { rrhhService } from '../services/rrhh.service'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 import './RrhhHome.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -793,12 +794,21 @@ function TabAsistencia({ asistencia, setAsistencia, empleados, showToast }) {
           <form onSubmit={handleAdd}>
             <div className="rrhh-modal-body">
               <div className="rrhh-form-grid-2">
-                <div className="rrhh-form-group">
-                  <label>Empleado *</label>
-                  <select required value={form.empleado} onChange={e => setForm(f => ({ ...f, empleado: e.target.value }))}>
-                    <option value="">Seleccionar...</option>
-                    {empleados.map(e => <option key={e.id}>{e.nombre}</option>)}
-                  </select>
+                <div className="rrhh-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <EnterprisePicker
+                    label="Empleado"
+                    required
+                    value={form.empleado}
+                    onChange={(val) => setForm(f => ({ ...f, empleado: val }))}
+                    items={empleados}
+                    displayField="nombre"
+                    subtitleField="cargo"
+                    filterField="departamento"
+                    filterLabel="Departamento"
+                    modalTitle="Directorio de Empleados · Registro de Asistencia"
+                    icon="👥"
+                    placeholder="Escriba nombre o explore directorio..."
+                  />
                 </div>
                 <div className="rrhh-form-group">
                   <label>Fecha</label>
@@ -1132,12 +1142,21 @@ function TabVacaciones({ vacaciones, setVacaciones, empleados, showToast }) {
           <form onSubmit={handleAdd}>
             <div className="rrhh-modal-body">
               <div className="rrhh-form-grid-2">
-                <div className="rrhh-form-group">
-                  <label>Empleado *</label>
-                  <select required value={form.empleado} onChange={e => setForm(f => ({ ...f, empleado: e.target.value }))}>
-                    <option value="">Seleccionar...</option>
-                    {empleados.map(e => <option key={e.id}>{e.nombre}</option>)}
-                  </select>
+                <div className="rrhh-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <EnterprisePicker
+                    label="Empleado Solicitante"
+                    required
+                    value={form.empleado}
+                    onChange={(val) => setForm(f => ({ ...f, empleado: val }))}
+                    items={empleados}
+                    displayField="nombre"
+                    subtitleField="cargo"
+                    filterField="departamento"
+                    filterLabel="Departamento"
+                    modalTitle="Directorio de Personal · Solicitud de Vacaciones"
+                    icon="🏖️"
+                    placeholder="Escriba nombre o explore personal..."
+                  />
                 </div>
                 <div className="rrhh-form-group">
                   <label>Días Solicitados</label>
@@ -1335,12 +1354,26 @@ function TabDesempeno({ desempeno, setDesempeno, empleados, showToast }) {
           <form onSubmit={handleAdd}>
             <div className="rrhh-modal-body">
               <div className="rrhh-form-grid-2">
-                <div className="rrhh-form-group">
-                  <label>Empleado *</label>
-                  <select required value={form.empleado} onChange={e => setForm(f => ({ ...f, empleado: e.target.value }))}>
-                    <option value="">Seleccionar...</option>
-                    {empleados.map(e => <option key={e.id}>{e.nombre}</option>)}
-                  </select>
+                <div className="rrhh-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <EnterprisePicker
+                    label="Empleado a Evaluar"
+                    required
+                    value={form.empleado}
+                    onChange={(val, item) => setForm(f => ({
+                      ...f,
+                      empleado: val,
+                      cargo: item?.cargo || f.cargo,
+                      departamento: item?.departamento || f.departamento
+                    }))}
+                    items={empleados}
+                    displayField="nombre"
+                    subtitleField="cargo"
+                    filterField="departamento"
+                    filterLabel="Departamento"
+                    modalTitle="Directorio de Empleados · Evaluación de Desempeño"
+                    icon="⭐"
+                    placeholder="Escriba nombre o explore personal..."
+                  />
                 </div>
                 <div className="rrhh-form-group">
                   <label>Evaluador</label>

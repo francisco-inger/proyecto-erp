@@ -4,6 +4,7 @@
 */
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../../core/auth/AuthContext'
 import { SeguridadView } from '../components/SeguridadView'
 import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
@@ -269,16 +270,21 @@ export function AjustesHome() {
     }, 1200)
   }
 
-  const tabsList = [
-    { id: 'General', label: 'General', icon: '⚙️' },
-    { id: 'Empresa', label: 'Empresa & Fiscal', icon: '🏢' },
-    { id: 'Módulos', label: 'Módulos & Sync', icon: '🧩' },
-    { id: 'Automatizaciones', label: 'Automatizaciones', icon: '⚡' },
-    { id: 'Notificaciones', label: 'Notificaciones & Canales', icon: '🔔' },
-    { id: 'Usuarios y Roles', label: 'Usuarios & Roles', icon: '👥' },
-    { id: 'Seguridad', label: 'Seguridad & 2FA', icon: '🛡️' },
-    { id: 'Sistema', label: 'Sistema & Plan', icon: '💻' },
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin' || user?.role === 'ADMIN'
+
+  const allTabs = [
+    { id: 'General', label: 'General', icon: '⚙️', adminOnly: false },
+    { id: 'Empresa', label: 'Empresa & Fiscal', icon: '🏢', adminOnly: true },
+    { id: 'Módulos', label: 'Módulos & Sync', icon: '🧩', adminOnly: true },
+    { id: 'Automatizaciones', label: 'Automatizaciones', icon: '⚡', adminOnly: true },
+    { id: 'Notificaciones', label: 'Notificaciones & Canales', icon: '🔔', adminOnly: true },
+    { id: 'Usuarios y Roles', label: 'Usuarios & Roles', icon: '👥', adminOnly: true },
+    { id: 'Seguridad', label: 'Seguridad & 2FA', icon: '🛡️', adminOnly: true },
+    { id: 'Sistema', label: 'Sistema & Plan', icon: '💻', adminOnly: false },
   ]
+
+  const tabsList = isAdmin ? allTabs : allTabs.filter(t => !t.adminOnly)
 
   return (
     <div className="ajustes-page">

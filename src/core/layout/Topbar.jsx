@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
-export function Topbar() {
+export function Topbar({ onToggleMobileMenu }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -198,68 +198,79 @@ export function Topbar() {
 
   return (
     <header className="topbar" style={{ position: 'relative' }}>
-      {/* ── Búsqueda estilo Pill ── */}
-      <div style={{ position: 'relative', width: 340 }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
-          border: `1px solid ${isSearchFocused ? '#2563EB' : '#E2E8F0'}`,
-          borderRadius: 10,
-          padding: '7px 12px',
-          boxShadow: isSearchFocused ? '0 0 0 3px rgba(37, 99, 235, 0.12)' : 'none',
-          transition: 'all 150ms ease',
-        }}>
-          <span style={{ color: '#64748B', fontSize: 13 }}>🔍</span>
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Buscar en appes.erp..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            style={{
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontSize: 13,
-              color: '#0F172A',
-              width: '100%'
-            }}
-          />
-          {/* Botón Scanner de Código de Barras */}
-          <button
-            onClick={() => setShowScanner(true)}
-            title="Escanear Código de Barras / SKU"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 14,
-              padding: '2px 4px',
-              borderRadius: 4,
-              color: '#475569',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            📷
-          </button>
-          <span style={{
-            fontSize: 10,
-            color: '#64748B',
-            background: '#FFFFFF',
-            border: '1px solid #CBD5E1',
-            borderRadius: 4,
-            padding: '2px 5px',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Botón Hamburguesa para Móvil y Tablet */}
+        <button
+          className="topbar-hamburger-btn"
+          onClick={onToggleMobileMenu}
+          title="Menú de Navegación"
+          aria-label="Abrir Menú"
+        >
+          ☰
+        </button>
+
+        {/* ── Búsqueda estilo Pill ── */}
+        <div className="topbar-search-wrapper" style={{ position: 'relative' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
+            border: `1px solid ${isSearchFocused ? '#2563EB' : '#E2E8F0'}`,
+            borderRadius: 10,
+            padding: '7px 12px',
+            boxShadow: isSearchFocused ? '0 0 0 3px rgba(37, 99, 235, 0.12)' : 'none',
+            transition: 'all 150ms ease',
           }}>
-            ⌘K
-          </span>
-        </div>
+            <span style={{ color: '#64748B', fontSize: 13 }}>🔍</span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Buscar en appes.erp..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: 13,
+                color: '#0F172A',
+                width: '100%'
+              }}
+            />
+            {/* Botón Scanner de Código de Barras */}
+            <button
+              onClick={() => setShowScanner(true)}
+              title="Escanear Código de Barras / SKU"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: '2px 4px',
+                borderRadius: 4,
+                color: '#475569',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              📷
+            </button>
+            <span className="topbar-shortcut-pill" style={{
+              fontSize: 10,
+              color: '#64748B',
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              borderRadius: 4,
+              padding: '2px 5px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+            }}>
+              ⌘K
+            </span>
+          </div>
 
         {/* Dropdown de Resultados de Búsqueda */}
         {isSearchFocused && searchQuery.trim() && (
@@ -318,6 +329,7 @@ export function Topbar() {
             )}
           </div>
         )}
+      </div>
       </div>
 
       {/* ── Acciones Derecha ── */}

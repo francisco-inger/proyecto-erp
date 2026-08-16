@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
 
 export function NuevoComprobanteModal({ isOpen, onClose, onSave, cuentas }) {
   const [tipo, setTipo] = useState('Ingreso')
@@ -10,6 +11,12 @@ export function NuevoComprobanteModal({ isOpen, onClose, onSave, cuentas }) {
   const [error, setError] = useState('')
 
   if (!isOpen) return null
+
+  const listadoCuentas = cuentas && cuentas.length > 0 ? cuentas : [
+    { id: '1', nombre: 'Banco Popular 960-123456', banco: 'Banco Popular', tipo: 'Cuenta Corriente', balance: 1450000 },
+    { id: '2', nombre: 'Banco BHD 450-987654', banco: 'Banco BHD', tipo: 'Cuenta Ahorros', balance: 820000 },
+    { id: '3', nombre: 'Efectivo / Caja Chica', banco: 'Tesorería', tipo: 'Caja Operativa', balance: 65000 },
+  ]
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -113,36 +120,34 @@ export function NuevoComprobanteModal({ isOpen, onClose, onSave, cuentas }) {
           </div>
 
           <div className="fn-form-row">
-            <label className="fn-form-label">{tipo === 'Transferencia' ? 'Cuenta Origen' : 'Cuenta Financiera'}</label>
-            <select
-              className="fn-form-select"
+            <EnterprisePicker
+              label={tipo === 'Transferencia' ? 'Cuenta Origen' : 'Cuenta Financiera / Banco'}
+              required
               value={cuenta}
-              onChange={(e) => setCuenta(e.target.value)}
-            >
-              {cuentas?.map((c) => (
-                <option key={c.id} value={c.nombre}>{c.nombre}</option>
-              )) || (
-                <>
-                  <option value="Banco Popular 960-123456">Banco Popular 960-123456</option>
-                  <option value="Banco BHD 450-987654">Banco BHD 450-987654</option>
-                  <option value="Efectivo / Caja Chica">Efectivo / Caja Chica</option>
-                </>
-              )}
-            </select>
+              onChange={(val) => setCuenta(val)}
+              items={listadoCuentas}
+              displayField="nombre"
+              subtitleField="tipo"
+              modalTitle="Directorio de Cuentas Bancarias y Cajas"
+              icon="🏦"
+              placeholder="Escriba o explore cuenta bancaria..."
+            />
           </div>
 
           {tipo === 'Transferencia' && (
             <div className="fn-form-row">
-              <label className="fn-form-label">Cuenta Destino</label>
-              <select
-                className="fn-form-select"
+              <EnterprisePicker
+                label="Cuenta Destino"
+                required
                 value={cuentaDestino}
-                onChange={(e) => setCuentaDestino(e.target.value)}
-              >
-                <option value="Efectivo / Caja Chica">Efectivo / Caja Chica</option>
-                <option value="Banco Popular 960-123456">Banco Popular 960-123456</option>
-                <option value="Banco BHD 450-987654">Banco BHD 450-987654</option>
-              </select>
+                onChange={(val) => setCuentaDestino(val)}
+                items={listadoCuentas}
+                displayField="nombre"
+                subtitleField="tipo"
+                modalTitle="Directorio de Cuentas Destino"
+                icon="🔄"
+                placeholder="Escriba o explore cuenta destino..."
+              />
             </div>
           )}
 

@@ -16,6 +16,12 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // Expone el servidor en la red local para teléfonos y tablets
+    port: 5173,
+    cors: true,
+  },
+  preview: {
+    host: true,
     port: 5173,
   },
 })

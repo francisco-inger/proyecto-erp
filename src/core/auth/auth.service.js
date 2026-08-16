@@ -17,6 +17,7 @@ const SEED_USERS_WITH_PASSWORDS = [
   { id: 'usr-5', nombre: 'María Rodríguez',    email: 'maria.r@appes.com',        password: 'Maria2024!',     rol: 'SOPORTE', estado: 'Activo', dosFactores: false, departamento: 'Compras' },
   { id: 'usr-6', nombre: 'Laura Jiménez',      email: 'laura.j@appes.com',        password: 'Laura2024!',     rol: 'RRHH',    estado: 'Activo', dosFactores: true,  departamento: 'Recursos Humanos' },
   { id: 'usr-7', nombre: 'Ediana Tejada',      email: 'ediana.t@appes.com',       password: 'Ediana2024!',    rol: 'CRM',     estado: 'Activo', dosFactores: false, departamento: 'Comercial' },
+  { id: 'usr-8', nombre: 'Tech Solutions (Cliente)', email: 'cliente@techsolutions.do', password: 'Cliente2024!', rol: 'CLIENTE', estado: 'Activo', dosFactores: false, departamento: 'Cliente Corporativo' },
 ]
 
 function getUsuariosDB() {
@@ -65,6 +66,11 @@ export async function login({ email, password }) {
   if (!usuario) {
     registrarLog(email, 'Intento de inicio de sesión — usuario no registrado', 'Bloqueado')
     throw new Error('Las credenciales ingresadas no corresponden a ningún usuario registrado.')
+  }
+
+  if (usuario.estado === 'Pendiente' || usuario.estado === 'Pendiente de Aprobación') {
+    registrarLog(email, 'Intento de inicio de sesión — esperando aprobación del Administrador', 'Pendiente')
+    throw new Error('Tu cuenta está registrada pero esperando que el Administrador te conceda acceso.')
   }
 
   if (usuario.estado === 'Inactivo' || usuario.estado === 'Bloqueado') {
@@ -120,9 +126,9 @@ export async function register({ name, email, password, company }) {
     nombre: name,
     email,
     password,
-    rol: 'VENTAS',
-    estado: 'Activo',
-    ultimoAcceso: 'Ahora',
+    rol: 'CLIENTE',
+    estado: 'Pendiente',
+    ultimoAcceso: 'Nunca',
     dosFactores: false,
     departamento: company || 'General',
   }
@@ -130,19 +136,8 @@ export async function register({ name, email, password, company }) {
   const updated = [nuevoUsuario, ...usuarios]
   localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated))
 
-  const userSession = {
-    id: nuevoUsuario.id,
-    name: nuevoUsuario.nombre,
-    email: nuevoUsuario.email,
-    role: nuevoUsuario.rol,
-    departamento: nuevoUsuario.departamento,
-  }
-
-  localStorage.setItem('erp_token', `token-${nuevoUsuario.id}-${Date.now()}`)
-  localStorage.setItem('erp_user', JSON.stringify(userSession))
-
-  registrarLog(email, 'Registro de nueva cuenta exitoso', 'Exitoso')
-  return userSession
+  registrarLog(email, 'Registro de nueva cuenta — esperando aprobación de acceso', 'Pendiente')
+  throw new Error('Registro exitoso. Tu cuenta está esperando que el Administrador te conceda acceso.')
 }
 
 export function logout() {

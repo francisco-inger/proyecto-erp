@@ -415,7 +415,7 @@
   background: #FFFFFF;
   border-radius: 16px;
   width: 100%;
-  max-width: 520px;
+  max-width: 600px;
   box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
@@ -424,14 +424,14 @@
   max-height: 90vh;
 }
 .compras-modal-box.large {
-  max-width: 720px;
+  max-width: 760px;
 }
 .compras-modal-box.danger {
   border-top: 4px solid #DC2626;
 }
 
 .compras-modal-header {
-  padding: 18px 22px;
+  padding: 18px 24px;
   border-bottom: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
@@ -440,51 +440,60 @@
 }
 .compras-modal-header h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   color: #0F172A;
+  letter-spacing: -0.02em;
 }
 
 .compras-modal-close {
-  background: none;
+  background: #F1F5F9;
   border: none;
-  font-size: 18px;
-  color: #94A3B8;
+  font-size: 16px;
+  color: #64748B;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 8px;
+  transition: all 0.15s;
 }
 .compras-modal-close:hover {
   color: #0F172A;
-  background: #F1F5F9;
+  background: #E2E8F0;
 }
 
 .compras-modal-body {
-  padding: 22px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(90vh - 130px);
 }
 
 .compras-form-row {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .compras-form-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .compras-form-group label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: #334155;
 }
 .compras-form-group input,
