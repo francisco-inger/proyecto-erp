@@ -56,7 +56,7 @@ export function OnboardingEmpresa() {
         }
         localStorage.setItem('appes_erp_global_settings_v2', JSON.stringify(empresaData))
 
-        // 2. Marcar al usuario como empresa configurada en la base de datos
+        // 2. Marcar al usuario como empresa configurada y Activo
         const rawUsers = localStorage.getItem('erp_seguridad_users_v1')
         if (rawUsers) {
           const users = JSON.parse(rawUsers)
@@ -64,6 +64,7 @@ export function OnboardingEmpresa() {
             if (u.email === user?.email || u.id === user?.id) {
               return {
                 ...u,
+                estado: 'Activo',
                 empresaConfigurada: true,
                 departamento: form.razonSocial,
               }
@@ -73,11 +74,13 @@ export function OnboardingEmpresa() {
           localStorage.setItem('erp_seguridad_users_v1', JSON.stringify(updated))
         }
 
-        // Actualizar sesión actual
+        // Actualizar sesión actual como activa
         const currentSession = JSON.parse(localStorage.getItem('erp_user') || '{}')
         currentSession.empresaConfigurada = true
         currentSession.departamento = form.razonSocial
+        currentSession.estado = 'Activo'
         localStorage.setItem('erp_user', JSON.stringify(currentSession))
+        localStorage.setItem('erp_token', `token-${currentSession.id || 'usr'}-${Date.now()}`)
 
         setLoading(false)
         setSuccess(true)
@@ -136,18 +139,18 @@ export function OnboardingEmpresa() {
             }}>
               <div style={{ fontSize: 44, marginBottom: 12 }}>🎉</div>
               <h2 style={{ fontSize: 22, fontWeight: 900, color: '#166534', margin: '0 0 8px' }}>
-                ¡Configuración Inicial Completada con Éxito!
+                ¡Suscripción y Configuración Activa!
               </h2>
               <p style={{ fontSize: 14, color: '#15803D', lineHeight: 1.5, margin: '0 0 20px' }}>
-                Tu cuenta y empresa <strong>{form.razonSocial}</strong> han quedado registradas y enlazadas al plan contratado. El Administrador General validará tu acceso para activar todos tus módulos.
+                Tu pago ha sido validado con éxito y la empresa <strong>{form.razonSocial}</strong> está lista para operar. Ya tienes acceso inmediato a todos tus módulos.
               </p>
               <button
                 type="button"
                 className="onboarding-submit-btn"
                 style={{ maxWidth: 280, margin: '0 auto' }}
-                onClick={() => navigate('/login')}
+                onClick={() => window.location.href = '/dashboard'}
               >
-                Ir a Iniciar Sesión →
+                🚀 Entrar al Sistema (Panel ERP) →
               </button>
             </div>
           ) : (

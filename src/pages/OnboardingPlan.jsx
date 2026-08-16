@@ -109,7 +109,7 @@ export function OnboardingPlan() {
       try {
         const ultimos4 = cleanCard.slice(-4)
 
-        // 1. Guardar la suscripción en el registro de usuarios
+        // 1. Guardar la suscripción y activar la cuenta inmediatamente al pagar
         try {
           const rawUsers = localStorage.getItem('erp_seguridad_users_v1')
           if (rawUsers) {
@@ -118,6 +118,7 @@ export function OnboardingPlan() {
               if (u.email?.toLowerCase() === user?.email?.toLowerCase() || u.id === user?.id) {
                 return {
                   ...u,
+                  estado: 'Activo',
                   planContratado: selectedPlan,
                   periodoSuscripcion: billingPeriod,
                   fechaPago: new Date().toISOString(),
