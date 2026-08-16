@@ -19,22 +19,22 @@ import { EnterprisePicker } from './EnterprisePickerModal'
 export const PLANES_SISTEMA = [
   {
     id: 'plan_startup',
-    nombre: 'Plan Startup',
-    subtitulo: 'Para emprendedores y pequeños comercios',
+    nombre: 'Plan Básico',
+    subtitulo: 'Para pequeñas y medianas empresas',
     precioDOP: 2450,
     precioUSD: 45,
-    icono: '🚀',
-    color: '#0284C7',
-    badge: 'Inicial',
+    icono: '🏢',
+    color: '#2563EB',
+    badge: 'Básico',
     features: [
       'Hasta 3 usuarios con roles',
       'Facturación de Ventas & POS',
       'Control de Stock de Inventario',
       'Gestión básica de Clientes CRM',
       'Soporte por Correo Electrónico',
-      '5 GB de Almacenamiento Seguro'
+      '5 GB de Almacenamiento NVMe'
     ],
-    modulosPermitidos: ['ventas', 'crm', 'rrhh-inventario'],
+    modulosPermitidos: ['ventas', 'crm', 'rrhh-inventario', 'reportes', 'chatbot'],
     maxUsuarios: 3,
     espacioGB: 5,
   },
@@ -44,7 +44,7 @@ export const PLANES_SISTEMA = [
     subtitulo: 'Para empresas en constante expansión',
     precioDOP: 5900,
     precioUSD: 99,
-    icono: '⭐',
+    icono: '💼',
     color: '#2563EB',
     badge: 'Más Popular',
     popular: true,
@@ -57,7 +57,7 @@ export const PLANES_SISTEMA = [
       '20 GB de Almacenamiento NVMe',
       'Soporte Prioritario WhatsApp / Email'
     ],
-    modulosPermitidos: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'proyectos', 'reportes'],
+    modulosPermitidos: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'proyectos', 'reportes', 'chatbot'],
     maxUsuarios: 10,
     espacioGB: 20,
   },
@@ -67,8 +67,8 @@ export const PLANES_SISTEMA = [
     subtitulo: 'Control integral y multi-sucursal corporativo',
     precioDOP: 12500,
     precioUSD: 210,
-    icono: '👑',
-    color: '#7C3AED',
+    icono: '🛡️',
+    color: '#2563EB',
     badge: 'Corporativo',
     features: [
       'Usuarios Ilimitados sin restricciones',
@@ -270,9 +270,9 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
         background: '#FFFFFF',
         borderRadius: 20,
         width: '100%',
-        maxWidth: step === 1 ? 940 : 640,
-        maxHeight: '92vh',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+        maxWidth: step === 1 ? 980 : 660,
+        maxHeight: '90vh',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -280,21 +280,32 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
       }}>
         {/* Encabezado del Modal */}
         <div style={{
-          padding: '20px 28px',
+          padding: '22px 30px',
           borderBottom: '1px solid #E2E8F0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+          background: 'linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%)',
           color: '#FFFFFF',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 24 }}>👑</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: 'rgba(255, 255, 255, 0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 20,
+            }}>
+              🛡️
+            </div>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
                 {step === 1 ? 'Adquirir / Cambiar Plan de Suscripción' : step === 2 ? 'Formulario de Facturación & Activación' : '¡Suscripción Activada con Éxito!'}
               </h3>
-              <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94A3B8' }}>
+              <p style={{ margin: '3px 0 0', fontSize: 12, color: '#93C5FD' }}>
                 {step === 1 ? 'Selecciona el nivel de licenciamiento que mejor se adapte al tamaño de tu empresa' : step === 2 ? `Completando adquisición de ${selectedPlan.nombre}` : 'Los módulos y capacidades han sido actualizados en todo el sistema'}
               </p>
             </div>
@@ -302,7 +313,7 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.12)',
               border: 'none',
               borderRadius: 8,
               width: 32,
@@ -320,7 +331,7 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
         </div>
 
         {/* Cuerpo del Modal */}
-        <div style={{ padding: '24px 28px', overflowY: 'auto', maxHeight: 'calc(92vh - 140px)' }}>
+        <div style={{ padding: '24px 30px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
           {/* PASO 1: COMPARACIÓN Y SELECCIÓN DE PLANES */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -371,11 +382,13 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
                 </div>
               </div>
 
-              {/* Cuadrícula de Tarjetas de Planes */}
+              {/* Cuadrícula de Tarjetas de Planes Perfectamente Alineadas */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: 16,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
+                gap: 18,
+                alignItems: 'stretch',
+                paddingTop: 8,
               }}>
                 {PLANES_SISTEMA.map((plan) => {
                   const isCurrent = plan.id === currentPlanId
@@ -387,40 +400,56 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
                       key={plan.id}
                       style={{
                         background: '#FFFFFF',
-                        border: isSel ? `2px solid ${plan.color}` : '1px solid #E2E8F0',
+                        border: isSel ? '2px solid #2563EB' : '1px solid #E2E8F0',
                         borderRadius: 16,
-                        padding: 20,
+                        padding: '24px 20px',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        boxShadow: isSel ? `0 10px 25px -5px ${plan.color}25` : '0 2px 4px rgba(0,0,0,0.03)',
+                        boxShadow: isSel ? '0 10px 25px -5px rgba(37, 99, 235, 0.15)' : '0 1px 3px rgba(0,0,0,0.02)',
                         position: 'relative',
-                        transition: 'all 0.2s',
+                        transition: 'all 0.18s ease',
                       }}
                     >
                       {plan.popular && (
                         <div style={{
                           position: 'absolute',
-                          top: -10,
-                          right: 20,
+                          top: -12,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
                           background: '#2563EB',
                           color: '#FFFFFF',
                           fontSize: 10,
                           fontWeight: 800,
-                          padding: '3px 10px',
-                          borderRadius: 10,
+                          padding: '4px 12px',
+                          borderRadius: 20,
                           letterSpacing: '0.04em',
                           textTransform: 'uppercase',
+                          boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
+                          whiteSpace: 'nowrap',
                         }}>
                           Recomendado
                         </div>
                       )}
 
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                          <span style={{ fontSize: 24 }}>{plan.icono}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                          <div style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            background: isSel ? '#EFF6FF' : '#F8FAFC',
+                            border: `1px solid ${isSel ? '#BFDBFE' : '#E2E8F0'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 20,
+                            flexShrink: 0,
+                          }}>
+                            {plan.icono}
+                          </div>
                           <div>
-                            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A' }}>
+                            <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em' }}>
                               {plan.nombre}
                             </h4>
                             <span style={{ fontSize: 11, color: '#64748B' }}>{plan.subtitulo}</span>
@@ -428,12 +457,12 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
                         </div>
 
                         {/* Precios */}
-                        <div style={{ margin: '14px 0', borderBottom: '1px solid #F1F5F9', paddingBottom: 14 }}>
+                        <div style={{ margin: '12px 0 16px', borderBottom: '1px solid #F1F5F9', paddingBottom: 14 }}>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                            <span style={{ fontSize: 24, fontWeight: 900, color: '#0F172A' }}>
+                            <span style={{ fontSize: 24, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em' }}>
                               RD$ {planPriceDOP.toLocaleString('es-DO')}
                             </span>
-                            <span style={{ fontSize: 12, color: '#64748B' }}>
+                            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
                               /{billingCycle === 'anual' ? 'año' : 'mes'}
                             </span>
                           </div>
@@ -449,13 +478,14 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
                           listStyle: 'none',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: 8,
+                          gap: 10,
                           fontSize: 12,
                           color: '#334155',
+                          flex: 1,
                         }}>
                           {plan.features.map((feat, idx) => (
-                            <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                              <span style={{ color: '#16A34A', fontWeight: 800 }}>✓</span>
+                            <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.35 }}>
+                              <span style={{ color: '#2563EB', fontWeight: 800, flexShrink: 0 }}>✓</span>
                               <span>{feat}</span>
                             </li>
                           ))}
@@ -467,16 +497,17 @@ export function AdquisicionPlanesModal({ isOpen, onClose, currentPlanId = 'plan_
                         type="button"
                         onClick={() => handleSelectPlan(plan)}
                         style={{
-                          marginTop: 20,
-                          background: isSel ? plan.color : '#F8FAFC',
+                          marginTop: 22,
+                          background: isSel ? '#2563EB' : '#F8FAFC',
                           color: isSel ? '#FFFFFF' : '#0F172A',
                           border: isSel ? 'none' : '1px solid #CBD5E1',
                           borderRadius: 10,
-                          padding: '10px 14px',
+                          padding: '11px 14px',
                           fontSize: 13,
                           fontWeight: 700,
                           cursor: 'pointer',
-                          transition: 'all 0.15s',
+                          transition: 'all 0.15s ease',
+                          boxShadow: isSel ? '0 4px 10px rgba(37, 99, 235, 0.25)' : 'none',
                         }}
                       >
                         {isCurrent ? 'Plan Actual · Renovar' : `Elegir ${plan.nombre}`}
