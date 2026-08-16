@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
+import { formatRNC, formatMoneyDOP } from '../../../core/utils/formatters'
 import './ComprasHome.css'
 
 const STORAGE_KEY = 'compras_orders_v1'
@@ -1135,7 +1136,7 @@ export function ComprasHome() {
                     <input
                       placeholder="1-31-89234-5"
                       value={form.rnc}
-                      onChange={e => setForm(f => ({ ...f, rnc: e.target.value }))}
+                      onChange={e => setForm(f => ({ ...f, rnc: formatRNC(e.target.value) }))}
                     />
                   </div>
                   <div className="compras-form-group">
@@ -1489,7 +1490,7 @@ export function ComprasHome() {
                     <label>RNC / Cédula</label>
                     <input
                       value={editingOrden.rnc || ''}
-                      onChange={e => setEditingOrden(ed => ({ ...ed, rnc: e.target.value }))}
+                      onChange={e => setEditingOrden(ed => ({ ...ed, rnc: formatRNC(e.target.value) }))}
                     />
                   </div>
                   <div className="compras-form-group" style={{ flex: 1 }}>
