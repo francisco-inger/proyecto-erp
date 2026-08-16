@@ -150,59 +150,18 @@ export function OnboardingPlan() {
           localStorage.setItem('appes_active_plan_subscription_v1', JSON.stringify(activePlanData))
         } catch (_) {}
 
-        // 2. Generar comprobante automático en Finanzas (Ingreso por suscripción SaaS)
+        // 2. Mantener la contabilidad del nuevo cliente limpia para sus propias operaciones
         try {
-          const rawFinanzas = localStorage.getItem('appes_finanzas_data_v1')
-          const finanzas = rawFinanzas ? JSON.parse(rawFinanzas) : { comprobantes: [], cuentas: [] }
-          if (!finanzas.comprobantes) finanzas.comprobantes = []
-
-          const nuevoComprobante = {
-            id: `sub-pay-${Date.now()}`,
-            numero: `B02-${Math.floor(10000000 + Math.random() * 90000000)}`,
-            tipo: 'Ingreso',
-            fecha: new Date().toLocaleDateString('es-DO'),
-            fechaRaw: new Date().toISOString().split('T')[0],
-            descripcion: `Cobro Tarjeta (•••• ${ultimos4}) · Suscripción SaaS ${planInfo.nombre} (${cardForm.cardName})`,
-            cuenta: 'Banco Popular Dominicano (DOP)',
-            cuentaId: 'cta-1',
-            monto: totalCobro * 60.25,
-            estado: 'Aprobado',
-            creadoPor: 'Pasarela Stripe/Azul (Online)',
-            categoria: 'Ingresos por Suscripción SaaS',
-            clienteProveedor: cardForm.cardName,
-          }
-
-          finanzas.comprobantes.unshift(nuevoComprobante)
-          localStorage.setItem('appes_finanzas_data_v1', JSON.stringify(finanzas))
-          erpSync.emit('finanzas_updated', { comprobante: nuevoComprobante })
+          localStorage.setItem('appes_finanzas_data_v1', JSON.stringify({ comprobantes: [], cuentas: [] }))
+          localStorage.setItem('appes_erp_finanzas_data_v3', JSON.stringify({ comprobantes: [], cuentas: [], presupuestos: [], conciliaciones: [] }))
         } catch (_) {}
 
-        // 3. Registrar cliente en CRM si no existe
+        // 3. Mantener el CRM del cliente limpio en 0 para su propia cartera
         try {
-          const rawCrm = localStorage.getItem('appes_crm_clients_v1')
-          const crmClients = rawCrm ? JSON.parse(rawCrm) : []
-          const existingIdx = crmClients.findIndex(c => c.email?.toLowerCase() === user?.email?.toLowerCase())
-          
-          if (existingIdx >= 0) {
-            crmClients[existingIdx].totalVentas = (Number(crmClients[existingIdx].totalVentas) || 0) + (totalCobro * 60.25)
-            crmClients[existingIdx].plan = planInfo.nombre
-            crmClients[existingIdx].estado = 'Activo'
-          } else {
-            crmClients.unshift({
-              id: `cli-${Date.now()}`,
-              nombre: cardForm.cardName || user?.name || 'Cliente Suscrito',
-              contacto: cardForm.cardName || 'Titular',
-              email: user?.email || 'cliente@appes.com',
-              telefono: '(809) 555-0100',
-              sector: 'Salud & Medicina',
-              estado: 'Activo',
-              plan: planInfo.nombre,
-              totalVentas: totalCobro * 60.25,
-              fechaRegistro: new Date().toLocaleDateString('es-DO'),
-            })
-          }
-          localStorage.setItem('appes_crm_clients_v1', JSON.stringify(crmClients))
-          erpSync.emit('crm_updated', { count: crmClients.length })
+          localStorage.setItem('appes_crm_clients_v1', JSON.stringify([]))
+          localStorage.setItem('appes_crm_opportunities_v1', JSON.stringify([]))
+          localStorage.setItem('appes_crm_contacts_v1', JSON.stringify([]))
+          localStorage.setItem('appes_crm_activities_v1', JSON.stringify([]))
         } catch (_) {}
 
         setLoading(false)

@@ -399,37 +399,37 @@ function ChatbotWidget() {
 export function Dashboard() {
   const { user } = useAuth()
   const [kpis, setKpis] = useState({
-    ventasMes: { value: 1250000, prev: 1108000 },
-    ordenes: { value: 320, prev: 296 },
-    clientes: { value: 1245, prev: 1073 },
-    ganancias: { value: 250000, prev: 226500 },
+    ventasMes: { value: 0, prev: 0 },
+    ordenes: { value: 0, prev: 0 },
+    clientes: { value: 0, prev: 0 },
+    ganancias: { value: 0, prev: 0 },
   })
   const [actividades, setActividades] = useState([])
-  const [inventarioSummary, setInventarioSummary] = useState({ total: 1245, disponible: 890, stockBajo: 120, sinStock: 35 })
+  const [inventarioSummary, setInventarioSummary] = useState({ total: 0, disponible: 0, stockBajo: 0, sinStock: 0 })
   const [topProductos, setTopProductos] = useState([])
   const [categorias, setCategorias] = useState([])
   const [financieroSummary, setFinancieroSummary] = useState({
-    ingresos: { value: 1250000 },
-    gastos: { value: 850000 },
-    utilidad: { value: 400000 },
-    margen: { value: 32 },
+    ingresos: { value: 0 },
+    gastos: { value: 0 },
+    utilidad: { value: 0 },
+    margen: { value: 0 },
   })
 
   const [salesSparkData, setSalesSparkData] = useState([
-    { valor: 80000 }, { valor: 95000 }, { valor: 88000 }, { valor: 110000 },
-    { valor: 105000 }, { valor: 125000 }, { valor: 140000 }
+    { valor: 0 }, { valor: 0 }, { valor: 0 }, { valor: 0 },
+    { valor: 0 }, { valor: 0 }, { valor: 0 }
   ])
   const [ordersSparkData, setOrdersSparkData] = useState([
-    { valor: 280 }, { valor: 290 }, { valor: 310 }, { valor: 300 },
-    { valor: 320 }, { valor: 315 }, { valor: 340 }
+    { valor: 0 }, { valor: 0 }, { valor: 0 }, { valor: 0 },
+    { valor: 0 }, { valor: 0 }, { valor: 0 }
   ])
   const [clientsSparkData, setClientsSparkData] = useState([
-    { valor: 1050 }, { valor: 1100 }, { valor: 1120 }, { valor: 1180 },
-    { valor: 1200 }, { valor: 1220 }, { valor: 1245 }
+    { valor: 0 }, { valor: 0 }, { valor: 0 }, { valor: 0 },
+    { valor: 0 }, { valor: 0 }, { valor: 0 }
   ])
   const [profitSparkData, setProfitSparkData] = useState([
-    { valor: 210000 }, { valor: 220000 }, { valor: 215000 }, { valor: 235000 },
-    { valor: 240000 }, { valor: 245000 }, { valor: 250000 }
+    { valor: 0 }, { valor: 0 }, { valor: 0 }, { valor: 0 },
+    { valor: 0 }, { valor: 0 }, { valor: 0 }
   ])
 
   const refreshAll = async () => {

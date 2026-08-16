@@ -116,12 +116,12 @@ export const dashboardService = {
         clientsSpark,
         profitSpark,
       }
-    } catch {
+    } catch (_) {
       return {
-        ventasMes:   { value: 1250000, prev: 1108000 },
-        ordenes:     { value: 320,     prev: 296 },
-        clientes:    { value: 1245,    prev: 1073 },
-        ganancias:   { value: 250000,  prev: 226500 },
+        ventasMes:   { value: 0, prev: 0 },
+        ordenes:     { value: 0, prev: 0 },
+        clientes:    { value: 0, prev: 0 },
+        ganancias:   { value: 0, prev: 0 },
       }
     }
   },
@@ -142,21 +142,14 @@ export const dashboardService = {
             id: i + 1,
             tipo: l.modulo === 'Finanzas' ? 'pago' : l.modulo === 'Ventas' ? 'venta' : l.modulo === 'Compras' ? 'factura' : 'cliente',
             texto: l.accion || 'Operación registrada en sistema',
-            sub: `${l.modulo || 'Sistema'} · ${l.usuario || 'admin@appes.com'}`,
+            sub: `${l.modulo || 'Sistema'} · ${l.usuario || 'Sistema'}`,
             hora: (l.fecha && l.fecha.includes(' ')) ? l.fecha.split(' ')[1] : 'Hoy',
           }))
         }
       }
     } catch (_) {}
 
-    const now = new Date()
-    const fmt = (d) => d.toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' })
-    return [
-      { id: 1, tipo: 'venta',   texto: 'Nueva venta confirmada en sistema', sub: 'Cliente: Farmacia Los Hidalgos', hora: fmt(new Date(now - 60000 * 20)) },
-      { id: 2, tipo: 'factura', texto: 'Comprobante de Ingreso generado',  sub: 'Cuenta: Banco Popular',          hora: fmt(new Date(now - 60000 * 45)) },
-      { id: 3, tipo: 'cliente', texto: 'Sincronización de cliente en CRM', sub: 'Usuario: admin@appes.com',       hora: 'Hoy' },
-      { id: 4, tipo: 'pago',    texto: 'Orden de Compra recibida en stock', sub: 'Proveedor: Distribuidora Tech',   hora: 'Hoy' },
-    ]
+    return []
   },
 
   /** Inventario: totales de stock reales de la base de datos. */
@@ -165,7 +158,7 @@ export const dashboardService = {
       const raw = localStorage.getItem('appes_inventory_products_v1')
       if (raw) {
         const products = JSON.parse(raw)
-        if (Array.isArray(products) && products.length > 0) {
+        if (Array.isArray(products)) {
           const totalStock = products.reduce((s, p) => s + (Number(p.stock) || 0), 0)
           const stockBajoCount = products.filter(p => Number(p.stock || 0) <= Number(p.stockMin || 20) && Number(p.stock || 0) > 0).length
           const sinStockCount = products.filter(p => Number(p.stock || 0) <= 0).length
@@ -182,10 +175,10 @@ export const dashboardService = {
     } catch (_) {}
 
     return {
-      total: 1245,
-      disponible: 890,
-      stockBajo: 120,
-      sinStock: 35,
+      total: 0,
+      disponible: 0,
+      stockBajo: 0,
+      sinStock: 0,
     }
   },
 
@@ -199,19 +192,14 @@ export const dashboardService = {
           return products.slice(0, 4).map(p => ({
             nombre: p.nombre,
             precio: p.precio || p.costo || 100,
-            unidades: p.stock || 50,
+            unidades: p.stock || 0,
             img: p.categoria === 'Medicamentos' ? '💊' : p.categoria === 'Tecnología & Hardware' ? '💻' : p.categoria === 'Suplementos' ? '🧪' : '📦'
           }))
         }
       }
     } catch (_) {}
 
-    return [
-      { nombre: 'Paracetamol 500mg (Caja 100)', precio: 125, unidades: 140, img: '💊' },
-      { nombre: 'Amoxicilina 500mg (Frasco)', precio: 220, unidades: 110, img: '💊' },
-      { nombre: 'Alcohol 70% Desnaturalizado', precio: 85, unidades: 95, img: '🧪' },
-      { nombre: 'Vitamina C 1000mg Efervescente', precio: 340, unidades: 75, img: '📦' },
-    ]
+    return []
   },
 
   /** Resumen financiero real sincronizado con los comprobantes del ERP. */
@@ -223,30 +211,30 @@ export const dashboardService = {
         if (fin.comprobantes && Array.isArray(fin.comprobantes)) {
           const ing = fin.comprobantes
             .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0) || 1250000
+            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
 
           const gas = fin.comprobantes
             .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
-            .reduce((s, c) => s + (Number(c.monto) || 0), 0) || 850000
+            .reduce((s, c) => s + (Number(c.monto) || 0), 0)
 
-          const ut = ing - gas
-          const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 32.0
+          const ut = Math.max(0, ing - gas)
+          const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 0
 
           return {
-            ingresos:  { value: ing, prev: Math.round(ing * 0.9) },
-            gastos:    { value: gas, prev: Math.round(gas * 0.92) },
-            utilidad:  { value: ut, prev: Math.round(ut * 0.88) },
-            margen:    { value: Number(margen), prev: 28.5 },
+            ingresos:  { value: ing, prev: 0 },
+            gastos:    { value: gas, prev: 0 },
+            utilidad:  { value: ut, prev: 0 },
+            margen:    { value: Number(margen), prev: 0 },
           }
         }
       }
     } catch (_) {}
 
     return {
-      ingresos:  { value: 1250000, prev: 1125000 },
-      gastos:    { value: 850000,  prev: 780000 },
-      utilidad:  { value: 400000,  prev: 345000 },
-      margen:    { value: 32.0,    prev: 28.5 },
+      ingresos:  { value: 0, prev: 0 },
+      gastos:    { value: 0, prev: 0 },
+      utilidad:  { value: 0, prev: 0 },
+      margen:    { value: 0, prev: 0 },
     }
   },
 
