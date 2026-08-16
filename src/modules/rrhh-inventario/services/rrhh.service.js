@@ -1,17 +1,17 @@
-/* rrhh.service.js — Servicio de Recursos Humanos con localStorage */
+/* rrhh.service.js — Servicio de Recursos Humanos con multi-tenant por empresa */
+import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 
 const KEY = 'rrhh_data_v1'
 
 function getStore() {
-  try {
-    const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw)
-  } catch (_) {}
-  return null
+  const tenantId = getActiveTenantId()
+  const isGlobalAdmin = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global')
+  const defaultVal = isGlobalAdmin ? seed() : { empleados: [], asistencia: [], nomina: [], vacaciones: [], desempeno: [], reclutamiento: [] }
+  return getTenantData(KEY, defaultVal)
 }
 
 function saveStore(data) {
-  localStorage.setItem(KEY, JSON.stringify(data))
+  setTenantData(KEY, data)
 }
 
 // ── Datos semilla ──────────────────────────────────────────────────────────────

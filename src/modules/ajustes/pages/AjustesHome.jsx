@@ -1,13 +1,10 @@
-/*
-  AjustesHome.jsx — Módulo de Configuración & Administración Global (APPEX.ERP)
-  Panel de control ejecutivo de nivel empresarial con validación estricta y funcionalidad 100% interactiva.
-*/
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../core/auth/AuthContext'
 import { SeguridadView } from '../components/SeguridadView'
 import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 import './AjustesHome.css'
 
 const STORAGE_SETTINGS_KEY = 'appes_erp_global_settings_v2'
@@ -118,9 +115,9 @@ export function AjustesHome() {
 
   const [settings, setSettings] = useState(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_SETTINGS_KEY)
-      if (raw) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+      const stored = getTenantData(STORAGE_SETTINGS_KEY, null)
+      if (stored) {
+        return { ...DEFAULT_SETTINGS, ...stored }
       }
     } catch (_) {}
     return DEFAULT_SETTINGS
@@ -205,7 +202,7 @@ export function AjustesHome() {
 
     setIsSaving(true)
     setTimeout(() => {
-      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+      setTenantData(STORAGE_SETTINGS_KEY, settings)
       setIsSaving(false)
       showToast('💾 Configuración guardada y sincronizada globalmente')
       erpSync.dispatch('settings:update', settings)
@@ -224,7 +221,7 @@ export function AjustesHome() {
     if (window.confirm('¿Deseas restablecer todos los ajustes a los valores recomendados por defecto?')) {
       setSettings(DEFAULT_SETTINGS)
       setErrors({})
-      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS))
+      setTenantData(STORAGE_SETTINGS_KEY, DEFAULT_SETTINGS)
       showToast('🔄 Preferencias restablecidas a los valores de fábrica')
     }
   }
@@ -234,11 +231,11 @@ export function AjustesHome() {
       version: '2026.4.0',
       timestamp: new Date().toISOString(),
       ajustes: settings,
-      ventas: JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]'),
-      compras: JSON.parse(localStorage.getItem('compras_orders_v1') || '[]'),
-      inventario: JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]'),
-      crm: JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]'),
-      finanzas: JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}'),
+      ventas: getTenantData('ventas_orders_v1', []),
+      compras: getTenantData('compras_orders_v1', []),
+      inventario: getTenantData('appes_inventory_products_v1', []),
+      crm: getTenantData('appes_crm_clients_v1', []),
+      finanzas: getTenantData('appes_erp_finanzas_data_v3', {}),
     }
 
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })

@@ -73,16 +73,18 @@ export const NUESTROS_SERVICIOS = [
   }
 ]
 
+import { getTenantData, getEmpresaActiva } from '../../../core/utils/formatters'
+
 // ── Contexto de la Base de Datos Local del ERP ─────────────────────────────────
 export function getERPContext() {
-  const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
-  const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
-  const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
-  const clientesCRM = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
-  const oportunidadesCRM = JSON.parse(localStorage.getItem('appes_crm_opportunities_v1') || '[]')
-  const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
+  const ventas = getTenantData('ventas_orders_v1', [])
+  const compras = getTenantData('compras_orders_v1', [])
+  const productos = getTenantData('appes_inventory_products_v1', [])
+  const clientesCRM = getTenantData('appes_crm_clients_v1', [])
+  const oportunidadesCRM = getTenantData('appes_crm_opportunities_v1', [])
+  const finanzasData = getTenantData('appes_erp_finanzas_data_v3', { comprobantes: [], cuentas: [] })
   const cuentasBancos = finanzasData.cuentas || []
-  const settings = JSON.parse(localStorage.getItem('appes_erp_global_settings_v2') || '{}')
+  const empresa = getEmpresaActiva()
 
   const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
   const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
@@ -91,7 +93,7 @@ export function getERPContext() {
 
   return `
 DATOS DE LA EMPRESA Y BASE DE DATOS LOCAL:
-- Razón Social: ${settings.razonSocial || 'APPEX Dominicana Suite SRL'} (RNC: ${settings.rnc || '1-31-89023-4'})
+- Razón Social: ${empresa.razonSocial} (RNC: ${empresa.rnc})
 - Ventas Totales: RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} órdenes)
 - Compras Totales: RD$ ${totalCompras.toLocaleString('es-DO')} (${compras.length} órdenes)
 - Inventario: ${productos.length} SKUs valorados en RD$ ${valorInventario.toLocaleString('es-DO')}
@@ -232,12 +234,12 @@ export function generateERPOnlyResponse(msg) {
       `💬 *¿Qué dato, módulo o reporte de tu sistema deseas consultar hoy?*`
   }
 
-  // 2. Base de Datos del ERP en Tiempo Real
-  const ventas = JSON.parse(localStorage.getItem('ventas_orders_v1') || '[]')
-  const compras = JSON.parse(localStorage.getItem('compras_orders_v1') || '[]')
-  const productos = JSON.parse(localStorage.getItem('appes_inventory_products_v1') || '[]')
-  const clientes = JSON.parse(localStorage.getItem('appes_crm_clients_v1') || '[]')
-  const finanzasData = JSON.parse(localStorage.getItem('appes_erp_finanzas_data_v3') || '{}')
+  // 2. Base de Datos del ERP en Tiempo Real por Tenant
+  const ventas = getTenantData('ventas_orders_v1', [])
+  const compras = getTenantData('compras_orders_v1', [])
+  const productos = getTenantData('appes_inventory_products_v1', [])
+  const clientes = getTenantData('appes_crm_clients_v1', [])
+  const finanzasData = getTenantData('appes_erp_finanzas_data_v3', { comprobantes: [], cuentas: [] })
   const cuentas = finanzasData.cuentas || []
   const totalVentas = ventas.reduce((s, v) => s + (Number(v.total) || 0), 0)
   const totalCompras = compras.reduce((s, c) => s + (Number(c.total) || 0), 0)
@@ -245,7 +247,7 @@ export function generateERPOnlyResponse(msg) {
 
   // Facturación y Ventas
   if (m.includes('venta') || m.includes('pedido') || m.includes('factur') || m.includes('dgii') || m.includes('ncf') || m.includes('ecf') || m.includes('e-cf')) {
-    return `🛒 **Ventas y Facturación Fiscal (Tiempo Real):**\n\n• **Total Facturado:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} pedidos registrados)\n• **Pedidos Pendientes:** ${ventas.filter(v => v.estado === 'Pendiente').length}\n• **Última Operación:** ${ventas[0]?.numero || 'PED-1001'} (${ventas[0]?.cliente || 'Cliente General'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}\n• **Comprobantes DGII:** Compatible con B01, B02, B14, B15 y e-CF Electrónico E31.`
+    return `🛒 **Ventas y Facturación Fiscal (Tiempo Real):**\n\n• **Total Facturado:** RD$ ${totalVentas.toLocaleString('es-DO')} (${ventas.length} pedidos registrados)\n• **Pedidos Pendientes:** ${ventas.filter(v => v.estado === 'Pendiente').length}\n• **Última Operación:** ${ventas[0]?.numero || 'Ninguna aún'} (${ventas[0]?.cliente || '—'}) por RD$ ${Number(ventas[0]?.total || 0).toLocaleString('es-DO')}\n• **Comprobantes DGII:** Compatible con B01, B02, B14, B15 y e-CF Electrónico E31.`
   }
 
   // Compras y Proveedores
