@@ -92,6 +92,7 @@ export async function login({ email, password }) {
     role: usuario.rol,
     departamento: usuario.departamento,
     dosFactores: usuario.dosFactores,
+    planContratado: usuario.planContratado,
   }
 
   // Actualizar último acceso
@@ -144,20 +145,34 @@ export async function register({ name, email, password, company }) {
     empresaConfigurada: false,
   }
 
+  // Inicializar almacenamiento aislado y limpio para la nueva empresa del usuario
+  try {
+    localStorage.setItem('ventas_orders_v1', JSON.stringify([]))
+    localStorage.setItem('compras_orders_v1', JSON.stringify([]))
+    localStorage.setItem('appes_crm_clients_v1', JSON.stringify([]))
+    localStorage.setItem('appes_crm_opportunities_v1', JSON.stringify([]))
+    localStorage.setItem('appes_crm_contacts_v1', JSON.stringify([]))
+    localStorage.setItem('appes_crm_activities_v1', JSON.stringify([]))
+    localStorage.setItem('appes_finanzas_data_v1', JSON.stringify({ comprobantes: [], cuentas: [] }))
+    localStorage.setItem('appes_erp_finanzas_data_v3', JSON.stringify({ comprobantes: [], cuentas: [], presupuestos: [], conciliaciones: [] }))
+  } catch (_) {}
+
   // Guardar sesión para onboarding inmediato
   localStorage.setItem('erp_token', `token-${nuevoUsuario.id}-${Date.now()}`)
   localStorage.setItem('erp_user', JSON.stringify(userSession))
 
-  registrarLog(email, 'Registro de nueva cuenta — acceso habilitado', 'Exitoso')
+  registrarLog(email, 'Registro de nueva cuenta — acceso y entorno limpio habilitado', 'Exitoso')
   return userSession
 }
 
 export function logout() {
-  const userRaw = localStorage.getItem('erp_user')
-  if (userRaw) {
-    const user = JSON.parse(userRaw)
-    registrarLog(user.email, 'Cierre de sesión', 'Exitoso')
-  }
+  try {
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      registrarLog(user.email, 'Cierre de sesión', 'Exitoso')
+    }
+  } catch (_) {}
   localStorage.removeItem('erp_token')
   localStorage.removeItem('erp_user')
 }
