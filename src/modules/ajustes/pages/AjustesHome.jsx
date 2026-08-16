@@ -212,6 +212,14 @@ export function AjustesHome() {
     }, 400)
   }
 
+  const handleLoadDemoData = () => {
+    if (window.confirm('¿Deseas poblar el ERP con un catálogo completo de datos de demostración para presentaciones?')) {
+      erpSync.resetDatabase()
+      showToast('🚀 Base de datos de demostración cargada con éxito')
+      setTimeout(() => window.location.reload(), 600)
+    }
+  }
+
   const handleResetSettings = () => {
     if (window.confirm('¿Deseas restablecer todos los ajustes a los valores recomendados por defecto?')) {
       setSettings(DEFAULT_SETTINGS)
@@ -366,6 +374,25 @@ export function AjustesHome() {
 
           {/* Botones Rápidos del Hero */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={handleLoadDemoData}
+              style={{
+                background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 8,
+                padding: '7px 14px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+              }}
+            >
+              🚀 Cargar Datos Demo (1-Click)
+            </button>
             <button
               onClick={handleExportBackup}
               style={{

@@ -24,4 +24,19 @@ export default defineConfig({
     host: true,
     port: 5173,
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'core-engine': [
+            path.resolve(__dirname, 'src/core/sync/erpSyncEngine.js'),
+            path.resolve(__dirname, 'src/core/auth/AuthContext.jsx'),
+            path.resolve(__dirname, 'src/core/rbac/permissions.js'),
+          ],
+        },
+      },
+    },
+  },
 })
