@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { rrhhService } from '../services/rrhh.service'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
+import { formatPhone, formatMoneyDOP } from '../../../core/utils/formatters'
 import './RrhhHome.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -589,7 +590,7 @@ function TabEmpleados({ empleados, setEmpleados, showToast }) {
                 </div>
                 <div className="rrhh-form-group">
                   <label>Teléfono</label>
-                  <input placeholder="809-555-0000" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
+                  <input placeholder="(809) 555-0000" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: formatPhone(e.target.value) }))} />
                 </div>
               </div>
             </div>
