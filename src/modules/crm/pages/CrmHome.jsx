@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { crmService } from '../services/crm.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
+import { formatPhone, formatRNC } from '../../../core/utils/formatters'
 import './CrmHome.css'
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
@@ -1249,7 +1250,7 @@ export function CrmHome() {
                     type="text"
                     placeholder="(809) 555-0000"
                     value={clientForm.telefono}
-                    onChange={(e) => setClientForm({ ...clientForm, telefono: e.target.value })}
+                    onChange={(e) => setClientForm({ ...clientForm, telefono: formatPhone(e.target.value) })}
                   />
                 </div>
                 <div className="crm-form-group">
