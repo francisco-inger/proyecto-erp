@@ -748,10 +748,10 @@ export function ComprasHome() {
             Gestiona adquisiciones corporativas, emisión de órdenes de compra (OC), control de embarques y catálogo de proveedores.
           </p>
 
-          {/* Estadísticas en vivo */}
+          {/* Estadísticas en vivo calculadas del tenant */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(totalComprasMes > 0 ? totalComprasMes : 850000)}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(totalComprasMes)}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Compras Acumuladas</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>

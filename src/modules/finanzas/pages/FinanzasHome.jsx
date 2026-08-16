@@ -128,22 +128,22 @@ export function FinanzasHome() {
             Supervisa balances en bancos, flujo de efectivo, cuentas por cobrar/pagar, presupuestos operativos y comprobantes fiscales.
           </p>
 
-          {/* Estadísticas en vivo estilo referencia */}
+          {/* Estadísticas en vivo calculadas del tenant */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.ingresosTotal || 1250000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.ingresosTotal || 0)).toLocaleString('es-DO')}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ingresos Acumulados</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.gastosTotal || 850000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.gastosTotal || 0)).toLocaleString('es-DO')}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Gastos Operativos</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.balanceGeneral || 400000)).toLocaleString('es-DO')}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>RD$ {(Number(data?.kpis?.balanceGeneral || 0)).toLocaleString('es-DO')}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Utilidad / Balance Neto</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>{data?.cuentas?.length || 4} Cuentas</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>{data?.cuentas?.length || 0} Cuentas</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Tesorería & Bancos</div>
             </div>
           </div>

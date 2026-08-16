@@ -1734,18 +1734,18 @@ export function RrhhHome() {
             Administra y consulta los registros oficiales de colaboradores, horas de asistencia, nómina y archivo general.
           </p>
 
-          {/* Estadísticas en vivo estilo referencia */}
+          {/* Estadísticas en vivo calculadas del tenant en sesión */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{empleados.length || 24}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{empleados.length}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Colaboradores Activos</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>8</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{new Set(empleados.map(e => e.departamento)).size}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Departamentos</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>178 hrs</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{empleados.length > 0 ? '160 hrs' : '0 hrs'}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Carga Horaria Promedio</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>

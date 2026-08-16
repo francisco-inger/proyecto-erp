@@ -480,10 +480,10 @@ export function RrhhInventarioHome() {
             Supervisa catálogo de productos, valorización de existencias, movimientos Kardex, transferencias entre almacenes y alertas de caducidad.
           </p>
 
-          {/* Estadísticas en vivo estilo referencia */}
+          {/* Estadísticas en vivo calculadas del tenant */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{fmtMoney(totalInventoryValuation > 0 ? totalInventoryValuation : 4250000)}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{fmtMoney(totalInventoryValuation)}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Valoración Total</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
@@ -491,11 +491,11 @@ export function RrhhInventarioHome() {
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Productos Registrados</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{warehouses.length || 4} Almacenes</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{warehouses.length} Almacenes</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ubicaciones Activas</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#F87171', lineHeight: 1 }}>{outOfStockProducts.length || 12}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#F87171', lineHeight: 1 }}>{outOfStockProducts.length}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Productos Agotados</div>
             </div>
           </div>

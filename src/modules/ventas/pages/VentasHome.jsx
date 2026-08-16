@@ -268,18 +268,18 @@ export function VentasHome() {
             Administra órdenes comerciales, emisión de comprobantes fiscales electrónicos (e-CF), despacho y cobranzas.
           </p>
 
-          {/* Estadísticas en vivo estilo referencia */}
+          {/* Estadísticas en vivo calculadas del tenant en sesión */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(ventasAcumuladas > 0 ? ventasAcumuladas : 1250000)}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{money(ventasAcumuladas)}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Ventas Acumuladas</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{totalPedidos || 156}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{totalPedidos}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Órdenes Totales</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{clientesUnicos || 12}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>{clientesUnicos}</div>
               <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Clientes con Pedidos</div>
             </div>
             <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 24 }}>

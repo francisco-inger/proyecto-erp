@@ -10,27 +10,27 @@ export const reportesService = {
   getReportesData: async (periodo = 'Este Mes (Mayo 2025)', multiplier = 1) => {
     // 1. Obtener datos de Finanzas
     let comprobantes = []
-    let balanceTotal = 1250000
+    let balanceTotal = 0
     try {
       comprobantes = await finanzasService.getComprobantes()
       const finanzasData = await finanzasService.getFinanzasData()
-      balanceTotal = finanzasData.cuentas?.reduce((acc, c) => acc + (c.saldo || 0), 0) || 1250000
+      balanceTotal = finanzasData.cuentas?.reduce((acc, c) => acc + (c.saldo || 0), 0) || 0
     } catch (_) {}
 
     // Calcular ingresos y gastos reales aplicando multiplicador de período
     const baseIngresos = comprobantes
       .filter(c => c.tipo?.includes('Ingreso') || c.tipo === 'FV' || c.tipo === 'Venta')
-      .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 1250000
+      .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 0
 
     const baseGastos = comprobantes
       .filter(c => c.tipo?.includes('Egreso') || c.tipo?.includes('Gasto') || c.tipo === 'EG' || c.tipo === 'Compra' || c.tipo === 'Nómina')
-      .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 850000
+      .reduce((acc, c) => acc + (Number(c.monto) || 0), 0) || 0
 
     const ingresosReales = Math.round(baseIngresos * multiplier)
     const gastosReales = Math.round(baseGastos * multiplier)
 
     const utilidadNeta = ingresosReales - gastosReales
-    const margenGanancia = ingresosReales > 0 ? Math.round((utilidadNeta / ingresosReales) * 100) : 32
+    const margenGanancia = ingresosReales > 0 ? Math.round((utilidadNeta / ingresosReales) * 100) : 0
 
     // 2. Obtener datos de Inventario
     let products = []
@@ -41,24 +41,18 @@ export const reportesService = {
     } catch (_) {}
 
     // Top 5 productos calculados en tiempo real
-    const topProducts = (products.length > 0 ? products : [
-      { codigo: 'MED-001', nombre: 'Paracetamol 500mg', categoria: 'Medicamentos', ventasUds: 1250, ingresos: 125000, stock: 450 },
-      { codigo: 'MED-002', nombre: 'Amoxicilina 500mg', categoria: 'Medicamentos', ventasUds: 980, ingresos: 98000, stock: 280 },
-      { codigo: 'CUI-001', nombre: 'Alcohol 70%', categoria: 'Cuidado Personal', ventasUds: 750, ingresos: 75000, stock: 120 },
-      { codigo: 'SUP-001', nombre: 'Vitamina C 1000mg', categoria: 'Suplementos', ventasUds: 620, ingresos: 62000, stock: 95 },
-      { codigo: 'MED-003', nombre: 'Ibuprofeno 400mg', categoria: 'Medicamentos', ventasUds: 580, ingresos: 58000, stock: 310 },
-    ])
+    const topProducts = products
       .sort((a, b) => (b.ingresos || 0) - (a.ingresos || 0))
       .slice(0, 5)
 
     // 3. Vendedores
-    const vendedores = [
+    const vendedores = ingresosReales > 0 ? [
       { nom: 'Ana Martínez', ventas: Math.round(ingresosReales * 0.32), ord: 28, com: Math.round(ingresosReales * 0.32 * 0.05), in: 'AM' },
       { nom: 'Juan Pérez', ventas: Math.round(ingresosReales * 0.26), ord: 24, com: Math.round(ingresosReales * 0.26 * 0.05), in: 'JP' },
       { nom: 'María Rodríguez', ventas: Math.round(ingresosReales * 0.22), ord: 22, com: Math.round(ingresosReales * 0.22 * 0.05), in: 'MR' },
       { nom: 'Luis Gómez', ventas: Math.round(ingresosReales * 0.12), ord: 18, com: Math.round(ingresosReales * 0.12 * 0.05), in: 'LG' },
       { nom: 'Carlos Hernández', ventas: Math.round(ingresosReales * 0.08), ord: 16, com: Math.round(ingresosReales * 0.08 * 0.05), in: 'CH' },
-    ]
+    ] : []
 
     // 4. Actividades recientes cruzadas
     const events = integracionesService.getEvents()
