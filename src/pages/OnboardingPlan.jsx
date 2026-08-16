@@ -110,53 +110,82 @@ export function OnboardingPlan() {
         const ultimos4 = cleanCard.slice(-4)
 
         // 1. Guardar la suscripción en el registro de usuarios
-        const rawUsers = localStorage.getItem('erp_seguridad_users_v1')
-        if (rawUsers) {
-          const users = JSON.parse(rawUsers)
-          const updated = users.map(u => {
-            if (u.email === user?.email || u.id === user?.id) {
-              return {
-                ...u,
-                planContratado: selectedPlan,
-                periodoSuscripcion: billingPeriod,
-                fechaPago: new Date().toISOString(),
-                montoPagado: totalCobro,
-                tarjetaUltimos4: ultimos4,
-                tarjetaTitular: cardForm.cardName,
+        try {
+          const rawUsers = localStorage.getItem('erp_seguridad_users_v1')
+          if (rawUsers) {
+            const users = JSON.parse(rawUsers)
+            const updated = users.map(u => {
+              if (u.email?.toLowerCase() === user?.email?.toLowerCase() || u.id === user?.id) {
+                return {
+                  ...u,
+                  planContratado: selectedPlan,
+                  periodoSuscripcion: billingPeriod,
+                  fechaPago: new Date().toISOString(),
+                  montoPagado: totalCobro,
+                  tarjetaUltimos4: ultimos4,
+                  tarjetaTitular: cardForm.cardName,
+                }
               }
-            }
-            return u
-          })
-          localStorage.setItem('erp_seguridad_users_v1', JSON.stringify(updated))
-        }
+              return u
+            })
+            localStorage.setItem('erp_seguridad_users_v1', JSON.stringify(updated))
+          }
+        } catch (_) {}
 
         // 2. Generar comprobante automático en Finanzas (Ingreso por suscripción SaaS)
-        erpSync.notifyFinancialMovement({
-          concepto: `Cobro Tarjeta (•••• ${ultimos4}) · Suscripción ${planInfo.nombre} (${user?.name || 'Cliente'})`,
-          monto: totalCobro * 60.25,
-          tipo: 'Ingreso',
-          origen: 'Pasarela de Pago Online (Tarjeta de Crédito)',
-          cuenta: 'Banco Popular Dominicano (DOP)',
-        })
+        try {
+          const rawFinanzas = localStorage.getItem('appes_finanzas_data_v1')
+          const finanzas = rawFinanzas ? JSON.parse(rawFinanzas) : { comprobantes: [], cuentas: [] }
+          if (!finanzas.comprobantes) finanzas.comprobantes = []
+
+          const nuevoComprobante = {
+            id: `sub-pay-${Date.now()}`,
+            numero: `B02-${Math.floor(10000000 + Math.random() * 90000000)}`,
+            tipo: 'Ingreso',
+            fecha: new Date().toLocaleDateString('es-DO'),
+            fechaRaw: new Date().toISOString().split('T')[0],
+            descripcion: `Cobro Tarjeta (•••• ${ultimos4}) · Suscripción SaaS ${planInfo.nombre} (${cardForm.cardName})`,
+            cuenta: 'Banco Popular Dominicano (DOP)',
+            cuentaId: 'cta-1',
+            monto: totalCobro * 60.25,
+            estado: 'Aprobado',
+            creadoPor: 'Pasarela Stripe/Azul (Online)',
+            categoria: 'Ingresos por Suscripción SaaS',
+            clienteProveedor: cardForm.cardName,
+          }
+
+          finanzas.comprobantes.unshift(nuevoComprobante)
+          localStorage.setItem('appes_finanzas_data_v1', JSON.stringify(finanzas))
+          erpSync.emit('finanzas_updated', { comprobante: nuevoComprobante })
+        } catch (_) {}
 
         // 3. Registrar cliente en CRM si no existe
-        const rawCrm = localStorage.getItem('appes_crm_clients_v1')
-        const crmClients = rawCrm ? JSON.parse(rawCrm) : []
-        if (!crmClients.find(c => c.email === user?.email)) {
-          const newCrmClient = {
-            id: `cli-${Date.now()}`,
-            nombre: cardForm.cardName || user?.name || 'Cliente Suscrito',
-            contacto: user?.name || 'Titular',
-            email: user?.email || 'cliente@appes.com',
-            telefono: '(809) 555-0100',
-            sector: 'Salud & Medicina',
-            estado: 'Activo',
-            plan: planInfo.nombre,
-            totalComprado: totalCobro * 60.25,
-            fechaRegistro: new Date().toLocaleDateString('es-DO'),
+        try {
+          const rawCrm = localStorage.getItem('appes_crm_clients_v1')
+          const crmClients = rawCrm ? JSON.parse(rawCrm) : []
+          const existingIdx = crmClients.findIndex(c => c.email?.toLowerCase() === user?.email?.toLowerCase())
+          
+          if (existingIdx >= 0) {
+            crmClients[existingIdx].totalVentas = (Number(crmClients[existingIdx].totalVentas) || 0) + (totalCobro * 60.25)
+            crmClients[existingIdx].plan = planInfo.nombre
+            crmClients[existingIdx].estado = 'Activo'
+          } else {
+            crmClients.unshift({
+              id: `cli-${Date.now()}`,
+              nombre: cardForm.cardName || user?.name || 'Cliente Suscrito',
+              contacto: cardForm.cardName || 'Titular',
+              email: user?.email || 'cliente@appes.com',
+              telefono: '(809) 555-0100',
+              sector: 'Salud & Medicina',
+              estado: 'Activo',
+              plan: planInfo.nombre,
+              totalVentas: totalCobro * 60.25,
+              fechaRegistro: new Date().toLocaleDateString('es-DO'),
+            })
           }
-          localStorage.setItem('appes_crm_clients_v1', JSON.stringify([newCrmClient, ...crmClients]))
-        }
+          localStorage.setItem('appes_crm_clients_v1', JSON.stringify(crmClients))
+          erpSync.emit('crm_updated', { count: crmClients.length })
+        } catch (_) {}
 
         setLoading(false)
         // Redirigir obligatoriamente al Paso 2: Configuración de la Empresa
