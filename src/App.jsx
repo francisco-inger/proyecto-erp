@@ -25,15 +25,23 @@ import 'modules/reportes'
 import 'modules/integraciones'
 import 'modules/ajustes'
 
-import { Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './core/auth/AuthContext'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './core/auth/AuthContext'
 import { ProtectedRoute } from './core/auth/ProtectedRoute'
 import { Login } from './core/auth/pages/Login'
 import { Register } from './core/auth/pages/Register'
+import { LandingPage } from './pages/LandingPage'
+import { OnboardingPlan } from './pages/OnboardingPlan'
+import { OnboardingEmpresa } from './pages/OnboardingEmpresa'
 import { AppShell } from './core/layout/AppShell'
 import { Dashboard } from './pages/Dashboard'
 import { NotFound } from './pages/NotFound'
 import { getEnabledModules } from './core/moduleRegistry'
+
+function RootNavigator() {
+  const { isAuthenticated } = useAuth()
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />
+}
 
 export default function App() {
   const modules = getEnabledModules()
@@ -41,9 +49,17 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
+        {/* Landing Page Pública de Captación y Conversión */}
+        <Route path="/" element={<RootNavigator />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Flujo Obligatorio Post-Registro: Selección de Plan, Pago con Tarjeta y Configuración Inicial */}
+        <Route path="/onboarding-plan" element={<OnboardingPlan />} />
+        <Route path="/onboarding-empresa" element={<OnboardingEmpresa />} />
+
+        {/* Panel ERP Administrativo Protegido */}
         <Route
           element={
             <ProtectedRoute>
@@ -51,7 +67,7 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           {modules.map((m) => (
             <Route key={m.id} path={m.path.replace('/', '')} element={m.element} />
           ))}
