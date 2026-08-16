@@ -41,7 +41,6 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
   mesesOrden.forEach((m) => {
     cashFlowMap[m] = { mes: m, ingresos: 0, gastos: 0, resultado: 0 }
   })
-
   // Distribuir los montos
   comprobantes.forEach((c) => {
     let mesAbrev = 'Ago'
@@ -50,51 +49,25 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
       if (parts.length >= 2) {
         const monthNum = parseInt(parts[1], 10)
         const mapIdx = [
-          'Ene',
-          'Feb',
-          'Mar',
-          'Abr',
-          'May',
-          'Jun',
-          'Jul',
-          'Ago',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dic',
+          'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+          'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
         ]
-        mesAbrev = mapIdx[monthNum - 1] || 'Ago'
+        if (monthNum >= 1 && monthNum <= 12) {
+          mesAbrev = mapIdx[monthNum - 1]
+        }
       }
     }
-
-    if (!cashFlowMap[mesAbrev]) {
-      cashFlowMap[mesAbrev] = { mes: mesAbrev, ingresos: 0, gastos: 0, resultado: 0 }
-    }
-
-    if (c.tipo === 'Ingreso' && c.estado !== 'Anulado') {
-      cashFlowMap[mesAbrev].ingresos += Number(c.monto) || 0
-    } else if ((c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado') {
-      cashFlowMap[mesAbrev].gastos += Number(c.monto) || 0
-    }
-    cashFlowMap[mesAbrev].resultado =
-      cashFlowMap[mesAbrev].ingresos - cashFlowMap[mesAbrev].gastos
-  })
-
-  // Si hay meses con 0 ingresos, rellenar valores proporcionales para visualización
-  const cashFlowData = mesesOrden.map((m, idx) => {
-    const item = cashFlowMap[m]
-    if (item.ingresos === 0 && item.gastos === 0) {
-      const baseIng = Math.round(totalIngresos * (0.8 + idx * 0.03))
-      const baseGas = Math.round(totalGastos * (0.75 + idx * 0.03))
-      return {
-        mes: m,
-        ingresos: baseIng,
-        gastos: baseGas,
-        resultado: baseIng - baseGas,
+    if (cashFlowMap[mesAbrev]) {
+      if (c.tipo === 'Ingreso' && c.estado !== 'Anulado') {
+        cashFlowMap[mesAbrev].ingresos += Number(c.monto) || 0
+      } else if (c.tipo === 'Gasto' && c.estado !== 'Anulado') {
+        cashFlowMap[mesAbrev].gastos += Number(c.monto) || 0
       }
+      cashFlowMap[mesAbrev].resultado = cashFlowMap[mesAbrev].ingresos - cashFlowMap[mesAbrev].gastos
     }
-    return item
   })
+
+  const cashFlowData = Object.values(cashFlowMap)
 
   // 5. Presupuestos actualizados con gasto ejecutado real
   const updatedPresupuestos = presupuestos.map((p) => {
@@ -104,7 +77,7 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
 
     return {
       ...p,
-      ejecutado: gastoRealDeCategoria > 0 ? gastoRealDeCategoria : p.ejecutado,
+      ejecutado: gastoRealDeCategoria,
     }
   })
 
@@ -112,31 +85,31 @@ export function calculateFinanceMetrics(cuentas, comprobantes, presupuestos = []
     kpis: {
       saldoCuentas: {
         valor: saldoConsolidado,
-        cambioPorcentual: 8.5,
-        periodoTexto: 'vs. mes anterior',
+        cambioPorcentual: 0,
+        periodoTexto: 'balance en tiempo real',
       },
       ingresosMes: {
         valor: totalIngresos,
-        cambioPorcentual: 12.3,
-        periodoTexto: 'vs. mes anterior',
+        cambioPorcentual: 0,
+        periodoTexto: 'ingresos registrados',
       },
       gastosMes: {
         valor: totalGastos,
-        cambioPorcentual: -5.4,
-        periodoTexto: 'vs. mes anterior',
+        cambioPorcentual: 0,
+        periodoTexto: 'gastos registrados',
       },
       resultadoMes: {
         valor: resultadoNeto,
-        cambioPorcentual: totalGastos > 0 ? Number(((resultadoNeto / totalGastos) * 10).toFixed(1)) : 0,
-        periodoTexto: 'vs. mes anterior',
+        cambioPorcentual: 0,
+        periodoTexto: 'margen neto',
       },
     },
     cashFlowData,
-    categoriasGastos: categoriasGastos.length > 0 ? categoriasGastos : INITIAL_FINANZAS_DATA.categoriasGastos,
+    categoriasGastos: categoriasGastos,
     cuentas,
     comprobantes,
-    presupuestos: updatedPresupuestos.length > 0 ? updatedPresupuestos : INITIAL_FINANZAS_DATA.presupuestos,
-    conciliaciones: conciliaciones.length > 0 ? conciliaciones : INITIAL_FINANZAS_DATA.conciliaciones,
+    presupuestos: updatedPresupuestos,
+    conciliaciones,
   }
 }
 

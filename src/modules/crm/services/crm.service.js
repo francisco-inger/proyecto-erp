@@ -43,7 +43,18 @@ const DEFAULT_ACTIVITIES = [
 function getStored(key, def) {
   try {
     const val = localStorage.getItem(key)
-    return val ? JSON.parse(val) : def
+    if (val) return JSON.parse(val)
+
+    // Si es un cliente, iniciar limpio en clientes y prospectos
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      if (user.role === 'CLIENTE' || user.role === 'cliente') {
+        localStorage.setItem(key, JSON.stringify([]))
+        return []
+      }
+    }
+    return def
   } catch {
     return def
   }

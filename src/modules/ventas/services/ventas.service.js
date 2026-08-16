@@ -15,6 +15,16 @@ function getLocalOrders() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw)
+    
+    // Si es un cliente nuevo, su lista de ventas debe iniciar vacía
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      if (user.role === 'CLIENTE' || user.role === 'cliente') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+        return []
+      }
+    }
   } catch (_) {}
   localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ORDERS))
   return SEED_ORDERS

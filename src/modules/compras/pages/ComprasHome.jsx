@@ -149,7 +149,17 @@ function getStoredCompras() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed)) return parsed
+    }
+    
+    // Si es un cliente, su módulo de compras inicia limpio
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      if (user.role === 'CLIENTE' || user.role === 'cliente') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([]))
+        return []
+      }
     }
   } catch (_) {}
   localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_COMPRAS))
