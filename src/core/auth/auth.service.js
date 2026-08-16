@@ -68,14 +68,10 @@ export async function login({ email, password }) {
     throw new Error('Las credenciales ingresadas no corresponden a ningún usuario registrado.')
   }
 
-  if (usuario.estado === 'Pendiente' || usuario.estado === 'Pendiente de Aprobación') {
-    registrarLog(email, 'Intento de inicio de sesión — esperando aprobación del Administrador', 'Pendiente')
-    throw new Error('Tu cuenta está registrada pero esperando que el Administrador te conceda acceso.')
-  }
-
+  // Permitir acceso directo a usuarios activos o clientes que han completado su proceso
   if (usuario.estado === 'Inactivo' || usuario.estado === 'Bloqueado') {
     registrarLog(email, 'Intento de inicio de sesión — cuenta desactivada', 'Bloqueado')
-    throw new Error('Tu cuenta está desactivada. Contacta al administrador del sistema.')
+    throw new Error('Tu cuenta está desactivada. Contacta a soporte técnico.')
   }
 
   // Verificar contraseña
@@ -127,17 +123,33 @@ export async function register({ name, email, password, company }) {
     email,
     password,
     rol: 'CLIENTE',
-    estado: 'Pendiente',
-    ultimoAcceso: 'Nunca',
+    estado: 'Activo',
+    ultimoAcceso: 'Ahora',
     dosFactores: false,
     departamento: company || 'General',
+    empresaConfigurada: false,
+    planContratado: null,
   }
 
   const updated = [nuevoUsuario, ...usuarios]
   localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated))
 
-  registrarLog(email, 'Registro de nueva cuenta — esperando aprobación de acceso', 'Pendiente')
-  throw new Error('Registro exitoso. Tu cuenta está esperando que el Administrador te conceda acceso.')
+  const userSession = {
+    id: nuevoUsuario.id,
+    name: nuevoUsuario.nombre,
+    email: nuevoUsuario.email,
+    role: nuevoUsuario.rol,
+    departamento: nuevoUsuario.departamento,
+    dosFactores: false,
+    empresaConfigurada: false,
+  }
+
+  // Guardar sesión para onboarding inmediato
+  localStorage.setItem('erp_token', `token-${nuevoUsuario.id}-${Date.now()}`)
+  localStorage.setItem('erp_user', JSON.stringify(userSession))
+
+  registrarLog(email, 'Registro de nueva cuenta — acceso habilitado', 'Exitoso')
+  return userSession
 }
 
 export function logout() {
