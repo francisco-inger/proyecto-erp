@@ -520,30 +520,44 @@ button, input, select {
   }
 
   .topbar {
-    padding: 0 14px;
+    padding: 0 10px;
     height: 56px;
+    gap: 6px !important;
   }
 
   .topbar-hamburger-btn {
     display: flex;
+    flex-shrink: 0;
   }
 
   .topbar-search-wrapper {
     width: auto !important;
-    max-width: 180px;
+    max-width: 130px !important;
   }
 
   .topbar-search-wrapper input {
     font-size: 11px !important;
+    padding-left: 26px !important;
   }
 
   .topbar-shortcut-pill {
     display: none !important;
   }
 
+  /* Ocultar en móviles botones redundantes de la topbar para evitar desbordes */
+  .topbar-scanner-btn,
+  .topbar-help-btn {
+    display: none !important;
+  }
+
+  .topbar-user-email {
+    display: none !important;
+  }
+
   .main-content {
-    padding: 12px;
+    padding: 10px;
     min-height: calc(100vh - 56px);
+    overflow-x: hidden;
   }
 
   /* Adaptación de grids universales de métricas y tarjetas */

@@ -344,23 +344,23 @@ export function AjustesHome() {
             Configura las políticas fiscales de la empresa, interconexión de módulos en tiempo real, canales de notificación, seguridad y roles RBAC.
           </p>
 
-          {/* Estadísticas en vivo estilo referencia */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginBottom: 16 }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Uptime Operativo</div>
+          {/* Estadísticas en vivo adaptables a móviles */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>99.99%</div>
+              <div style={{ fontSize: 10, color: '#93C5FD', marginTop: 3 }}>Uptime Operativo</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Seguridad & Cifrado</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#34D399', lineHeight: 1 }}>2FA + AES-256</div>
+              <div style={{ fontSize: 10, color: '#93C5FD', marginTop: 3 }}>Seguridad & Cifrado</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Multi-Moneda Activo</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>RD$ / USD / EUR</div>
+              <div style={{ fontSize: 10, color: '#93C5FD', marginTop: 3 }}>Multi-Moneda</div>
             </div>
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
-              <div style={{ fontSize: 11, color: '#93C5FD', marginTop: 2 }}>Licencia Corporativa</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>Enterprise Suite</div>
+              <div style={{ fontSize: 10, color: '#93C5FD', marginTop: 3 }}>Licencia Activa</div>
             </div>
           </div>
 

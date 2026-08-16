@@ -20,12 +20,19 @@
 .ajustes-tabs-bar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   border-bottom: 1px solid #E2E8F0;
   padding-bottom: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
   box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.ajustes-tabs-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .ajustes-tab-btn {

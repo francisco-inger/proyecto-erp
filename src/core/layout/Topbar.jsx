@@ -333,10 +333,11 @@ export function Topbar({ onToggleMobileMenu }) {
       </div>
 
       {/* ── Acciones Derecha ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         
         {/* 1. Botón Escáner de Barra / QR */}
         <button
+          className="topbar-scanner-btn"
           onClick={() => setShowScanner(true)}
           title="Escáner de Códigos de Barras / QR"
           style={{
@@ -408,7 +409,8 @@ export function Topbar({ onToggleMobileMenu }) {
               position: 'absolute',
               top: 'calc(100% + 10px)',
               right: -50,
-              width: 340,
+              width: 320,
+              maxWidth: '90vw',
               background: '#FFFFFF',
               border: '1px solid #E2E8F0',
               borderRadius: 14,
@@ -486,6 +488,7 @@ export function Topbar({ onToggleMobileMenu }) {
 
         {/* 3. Botón Centro de Ayuda (?) */}
         <button
+          className="topbar-help-btn"
           onClick={() => setShowHelp(true)}
           title="Centro de Ayuda y Documentación"
           style={{
@@ -530,9 +533,9 @@ export function Topbar({ onToggleMobileMenu }) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 8,
               cursor: 'pointer',
-              padding: '5px 12px',
+              padding: '4px 8px',
               borderRadius: 10,
               background: showUserMenu ? '#EFF6FF' : '#F8FAFC',
               border: `1px solid ${showUserMenu ? '#93C5FD' : '#E2E8F0'}`,
@@ -542,8 +545,8 @@ export function Topbar({ onToggleMobileMenu }) {
             onMouseLeave={(e) => { e.currentTarget.style.background = showUserMenu ? '#EFF6FF' : '#F8FAFC'; e.currentTarget.style.borderColor = showUserMenu ? '#93C5FD' : '#E2E8F0' }}
           >
             <div style={{
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
               color: '#FFFFFF',
@@ -551,12 +554,13 @@ export function Topbar({ onToggleMobileMenu }) {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 800,
-              fontSize: 11,
+              fontSize: 10,
               boxShadow: '0 2px 4px rgba(37, 99, 235, 0.25)',
+              flexShrink: 0,
             }}>
               {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AD'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
+            <div className="topbar-user-email" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>
                 {user?.name ?? 'Administrador'}
               </span>
