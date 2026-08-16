@@ -1019,62 +1019,69 @@
   margin-top: 1px;
 }
 
-/* Footer Bar */
+/* Footer Bar Corporativa */
 .dash-footer-bar {
-  background: #0F172A;
-  color: #94A3B8;
-  border-radius: 14px;
-  padding: 16px 20px;
+  background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%);
+  color: #CBD5E1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   font-size: 12px;
+  box-shadow: 0 4px 15px -2px rgba(30, 58, 138, 0.25);
+  margin-top: 10px;
 }
 
 .dash-footer-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .dash-footer-logo {
-  font-weight: 800;
+  font-weight: 900;
   color: #FFFFFF;
   letter-spacing: -0.02em;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .dash-footer-version {
-  color: #60A5FA;
-  font-weight: 600;
+  color: #93C5FD;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 3px 10px;
+  border-radius: 12px;
 }
 
 .dash-footer-divider {
-  color: #334155;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .dash-footer-uptime {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #34D399;
-  font-weight: 500;
+  color: #A7F3D0;
+  font-weight: 600;
 }
 
 .uptime-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #10B981;
-  box-shadow: 0 0 6px #10B981;
+  box-shadow: 0 0 8px #10B981;
 }
 
 .dash-footer-right {
-  color: #64748B;
+  color: #94A3B8;
   font-size: 11px;
+  font-weight: 500;
 }
 
 /* Responsivo */
