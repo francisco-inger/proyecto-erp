@@ -598,9 +598,9 @@ export function RrhhInventarioHome() {
               <div className="inv-kpi-circle-icon green">💲</div>
               <div className="inv-kpi-details">
                 <span className="inv-kpi-title">Valor de Inventario</span>
-                <h3 className="inv-kpi-number">{fmtMoney(totalInventoryValuation > 0 ? totalInventoryValuation : 4250000)}</h3>
+                <h3 className="inv-kpi-number">{fmtMoney(totalInventoryValuation)}</h3>
                 <span className="inv-kpi-badge success">
-                  ↑ 12.4% <small>vs mes anterior</small>
+                  ↑ 0% <small>vs mes anterior</small>
                 </span>
               </div>
             </div>
@@ -610,9 +610,9 @@ export function RrhhInventarioHome() {
               <div className="inv-kpi-circle-icon purple">🛒</div>
               <div className="inv-kpi-details">
                 <span className="inv-kpi-title">Productos en Stock</span>
-                <h3 className="inv-kpi-number">{totalStockCount > 0 ? totalStockCount : 820}</h3>
+                <h3 className="inv-kpi-number">{totalStockCount}</h3>
                 <span className="inv-kpi-badge success">
-                  ↑ 6.3% <small>vs mes anterior</small>
+                  ↑ 0% <small>vs mes anterior</small>
                 </span>
               </div>
             </div>
@@ -622,9 +622,9 @@ export function RrhhInventarioHome() {
               <div className="inv-kpi-circle-icon orange">🛍️</div>
               <div className="inv-kpi-details">
                 <span className="inv-kpi-title">Productos Bajos</span>
-                <h3 className="inv-kpi-number">{lowStockProducts.length > 0 ? lowStockProducts.length : 45}</h3>
+                <h3 className="inv-kpi-number">{lowStockProducts.length}</h3>
                 <span className="inv-kpi-badge danger">
-                  ↑ 15.2% <small>vs mes anterior</small>
+                  ↑ 0% <small>vs mes anterior</small>
                 </span>
               </div>
             </div>
@@ -634,9 +634,9 @@ export function RrhhInventarioHome() {
               <div className="inv-kpi-circle-icon red">⚠️</div>
               <div className="inv-kpi-details">
                 <span className="inv-kpi-title">Productos Agotados</span>
-                <h3 className="inv-kpi-number">{outOfStockProducts.length > 0 ? outOfStockProducts.length : 12}</h3>
+                <h3 className="inv-kpi-number">{outOfStockProducts.length}</h3>
                 <span className="inv-kpi-badge danger">
-                  ↑ 5.1% <small>vs mes anterior</small>
+                  ↑ 0% <small>vs mes anterior</small>
                 </span>
               </div>
             </div>

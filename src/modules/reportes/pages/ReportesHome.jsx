@@ -12,6 +12,14 @@ function money(n) {
 
 // ── Gráfico de Curva de Ventas SVG (Últimos 30 días) ──────────────────────────
 function SalesTrendCurve({ totalVentas }) {
+  if (!totalVentas || totalVentas === 0) {
+    return (
+      <div className="rep-line-chart-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 140, color: '#94A3B8', fontSize: 12 }}>
+        <span>📈 No hay registros de ventas en este período</span>
+      </div>
+    )
+  }
+
   const points = [
     { x: 30, y: 120, label: '1 May' },
     { x: 60, y: 100 },
@@ -22,7 +30,7 @@ function SalesTrendCurve({ totalVentas }) {
     { x: 210, y: 85, label: '11 May' },
     { x: 240, y: 65 },
     { x: 270, y: 70 },
-    { x: 300, y: 40, label: '16 May', val: money(totalVentas ? totalVentas * 0.45 : 540000) },
+    { x: 300, y: 40, label: '16 May', val: money(totalVentas * 0.45) },
     { x: 330, y: 50 },
     { x: 360, y: 45, label: '21 May' },
     { x: 390, y: 55 },
@@ -74,7 +82,7 @@ function SalesTrendCurve({ totalVentas }) {
 
       <div className="rep-line-badge-tooltip">
         <small>Pico Operativo</small>
-        <strong>{money(totalVentas ? totalVentas * 0.45 : 540000)}</strong>
+        <strong>{money(totalVentas * 0.45)}</strong>
       </div>
     </div>
   )
@@ -82,9 +90,17 @@ function SalesTrendCurve({ totalVentas }) {
 
 // ── Gráfico Donut de Categorías ───────────────────────────────────────────────
 function CategoryDonut({ total }) {
+  if (!total || total === 0) {
+    return (
+      <div style={{ padding: '36px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+        <span>📦 No hay ventas por categoría registradas aún</span>
+      </div>
+    )
+  }
+
   const R = 44, cx = 55, cy = 55
   const circ = 2 * Math.PI * R
-  const base = total || 2100000
+  const base = total
 
   const segs = [
     { name: 'Medicamentos', pct: 42, color: '#3B82F6', val: money(base * 0.42) },

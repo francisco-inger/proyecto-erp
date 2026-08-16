@@ -418,8 +418,8 @@ export function VentasHome() {
           </div>
           <div className="ventas-kpi-content">
             <span className="ventas-kpi-label">Ventas acumuladas</span>
-            <h3 className="ventas-kpi-value">{money(ventasAcumuladas > 0 ? ventasAcumuladas : 418000)}</h3>
-            <span className="ventas-kpi-trend up">+ 12.4% vs periodo anterior</span>
+            <h3 className="ventas-kpi-value">{money(ventasAcumuladas)}</h3>
+            <span className="ventas-kpi-trend up">+ 0% vs periodo anterior</span>
           </div>
         </div>
 
@@ -430,8 +430,8 @@ export function VentasHome() {
           </div>
           <div className="ventas-kpi-content">
             <span className="ventas-kpi-label">Clientes con pedidos</span>
-            <h3 className="ventas-kpi-value">{clientesUnicos || 5}</h3>
-            <span className="ventas-kpi-trend up">+ 2% vs mes anterior</span>
+            <h3 className="ventas-kpi-value">{clientesUnicos}</h3>
+            <span className="ventas-kpi-trend up">+ 0% vs mes anterior</span>
           </div>
         </div>
       </div>

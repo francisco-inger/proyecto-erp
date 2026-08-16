@@ -68,16 +68,16 @@ export const reportesService = {
         ingresosTotales: ingresosReales,
         gastosTotales: gastosReales,
         utilidadNeta,
-        margenGanancia: Math.max(margenGanancia, 5),
-        ventasTotales: ingresosReales + 850000,
-        ordenesVenta: comprobantes.length > 0 ? comprobantes.length + 120 : 156,
+        margenGanancia: margenGanancia,
+        ventasTotales: ingresosReales,
+        ordenesVenta: comprobantes.length,
       },
       topProducts,
       vendedores,
       resumenFinanciero: {
-        activosTotales: balanceTotal + 2200000,
-        pasivosTotales: gastosReales + 380000,
-        patrimonioNeto: (balanceTotal + 2200000) - (gastosReales + 380000),
+        activosTotales: balanceTotal,
+        pasivosTotales: gastosReales,
+        patrimonioNeto: balanceTotal - gastosReales,
         flujoCaja: utilidadNeta,
       },
       cuentasPorCobrar: {
@@ -92,11 +92,7 @@ export const reportesService = {
         porVencer: Math.round(gastosReales * 0.35 * 0.29),
         alDia: Math.round(gastosReales * 0.35 * 0.50),
       },
-      actividades: ultimasActividades.length > 0 ? ultimasActividades : [
-        { icon: '📄', desc: 'Nueva orden de venta #ORD-1056', monto: 'RD$ 25,000', time: 'Hace 10 min' },
-        { icon: '💰', desc: 'Pago recibido de Cliente ABC', monto: 'RD$ 15,000', time: 'Hace 35 min' },
-        { icon: '🧾', desc: 'Factura con NCF #B010000045', monto: 'RD$ 18,500', time: 'Hace 1 hora' },
-      ]
+      actividades: ultimasActividades
     }
   }
 }
