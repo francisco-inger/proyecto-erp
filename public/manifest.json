@@ -1,0 +1,25 @@
+{
+  "short_name": "APPEX ERP",
+  "name": "APPEX Enterprise Suite ERP",
+  "description": "Sistema de Gestión y Control Empresarial Integral",
+  "icons": [
+    {
+      "src": "/branding/logo_appex.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/branding/logo_appex.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0F172A",
+  "theme_color": "#1E3A8A",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}
