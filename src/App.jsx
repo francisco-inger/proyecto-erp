@@ -68,6 +68,7 @@ export default function App() {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/panel" element={<Dashboard />} />
           {modules.map((m) => (
             <Route key={m.id} path={m.path.replace('/', '')} element={m.element} />
           ))}

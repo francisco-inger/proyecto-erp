@@ -9,8 +9,8 @@ export function ProtectedRoute({ children, requiredRole = null }) {
     return <Navigate to="/login" replace />
   }
 
-  if (!canAccess(user.role, requiredRole)) {
-    return <Navigate to="/" replace />
+  if (requiredRole && !canAccess(user?.role, requiredRole)) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return children

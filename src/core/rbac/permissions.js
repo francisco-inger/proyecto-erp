@@ -21,20 +21,43 @@ export const PLAN_MODULES = {
 }
 
 /**
- * Obtiene el plan activo guardado en el sistema
+ * Obtiene el plan activo guardado en el sistema o del usuario en sesión
  */
 export function getActivePlan() {
   try {
+    // 1. Verificar si el usuario en sesión tiene un plan contratado
+    const userRaw = localStorage.getItem('erp_user')
+    if (userRaw) {
+      const user = JSON.parse(userRaw)
+      if (user.planContratado && PLAN_MODULES[user.planContratado]) {
+        const nombres = {
+          plan_startup: 'Plan Básico',
+          plan_profesional: 'Plan Profesional',
+          plan_enterprise: 'Plan Enterprise Suite',
+        }
+        return {
+          planId: user.planContratado,
+          planNombre: nombres[user.planContratado] || 'Plan Activo',
+          planBadge: 'Suscripción Activa',
+          estado: 'Activo',
+          maxUsuarios: user.planContratado === 'plan_enterprise' ? 999 : user.planContratado === 'plan_profesional' ? 10 : 2,
+          espacioGB: user.planContratado === 'plan_enterprise' ? 50 : 10,
+        }
+      }
+    }
+
+    // 2. Verificar suscripción global guardada
     const raw = localStorage.getItem('appes_active_plan_subscription_v1')
     if (raw) return JSON.parse(raw)
   } catch (_) {}
+
   return {
-    planId: 'plan_enterprise',
-    planNombre: 'Plan Enterprise Suite',
-    planBadge: 'Corporativo',
+    planId: 'plan_profesional',
+    planNombre: 'Plan Profesional',
+    planBadge: 'Activo',
     estado: 'Activo',
-    maxUsuarios: 999,
-    espacioGB: 50,
+    maxUsuarios: 10,
+    espacioGB: 20,
   }
 }
 

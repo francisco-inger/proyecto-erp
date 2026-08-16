@@ -131,6 +131,23 @@ export function OnboardingPlan() {
             })
             localStorage.setItem('erp_seguridad_users_v1', JSON.stringify(updated))
           }
+
+          // Actualizar sesión activa
+          const currentSession = JSON.parse(localStorage.getItem('erp_user') || '{}')
+          currentSession.planContratado = selectedPlan
+          currentSession.estado = 'Activo'
+          localStorage.setItem('erp_user', JSON.stringify(currentSession))
+
+          // Guardar suscripción activa global
+          const activePlanData = {
+            planId: selectedPlan,
+            planNombre: planInfo.nombre,
+            planBadge: 'Activo',
+            estado: 'Activo',
+            maxUsuarios: selectedPlan === 'plan_enterprise' ? 999 : selectedPlan === 'plan_profesional' ? 10 : 2,
+            espacioGB: selectedPlan === 'plan_enterprise' ? 50 : 10,
+          }
+          localStorage.setItem('appes_active_plan_subscription_v1', JSON.stringify(activePlanData))
         } catch (_) {}
 
         // 2. Generar comprobante automático en Finanzas (Ingreso por suscripción SaaS)
