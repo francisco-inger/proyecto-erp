@@ -592,6 +592,12 @@ export function Topbar({ onToggleMobileMenu }) {
               <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A' }}>{user?.name || 'Administrador'}</div>
                 <div style={{ fontSize: 11, color: '#64748B' }}>{user?.email || 'admin@appes.com'}</div>
+                
+                {/* Empresa del usuario */}
+                <div style={{ marginTop: 6, fontSize: 11, color: '#1E293B', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span>🏢</span> {user?.departamento || 'APPEX Dominicana SRL'}
+                </div>
+
                 <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EFF6FF', color: '#2563EB', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>
                   👑 Rol: {user?.role ? user.role.toUpperCase() : 'ADMIN'}
                 </div>

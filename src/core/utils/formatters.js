@@ -38,6 +38,50 @@ export function formatPhone(value) {
 }
 
 /**
+ * Obtiene los datos fiscales y corporativos de la empresa asociada al usuario actual o ajustes globales
+ */
+export function getEmpresaActiva() {
+  try {
+    const userRaw = localStorage.getItem('erp_user')
+    const user = userRaw ? JSON.parse(userRaw) : null
+
+    // 1. Si existe configuración de empresa guardada
+    const rawSettings = localStorage.getItem('appes_erp_global_settings_v2')
+    const settings = rawSettings ? JSON.parse(rawSettings) : {}
+
+    const nombreEmpresa = settings.razonSocial || settings.nombreComercial || user?.departamento || user?.name || 'APPEX Dominicana SRL'
+    const rnc = settings.rnc || '1-31-89023-4'
+    const telefono = settings.telefono || settings.telefonoPrincipal || '(809) 555-0100'
+    const direccion = settings.direccion || settings.direccionFiscal || 'Santo Domingo, República Dominicana'
+    const email = settings.emailCorporativo || settings.emailContacto || user?.email || 'contacto@empresa.com'
+
+    return {
+      razonSocial: nombreEmpresa,
+      nombreComercial: settings.nombreComercial || nombreEmpresa,
+      rnc,
+      telefono,
+      direccion,
+      email,
+      ciudad: settings.ciudad || 'Santo Domingo',
+      moneda: settings.monedaPrincipal || 'DOP',
+      sector: settings.sector || 'General',
+    }
+  } catch (_) {}
+
+  return {
+    razonSocial: 'APPEX Dominicana SRL',
+    nombreComercial: 'APPEX ERP',
+    rnc: '1-31-89023-4',
+    telefono: '(809) 555-0100',
+    direccion: 'Santo Domingo, República Dominicana',
+    email: 'contacto@appex.do',
+    ciudad: 'Santo Domingo',
+    moneda: 'DOP',
+    sector: 'General',
+  }
+}
+
+/**
  * Obtiene la tasa oficial de cambio configurada en Ajustes (o valor por defecto)
  */
 export function getExchangeRate() {

@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router
 import { useAuth } from '../auth/AuthContext'
 import { canAccess } from '../rbac/permissions'
 import { getEnabledModules } from '../moduleRegistry'
+import { getEmpresaActiva } from '../utils/formatters'
 import { AdquisicionPlanesModal } from '../components/AdquisicionPlanesModal'
 
 /* Orden y íconos del sidebar, alineados al mockup del proyecto */
@@ -58,8 +59,33 @@ const SUBMENUS = {
     { label: 'Gastos', tab: 'Gastos' },
     { label: 'Transferencias', tab: 'Transferencias' },
     { label: 'Conciliaciones', tab: 'Conciliaciones' },
-    { label: 'Reportes', tab: 'Reportes' },
-    { label: 'Presupuesto', tab: 'Presupuesto' },
+    { label: 'Impuestos DGII', tab: 'Impuestos' },
+    { label: 'Monedas & Tasas', tab: 'Monedas' },
+    { label: 'Presupuestos', tab: 'Presupuestos' },
+    { label: 'Reporte Financiero', tab: 'Reportes' },
+  ],
+  ventas: [
+    { label: 'Resumen', tab: 'Resumen' },
+    { label: 'Facturas', tab: 'Facturas' },
+    { label: 'Nueva Venta', tab: 'Nueva Venta' },
+    { label: 'Cotizaciones', tab: 'Cotizaciones' },
+    { label: 'Cobros', tab: 'Cobros' },
+    { label: 'Comprobantes NCF', tab: 'NCF' },
+  ],
+  compras: [
+    { label: 'Resumen', tab: 'Resumen' },
+    { label: 'Órdenes de Compra', tab: 'Ordenes' },
+    { label: 'Nueva Orden', tab: 'Nueva' },
+    { label: 'Proveedores', tab: 'Proveedores' },
+    { label: 'Facturas Proveedor', tab: 'Facturas' },
+    { label: 'Recepción Stock', tab: 'Recepcion' },
+  ],
+  proyectos: [
+    { label: 'Tablero Kanban', tab: 'Kanban' },
+    { label: 'Lista de Proyectos', tab: 'Proyectos' },
+    { label: 'Diagrama Gantt', tab: 'Gantt' },
+    { label: 'Control de Horas', tab: 'Horas' },
+    { label: 'Presupuestos', tab: 'Presupuestos' },
   ],
 }
 
@@ -71,9 +97,13 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // Submenús cerrados por defecto al iniciar sesión (despliegue 100% manual)
   const [openSubmenus, setOpenSubmenus] = useState({})
   const [showPlanModal, setShowPlanModal] = useState(false)
+  const [empresa, setEmpresa] = useState(() => getEmpresaActiva())
+
+  useEffect(() => {
+    setEmpresa(getEmpresaActiva())
+  }, [user, location.pathname])
 
   const all = getEnabledModules().filter((m) => canAccess(user?.role, m.id))
   const modules = [...all].sort((a, b) => {
@@ -100,12 +130,12 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
               alt="APPEX ERP Logo"
               style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: 2 }}
             />
-            <div>
-              <span className="sidebar-brand-name" style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>
-                APPEX<span style={{ color: '#2563EB' }}>.ERP</span>
+            <div style={{ overflow: 'hidden' }}>
+              <span className="sidebar-brand-name" style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: 140 }} title={empresa.razonSocial}>
+                {empresa.nombreComercial || empresa.razonSocial}
               </span>
               <span className="sidebar-brand-tag" style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
-                Enterprise Suite 2026
+                RNC: {empresa.rnc}
               </span>
             </div>
           </div>
