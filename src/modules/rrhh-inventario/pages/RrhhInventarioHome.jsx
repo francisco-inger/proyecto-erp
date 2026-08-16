@@ -837,134 +837,53 @@ export function RrhhInventarioHome() {
                 <div className="inv-rrhh-kpi-item">
                   <span className="inv-rrhh-kpi-icon">👥</span>
                   <span className="inv-rrhh-kpi-title">Empleados Activos</span>
-                  <span className="inv-rrhh-kpi-val">156</span>
-                  <span className="inv-rrhh-kpi-badge">↑ 2.7%</span>
+                  <span className="inv-rrhh-kpi-val">0</span>
+                  <span className="inv-rrhh-kpi-badge">0%</span>
                 </div>
                 <div className="inv-rrhh-kpi-item">
                   <span className="inv-rrhh-kpi-icon">👤</span>
                   <span className="inv-rrhh-kpi-title">Nuevas Contrataciones</span>
-                  <span className="inv-rrhh-kpi-val">5</span>
+                  <span className="inv-rrhh-kpi-val">0</span>
                   <span style={{ fontSize: 9, color: 'var(--color-ink-faint)' }}>Este mes</span>
                 </div>
                 <div className="inv-rrhh-kpi-item">
                   <span className="inv-rrhh-kpi-icon">⏱️</span>
                   <span className="inv-rrhh-kpi-title">Ausencias Hoy</span>
-                  <span className="inv-rrhh-kpi-val">3</span>
+                  <span className="inv-rrhh-kpi-val">0</span>
                   <span style={{ fontSize: 9, color: 'var(--color-ink-faint)' }}>Empleados</span>
                 </div>
                 <div className="inv-rrhh-kpi-item">
                   <span className="inv-rrhh-kpi-icon">🎂</span>
                   <span className="inv-rrhh-kpi-title">Cumpleaños del Mes</span>
-                  <span className="inv-rrhh-kpi-val">7</span>
+                  <span className="inv-rrhh-kpi-val">0</span>
                   <span style={{ fontSize: 9, color: 'var(--color-ink-faint)' }}>Empleados</span>
                 </div>
                 <div className="inv-rrhh-kpi-item">
                   <span className="inv-rrhh-kpi-icon">🏖️</span>
                   <span className="inv-rrhh-kpi-title">Vacaciones Pendientes</span>
-                  <span className="inv-rrhh-kpi-val">12</span>
+                  <span className="inv-rrhh-kpi-val">0</span>
                   <span style={{ fontSize: 9, color: 'var(--color-ink-faint)' }}>Empleados</span>
                 </div>
               </div>
 
-              {/* Distribución por Departamento + Cumpleaños/Vacaciones */}
-              <div className="inv-rrhh-split">
-                <div className="inv-dept-bars">
-                  <strong style={{ fontSize: 11, color: 'var(--color-ink)' }}>Distribución por Departamento</strong>
-                  {[
-                    { dept: 'Ventas', count: 35, pct: 22, color: '#4F46E5' },
-                    { dept: 'Administración', count: 28, pct: 18, color: '#6366F1' },
-                    { dept: 'Almacén', count: 25, pct: 16, color: '#3B82F6' },
-                    { dept: 'Compras', count: 22, pct: 14, color: '#0EA5E9' },
-                    { dept: 'Contabilidad', count: 18, pct: 12, color: '#06B6D4' },
-                    { dept: 'Recursos Humanos', count: 16, pct: 10, color: '#10B981' },
-                    { dept: 'TI / Sistemas', count: 12, pct: 8, color: '#8B5CF6' },
-                  ].map((d) => (
-                    <div key={d.dept} className="inv-dept-row">
-                      <div className="inv-dept-info">
-                        <span>{d.dept}</span>
-                        <span><strong>{d.count}</strong> ({d.pct}%)</span>
-                      </div>
-                      <div className="inv-dept-bar-bg">
-                        <div className="inv-dept-bar-fill" style={{ width: `${d.pct * 3.5}%`, background: d.color }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div>
-                    <strong style={{ fontSize: 11, color: 'var(--color-ink)' }}>Próximos Cumpleaños</strong>
-                    <div className="inv-birthdays-list" style={{ marginTop: 6 }}>
-                      {[
-                        { nombre: 'Ana Martínez', dept: 'Ventas', fecha: '22 May', in: 'AM' },
-                        { nombre: 'Juan Pérez', dept: 'Almacén', fecha: '24 May', in: 'JP' },
-                        { nombre: 'María Rodríguez', dept: 'Compras', fecha: '26 May', in: 'MR' },
-                        { nombre: 'Luis Gómez', dept: 'Contabilidad', fecha: '28 May', in: 'LG' },
-                      ].map((b) => (
-                        <div key={b.nombre} className="inv-birthday-item">
-                          <div className="inv-emp-avatar">{b.in}</div>
-                          <span className="inv-birthday-name">{b.nombre} <small style={{ color: 'var(--color-ink-faint)', fontWeight: 400 }}>({b.dept})</small></span>
-                          <span className="inv-birthday-date">{b.fecha}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <strong style={{ fontSize: 11, color: 'var(--color-ink)' }}>Vacaciones Próximas</strong>
-                    <div className="inv-birthdays-list" style={{ marginTop: 6 }}>
-                      {[
-                        { nombre: 'Carlos Hernández', dept: 'Ventas', fecha: '21/05 - 28/05', in: 'CH' },
-                        { nombre: 'Laura Jiménez', dept: 'Administración', fecha: '23/05 - 27/05', in: 'LJ' },
-                      ].map((v) => (
-                        <div key={v.nombre} className="inv-birthday-item">
-                          <div className="inv-emp-avatar" style={{ background: '#FEF3C7', color: '#D97706' }}>{v.in}</div>
-                          <span className="inv-birthday-name">{v.nombre}</span>
-                          <span className="inv-birthday-date">{v.fecha}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--color-ink-faint)', fontSize: 12 }}>
+                <span>👥 No hay colaboradores registrados en el módulo de Recursos Humanos</span>
               </div>
             </div>
 
             {/* 2. Nómina del Mes */}
             <div className="card">
               <div className="inv-card-header">
-                <strong>Nómina del Mes (Mayo 2025)</strong>
+                <strong>Nómina del Mes</strong>
                 <span className="inv-header-link" onClick={() => showToastMsg('Navegando a Nómina')}>Ver módulo</span>
               </div>
               <div className="inv-payroll-wrap">
                 <div>
-                  <h3 className="inv-payroll-total">RD$ 1,850,000</h3>
+                  <h3 className="inv-payroll-total">RD$ 0</h3>
                   <small style={{ color: 'var(--color-ink-faint)' }}>Total a pagar</small>
                 </div>
-                <div className="inv-payroll-body">
-                  <PayrollDonut />
-                  <ul className="inv-payroll-legend">
-                    <li>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB' }} />
-                        Salarios
-                      </span>
-                      <span><strong>RD$ 1,450,000</strong> <small>(78%)</small></span>
-                    </li>
-                    <li>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981' }} />
-                        Bonificaciones
-                      </span>
-                      <span><strong>RD$ 250,000</strong> <small>(14%)</small></span>
-                    </li>
-                    <li>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B' }} />
-                        Deducciones
-                      </span>
-                      <span><strong>RD$ 150,000</strong> <small>(8%)</small></span>
-                    </li>
-                  </ul>
+                <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--color-ink-faint)', fontSize: 12 }}>
+                  <span>💰 No hay nóminas generadas para este período</span>
                 </div>
               </div>
             </div>
@@ -976,25 +895,9 @@ export function RrhhInventarioHome() {
                 <span className="inv-header-link" onClick={() => showToastMsg('Navegando a Evaluaciones de Desempeño')}>Ver módulo</span>
               </div>
               <div className="inv-perf-wrap">
-                <PerformanceGauge />
-                <span style={{ fontSize: 11, color: 'var(--color-ink-soft)', marginTop: -4 }}>Promedio General</span>
-                <div className="inv-perf-stars">⭐⭐⭐⭐⭐</div>
-
-                <div className="inv-perf-bars">
-                  {[
-                    { label: 'Excelente', count: 45, pct: 29, color: '#10B981' },
-                    { label: 'Bueno', count: 72, pct: 46, color: '#3B82F6' },
-                    { label: 'Regular', count: 28, pct: 18, color: '#F59E0B' },
-                    { label: 'Necesita Mejora', count: 11, pct: 7, color: '#EF4444' },
-                  ].map((lvl) => (
-                    <div key={lvl.label} className="inv-perf-row">
-                      <span style={{ width: 90 }}>{lvl.label}</span>
-                      <div style={{ flex: 1, height: 5, background: '#E2E8F0', borderRadius: 3, margin: '0 8px', overflow: 'hidden' }}>
-                        <div style={{ width: `${lvl.pct * 2}%`, background: lvl.color, height: '100%' }} />
-                      </div>
-                      <span style={{ width: 50, textAlign: 'right' }}><strong>{lvl.count}</strong> ({lvl.pct}%)</span>
-                    </div>
-                  ))}
+                <div style={{ padding: '36px 12px', textAlign: 'center', color: 'var(--color-ink-faint)', fontSize: 12 }}>
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>⭐</div>
+                  <span>Sin evaluaciones registradas aún</span>
                 </div>
               </div>
             </div>

@@ -22,6 +22,23 @@ export function ExpensesDonutChart({ categorias }) {
 
   const totalGastos = totalCalculado
 
+  if (items.length === 0) {
+    return (
+      <div className="fn-chart-card">
+        <div className="fn-chart-header">
+          <div className="fn-chart-title-group">
+            <h3 className="fn-chart-title">Gastos por Categoría</h3>
+            <span className="fn-chart-info-icon" title="Distribución proporcional de egresos en el período">ⓘ</span>
+          </div>
+        </div>
+        <div style={{ padding: '48px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>📊</div>
+          <span>No hay gastos registrados en este período</span>
+        </div>
+      </div>
+    )
+  }
+
   // Geometría del Donut SVG
   const size = 180
   const radius = 65

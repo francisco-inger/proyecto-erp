@@ -159,9 +159,17 @@ function CategoryDonut({ total }) {
 
 // ── Gráfico Donut de Gastos por Categoría ──────────────────────────────────────
 function ExpensesDonut({ total }) {
+  if (!total || total === 0) {
+    return (
+      <div style={{ padding: '36px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+        <span>📊 No hay gastos por categoría registrados aún</span>
+      </div>
+    )
+  }
+
   const R = 44, cx = 55, cy = 55
   const circ = 2 * Math.PI * R
-  const base = total || 850000
+  const base = total
 
   const segs = [
     { name: 'Operativos', pct: 40, color: '#3B82F6', val: money(base * 0.40) },

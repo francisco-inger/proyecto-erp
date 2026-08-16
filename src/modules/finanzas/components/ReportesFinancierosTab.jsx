@@ -4,10 +4,10 @@ export function ReportesFinancierosTab({ kpis, categorias, comprobantes, cuentas
   const [reporteTipo, setReporteTipo] = useState('pyg') // pyg | balance | flujo
   const [periodo, setPeriodo] = useState('Agosto 2025')
 
-  const totalIngresos = kpis?.ingresosMes?.valor || 1280000
-  const totalGastos = kpis?.gastosMes?.valor || 680000
+  const totalIngresos = kpis?.ingresosTotal || kpis?.ingresosMes?.valor || 0
+  const totalGastos = kpis?.gastosTotal || kpis?.gastosMes?.valor || 0
   const resultadoNeto = totalIngresos - totalGastos
-  const totalActivos = (cuentas || []).reduce((acc, c) => acc + c.saldo, 0)
+  const totalActivos = (cuentas || []).reduce((acc, c) => acc + (c.saldo || 0), 0)
 
   const handleExportPDF = () => {
     window.print()
