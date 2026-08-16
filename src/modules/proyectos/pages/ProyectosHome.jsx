@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { proyectosService } from '../services/proyectos.service'
 import { crmService } from '../../crm/services/crm.service'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
+import { formatMoneyDOP } from '../../../core/utils/formatters'
 
 const statusColor = {
   'En curso': '#2563EB',
@@ -231,7 +232,7 @@ export function ProyectosHome() {
                   </p>
                   {p.presupuesto && (
                     <p style={{ fontSize: 12, color: '#10B981', fontWeight: 700, margin: '4px 0 0' }}>
-                      Presupuesto: RD$ {Number(p.presupuesto).toLocaleString('en-US')}
+                      Presupuesto: {formatMoneyDOP(p.presupuesto)}
                     </p>
                   )}
                 </div>
