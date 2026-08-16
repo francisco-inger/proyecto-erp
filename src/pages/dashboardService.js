@@ -41,16 +41,12 @@ export const dashboardService = {
         }
       }
 
-      if (totalVentas === 0) totalVentas = 1250000
-      if (totalOrdenes === 0) totalOrdenes = 32
-
       if (rawCrm) {
         const crm = JSON.parse(rawCrm)
-        if (Array.isArray(crm) && crm.length > 0) {
+        if (Array.isArray(crm)) {
           totalClientes = crm.length
         }
       }
-      if (totalClientes === 0) totalClientes = 12
 
       // Calcular ganancias a partir del margen financiero
       let totalGastos = 0
@@ -62,7 +58,6 @@ export const dashboardService = {
             .reduce((s, c) => s + (Number(c.monto) || 0), 0)
         }
       }
-      if (totalGastos === 0) totalGastos = Math.round(totalVentas * 0.68)
 
       const totalGanancias = Math.max(0, totalVentas - totalGastos)
 

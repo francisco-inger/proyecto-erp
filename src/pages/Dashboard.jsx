@@ -617,9 +617,9 @@ export function Dashboard() {
             </div>
             <div className="dash-kpi-details">
               <span className="dash-kpi-title">Ventas del Mes</span>
-              <h3 className="dash-kpi-number">{fmtMoney(kpis.ventasMes?.value ?? 1250000)}</h3>
+              <h3 className="dash-kpi-number">{fmtMoney(kpis.ventasMes?.value ?? 0)}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 12.5% <small>sincronizado</small>
+                ● <small>en tiempo real</small>
               </span>
             </div>
           </div>
@@ -636,9 +636,9 @@ export function Dashboard() {
             </div>
             <div className="dash-kpi-details">
               <span className="dash-kpi-title">Órdenes Activas</span>
-              <h3 className="dash-kpi-number">{kpis.ordenes?.value ?? 32}</h3>
+              <h3 className="dash-kpi-number">{kpis.ordenes?.value ?? 0}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 8.1% <small>en tiempo real</small>
+                ● <small>registradas</small>
               </span>
             </div>
           </div>
@@ -655,9 +655,9 @@ export function Dashboard() {
             </div>
             <div className="dash-kpi-details">
               <span className="dash-kpi-title">Clientes CRM</span>
-              <h3 className="dash-kpi-number">{kpis.clientes?.value ?? 12}</h3>
+              <h3 className="dash-kpi-number">{kpis.clientes?.value ?? 0}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 16% <small>cartera activa</small>
+                ● <small>cartera activa</small>
               </span>
             </div>
           </div>
@@ -674,9 +674,9 @@ export function Dashboard() {
             </div>
             <div className="dash-kpi-details">
               <span className="dash-kpi-title">Ganancias Estimadas</span>
-              <h3 className="dash-kpi-number">{fmtMoney(kpis.ganancias?.value ?? 250000)}</h3>
+              <h3 className="dash-kpi-number">{fmtMoney(kpis.ganancias?.value ?? 0)}</h3>
               <span className="dash-kpi-badge success">
-                ↑ 10.3% <small>margen operativo</small>
+                ● <small>balance neto</small>
               </span>
             </div>
           </div>
