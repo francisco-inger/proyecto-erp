@@ -195,7 +195,7 @@ export function generateERPOnlyResponse(msg) {
     m.includes('login de') ||
     m.includes('cuenta de')
   ) {
-    return `🔒 **Aviso de Ciberseguridad y Confidencialidad:**\n\nPor estrictas políticas de seguridad informática y protección de datos empresariales, el asistente **no tiene autorización para acceder, consultar ni revelar contraseñas, credenciales ni claves de acceso** de ningún usuario o cliente.\n\nPara solicitudes de acceso o restablecimiento de credenciales, por favor dirígete al módulo de **Ajustes ➔ Usuarios & Roles** con una cuenta de Administrador.`
+    return `🔒 **Aviso de Ciberseguridad y Confidencialidad:**\n\nPor estrictas políticas de seguridad informática y protección de datos empresariales, el asistente **no tiene autorización para acceder, consultar ni revelar contraseñas, credenciales ni claves de acceso** de ningún usuario o cliente.\n\nPara solicitudes de acceso, altas de usuario o restablecimiento de credenciales, por favor **comunícate directamente con tu Administrador del Sistema** o con el equipo de soporte técnico corporativo.`
   }
 
   // 1. Saludos y Servicios del ERP
