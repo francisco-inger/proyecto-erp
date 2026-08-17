@@ -6,6 +6,7 @@
   Bitácora de Actividades y Reportes exportables.
 */
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { crmService } from '../services/crm.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
@@ -149,7 +150,15 @@ function SourcesDonut({ sources }) {
 // ─── Componente Principal CrmHome ────────────────────────────────────────────
 
 export function CrmHome() {
-  const [activeTab, setActiveTab] = useState('Resumen')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTab = searchParams.get('tab') || 'Resumen'
+  const [activeTab, setActiveTab] = useState(rawTab)
+
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t) setActiveTab(t)
+  }, [searchParams])
+
   const [clients, setClients] = useState([])
   const [opportunities, setOpportunities] = useState([])
   const [contacts, setContacts] = useState([])
