@@ -90,8 +90,8 @@ export function canAccess(userRole, moduleId) {
   const allowedInPlan = PLAN_MODULES[activePlan.planId] || PLAN_MODULES.plan_enterprise
 
   if (uRole === 'cliente') {
-    // El cliente no tiene acceso a la administración técnica profunda de ajustes del proveedor
-    if (moduleId === 'plugin-manager') return false
+    // El cliente comprador NO tiene acceso a ajustes del sistema, plugins ni configuraciones centrales del proveedor
+    if (moduleId === 'plugin-manager' || moduleId === 'ajustes' || moduleId === 'integraciones') return false
     return allowedInPlan.includes(moduleId)
   }
 
