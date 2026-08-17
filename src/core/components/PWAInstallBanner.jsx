@@ -27,6 +27,12 @@ export function PWAInstallBanner({ showModalOverride, onCloseModalOverride }) {
     }
   }, [showModalOverride])
 
+  useEffect(() => {
+    const handleOpen = () => setShowModal(true)
+    window.addEventListener('erp:open_pwa_modal', handleOpen)
+    return () => window.removeEventListener('erp:open_pwa_modal', handleOpen)
+  }, [])
+
   const handleOpenInstall = async () => {
     if (isInstallable) {
       const installed = await promptInstall()

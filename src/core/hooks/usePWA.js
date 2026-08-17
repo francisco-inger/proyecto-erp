@@ -73,11 +73,18 @@ export function usePWA() {
     return false
   }, [])
 
+  const openInstallModal = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('erp:open_pwa_modal'))
+    }
+  }, [])
+
   return {
     isInstallable,
     isInstalled,
     isOnline,
     isIOS,
-    promptInstall
+    promptInstall,
+    openInstallModal
   }
 }
