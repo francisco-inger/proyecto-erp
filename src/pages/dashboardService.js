@@ -32,13 +32,14 @@ export const dashboardService = {
         const ingresos = fin.comprobantes
           .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
           .reduce((s, c) => s + (Number(c.monto) || 0), 0)
-        if (ingresos > 0 && totalVentas === 0) totalVentas = ingresos
+        if (ingresos > totalVentas) totalVentas = ingresos
       }
 
       if (Array.isArray(crm) && crm.length > 0) {
         totalClientes = crm.length
       }
 
+      // Si es cuenta administrativa y no hay operaciones activas o está en demo inicial
       if (isGlobalAdmin) {
         if (totalVentas === 0) totalVentas = 1250000
         if (totalOrdenes === 0) totalOrdenes = 320
