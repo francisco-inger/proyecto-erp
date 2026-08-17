@@ -39,21 +39,13 @@ export const dashboardService = {
         totalClientes = crm.length
       }
 
-      // Si es cuenta administrativa y no hay operaciones activas o está en demo inicial
-      if (isGlobalAdmin) {
-        if (totalVentas === 0) totalVentas = 1250000
-        if (totalOrdenes === 0) totalOrdenes = 320
-        if (totalClientes === 0) totalClientes = 1245
-      }
-
-      // Calcular gastos y ganancias
+      // Calcular gastos y ganancias reales
       let totalGastos = 0
       if (fin && fin.comprobantes) {
         totalGastos = fin.comprobantes
           .filter(c => (c.tipo === 'Gasto' || c.tipo === 'Egreso') && c.estado !== 'Anulado')
           .reduce((s, c) => s + (Number(c.monto) || 0), 0)
       }
-      if (isGlobalAdmin && totalGastos === 0) totalGastos = 850000
 
       const totalGanancias = Math.max(0, totalVentas - totalGastos)
 
