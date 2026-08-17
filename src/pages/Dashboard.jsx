@@ -145,8 +145,8 @@ function MainSalesChart({ period = 'Este mes' }) {
   ]
 
   return (
-    <div className="dash-main-chart-wrapper" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <select
           className="dash-dropdown-select"
           value={selectedPeriod}
@@ -158,15 +158,15 @@ function MainSalesChart({ period = 'Este mes' }) {
         </select>
       </div>
 
-      <div style={{ display: 'flex', width: '100%', height: H }}>
-        <div className="dash-chart-y-axis" style={{ height: H - padBottom, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div className="dash-main-chart-wrapper" style={{ position: 'relative', display: 'flex', width: '100%', height: H, alignItems: 'stretch' }}>
+        <div className="dash-chart-y-axis" style={{ height: H - padBottom, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingRight: 8 }}>
           {yTicks.map((t, i) => (
             <span key={i} style={{ fontSize: 10, color: '#94A3B8' }}>{t.label}</span>
           ))}
         </div>
 
-        <div className="dash-chart-svg-container" style={{ position: 'relative', flex: 1 }}>
-          <svg viewBox={`0 0 ${W} ${H}`} className="dash-main-chart-svg" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+        <div className="dash-chart-svg-container" style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+          <svg viewBox={`0 0 ${W} ${H}`} className="dash-main-chart-svg" preserveAspectRatio="none" style={{ width: '100%', height: H - padBottom, display: 'block' }}>
             <defs>
               <linearGradient id="mainAreaGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#2563EB" stopOpacity="0.22" />
@@ -225,7 +225,7 @@ function MainSalesChart({ period = 'Este mes' }) {
             </div>
           )}
 
-          <div className="dash-chart-x-axis" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: padLeft, paddingRight: padRight }}>
+          <div className="dash-chart-x-axis" style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: padLeft, paddingRight: padRight, marginTop: 4 }}>
             {chartData.map(d => (
               <span key={d.day} style={{ fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>{d.day}</span>
             ))}

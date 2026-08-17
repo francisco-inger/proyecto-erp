@@ -188,24 +188,24 @@
 .dash-main-chart-wrapper {
   display: flex;
   gap: 8px;
-  align-items: flex-end;
-  height: 240px;
-  padding-top: 10px;
+  align-items: stretch;
+  width: 100%;
+  height: 220px;
 }
 
 .dash-chart-y-axis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 180px;
   font-size: 11px;
   color: var(--color-ink-faint);
   text-align: right;
-  padding-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .dash-chart-svg-container {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -213,7 +213,7 @@
 
 .dash-main-chart-svg {
   width: 100%;
-  height: 190px;
+  flex: 1;
 }
 
 .dash-chart-x-axis {
@@ -221,7 +221,7 @@
   justify-content: space-between;
   font-size: 11px;
   color: var(--color-ink-faint);
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
 /* Ventas por Categoría (Donut) */

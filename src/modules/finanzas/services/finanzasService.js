@@ -674,5 +674,14 @@ export const finanzasService = {
     finanzasService.saveData(nextData)
     return nextData
   },
+
+  getComprobantes: async () => {
+    const data = await finanzasService.getData()
+    return data.comprobantes || []
+  },
+
+  getFinanzasData: async () => {
+    return await finanzasService.getData()
+  },
 }
 
