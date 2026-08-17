@@ -338,45 +338,6 @@ export function Topbar({ onToggleMobileMenu }) {
 
       {/* ── Acciones Derecha ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        
-        {/* Botón Descargar / Instalar PWA */}
-        {!isInstalled && (
-          <button
-            onClick={() => {
-              if (isInstallable) {
-                promptInstall()
-              } else {
-                openInstallModal()
-              }
-            }}
-            title="Instalar APPEX ERP como aplicación en tu ordenador o móvil"
-            style={{
-              background: 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(30,58,138,0.15))',
-              border: '1px solid #93C5FD',
-              borderRadius: 8,
-              padding: '6px 12px',
-              cursor: 'pointer',
-              fontSize: 13,
-              color: '#1E40AF',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontWeight: 700,
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2563EB'
-              e.currentTarget.style.color = '#FFFFFF'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(30,58,138,0.15))'
-              e.currentTarget.style.color = '#1E40AF'
-            }}
-          >
-            <span>📲</span>
-            <span className="topbar-pwa-btn-text">Instalar App</span>
-          </button>
-        )}
 
         {/* 1. Botón Escáner de Barra / QR */}
         <button
