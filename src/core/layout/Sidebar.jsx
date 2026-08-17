@@ -278,46 +278,6 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
             >
               {user?.role === 'cliente' ? 'Mejorar mi Plan' : 'Gestionar Planes'}
             </button>
-
-            {!isInstalled && (
-              <button
-                onClick={() => {
-                  if (isInstallable) {
-                    promptInstall()
-                  } else {
-                    openInstallModal()
-                  }
-                }}
-                style={{
-                  marginTop: 8,
-                  width: '100%',
-                  background: 'rgba(37, 99, 235, 0.08)',
-                  border: '1px solid rgba(37, 99, 235, 0.35)',
-                  color: '#1D4ED8',
-                  padding: '7px 10px',
-                  borderRadius: 8,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'all 120ms ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#2563EB'
-                  e.currentTarget.style.color = '#FFFFFF'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)'
-                  e.currentTarget.style.color = '#1D4ED8'
-                }}
-                title="Instalar APPEX ERP como aplicación nativa en tu ordenador o móvil"
-              >
-                <span>📲</span> Instalar App Nativa (PWA)
-              </button>
-            )}
           </div>
         )
       })()}
