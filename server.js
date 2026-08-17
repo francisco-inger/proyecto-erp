@@ -202,29 +202,37 @@ app.get('/api/dashboard/actividades', (req, res) => {
   res.json(logs)
 })
 
-// Ventas
+// Ventas & Pedidos
 app.get('/api/sales/orders', (req, res) => {
   const orders = db.prepare('SELECT * FROM ordenes_venta ORDER BY id DESC').all()
   res.json(orders)
 })
 
 app.post('/api/sales/orders', (req, res) => {
-  const { cliente, total, estado, observaciones, fecha } = req.body
-  const num = `PED-${Math.floor(1000 + Math.random() * 9000)}`
-  const fechaVal = fecha || new Date().toISOString().slice(0, 10)
-  const stmt = db.prepare('INSERT INTO ordenes_venta (numero, cliente, fecha, total, estado, observaciones) VALUES (?, ?, ?, ?, ?, ?)')
-  const info = stmt.run(num, cliente, fechaVal, total || 0, estado || 'Pendiente', observaciones || '')
-  
-  const created = db.prepare('SELECT * FROM ordenes_venta WHERE id = ?').get(info.lastInsertRowid)
-  res.json(created)
+  try {
+    const { cliente, total, estado, observaciones, fecha, numero } = req.body
+    const num = numero || `PED-${Math.floor(1000 + Math.random() * 9000)}`
+    const fechaVal = fecha || new Date().toISOString().slice(0, 10)
+    const stmt = db.prepare('INSERT INTO ordenes_venta (numero, cliente, fecha, total, estado, observaciones) VALUES (?, ?, ?, ?, ?, ?)')
+    const info = stmt.run(num, cliente || 'Cliente General', fechaVal, Number(total) || 0, estado || 'Pendiente', observaciones || '')
+    
+    const created = db.prepare('SELECT * FROM ordenes_venta WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 app.patch('/api/sales/orders/:id/status', (req, res) => {
-  const { id } = req.params
-  const { estado } = req.body
-  db.prepare('UPDATE ordenes_venta SET estado = ? WHERE id = ?').run(estado, id)
-  const updated = db.prepare('SELECT * FROM ordenes_venta WHERE id = ?').get(id)
-  res.json(updated)
+  try {
+    const { id } = req.params
+    const { estado } = req.body
+    db.prepare('UPDATE ordenes_venta SET estado = ? WHERE id = ?').run(estado, id)
+    const updated = db.prepare('SELECT * FROM ordenes_venta WHERE id = ?').get(id)
+    res.json(updated)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // Productos / Inventario
@@ -239,16 +247,111 @@ app.get('/api/products/:id', (req, res) => {
   res.json(prod)
 })
 
-// Clientes CRM
+app.post('/api/products', (req, res) => {
+  try {
+    const { sku, nombre, categoria, unidad_medida, precio_compra, precio_venta, stock_actual, stock_minimo, ubicacion_almacen, estado } = req.body
+    const skuVal = sku || `PRD-${Date.now().toString().slice(-6)}`
+    const stmt = db.prepare(`
+      INSERT INTO productos (sku, nombre, categoria, unidad_medida, precio_compra, precio_venta, stock_actual, stock_minimo, ubicacion_almacen, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    const info = stmt.run(skuVal, nombre, categoria || 'General', unidad_medida || 'Unidad', Number(precio_compra) || 0, Number(precio_venta) || 0, Number(stock_actual) || 0, Number(stock_minimo) || 5, ubicacion_almacen || 'Almacén Principal', estado || 'Disponible')
+    const created = db.prepare('SELECT * FROM productos WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.put('/api/products/:id', (req, res) => {
+  try {
+    const { id } = req.params
+    const { nombre, categoria, precio_compra, precio_venta, stock_actual, stock_minimo, ubicacion_almacen, estado } = req.body
+    db.prepare(`
+      UPDATE productos 
+      SET nombre = COALESCE(?, nombre),
+          categoria = COALESCE(?, categoria),
+          precio_compra = COALESCE(?, precio_compra),
+          precio_venta = COALESCE(?, precio_venta),
+          stock_actual = COALESCE(?, stock_actual),
+          stock_minimo = COALESCE(?, stock_minimo),
+          ubicacion_almacen = COALESCE(?, ubicacion_almacen),
+          estado = COALESCE(?, estado)
+      WHERE id = ?
+    `).run(nombre, categoria, precio_compra, precio_venta, stock_actual, stock_minimo, ubicacion_almacen, estado, id)
+    const updated = db.prepare('SELECT * FROM productos WHERE id = ?').get(id)
+    res.json(updated)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Clientes (CRM)
+app.get('/api/clientes', (req, res) => {
+  const clients = db.prepare('SELECT * FROM clientes ORDER BY id ASC').all()
+  res.json(clients)
+})
+
 app.get('/api/crm/clients', (req, res) => {
   const clients = db.prepare('SELECT * FROM clientes ORDER BY id ASC').all()
   res.json(clients)
 })
 
-// Empleados RRHH
+app.post('/api/clientes', (req, res) => {
+  try {
+    const { rnc_cedula, nombre_empresa, contacto_principal, email, telefono, direccion, sector, limite_credito, estado } = req.body
+    const stmt = db.prepare(`
+      INSERT INTO clientes (rnc_cedula, nombre_empresa, contacto_principal, email, telefono, direccion, sector, limite_credito, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    const info = stmt.run(rnc_cedula, nombre_empresa, contacto_principal, email, telefono, direccion, sector || 'Comercial', Number(limite_credito) || 0, estado || 'Activo')
+    const created = db.prepare('SELECT * FROM clientes WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Proveedores (Compras)
+app.get('/api/proveedores', (req, res) => {
+  const proveedores = db.prepare('SELECT * FROM proveedores ORDER BY id ASC').all()
+  res.json(proveedores)
+})
+
+app.post('/api/proveedores', (req, res) => {
+  try {
+    const { rnc, razon_social, contacto, email, telefono, direccion, categoria, condiciones_pago, estado } = req.body
+    const stmt = db.prepare(`
+      INSERT INTO proveedores (rnc, razon_social, contacto, email, telefono, direccion, categoria, condiciones_pago, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    const info = stmt.run(rnc, razon_social, contacto, email, telefono, direccion, categoria || 'Suministros', condiciones_pago || 'Crédito 30 días', estado || 'Activo')
+    const created = db.prepare('SELECT * FROM proveedores WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Empleados (RRHH)
 app.get('/api/rrhh/employees', (req, res) => {
   const employees = db.prepare('SELECT * FROM empleados ORDER BY id ASC').all()
   res.json(employees)
+})
+
+app.post('/api/rrhh/employees', (req, res) => {
+  try {
+    const { cedula, nombre, apellido, email, telefono, departamento, cargo, salario_mensual, fecha_ingreso, estado } = req.body
+    const stmt = db.prepare(`
+      INSERT INTO empleados (cedula, nombre, apellido, email, telefono, departamento, cargo, salario_mensual, fecha_ingreso, estado)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+    const info = stmt.run(cedula, nombre, apellido, email, telefono, departamento, cargo, Number(salario_mensual) || 0, fecha_ingreso || new Date().toISOString().slice(0, 10), estado || 'Activo')
+    const created = db.prepare('SELECT * FROM empleados WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // Seguridad & Usuarios
@@ -262,10 +365,35 @@ app.get('/api/seguridad/logs', (req, res) => {
   res.json(logs)
 })
 
-// Finanzas
+app.post('/api/seguridad/logs', (req, res) => {
+  try {
+    const { usuario, modulo, accion, ip, estado } = req.body
+    const stmt = db.prepare(`INSERT INTO logs_auditoria (usuario, modulo, accion, ip, estado) VALUES (?, ?, ?, ?, ?)`)
+    stmt.run(usuario || 'Sistema', modulo || 'General', accion, ip || req.ip || '127.0.0.1', estado || 'Exitoso')
+    res.json({ status: 'ok' })
+  } catch (_) {
+    res.json({ status: 'ignored' })
+  }
+})
+
+// Finanzas & Cuentas Contables
 app.get('/api/finanzas/cuentas', (req, res) => {
   const cuentas = db.prepare('SELECT * FROM cuentas_contables ORDER BY codigo ASC').all()
   res.json(cuentas)
+})
+
+app.post('/api/finanzas/cuentas', (req, res) => {
+  try {
+    const { codigo, nombre, tipo, saldo_actual, saldoInicial } = req.body
+    const cod = codigo || `110${Date.now().toString().slice(-4)}`
+    const saldo = Number(saldo_actual || saldoInicial || 0)
+    const stmt = db.prepare(`INSERT INTO cuentas_contables (codigo, nombre, tipo, saldo_actual) VALUES (?, ?, ?, ?)`)
+    const info = stmt.run(cod, nombre, tipo || 'Activo', saldo)
+    const created = db.prepare('SELECT * FROM cuentas_contables WHERE id = ?').get(info.lastInsertRowid)
+    res.json(created)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // Health check & DB Summary
@@ -280,3 +408,4 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor API Backend & Base de Datos Relacional escuchando en http://localhost:${PORT}`)
 })
+
