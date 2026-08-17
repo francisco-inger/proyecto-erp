@@ -1677,28 +1677,55 @@ export function PluginManagerHome() {
                                 }}
                               >
 
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary"
+                                <div
+                                  className="plugin-action-btns"
                                   style={{
-                                    fontSize: 11,
-                                    padding:
-                                      '4px 10px',
+                                    justifyContent: 'flex-end',
                                   }}
-                                  disabled={
-                                    isInstalled
-                                  }
-                                  onClick={() =>
-                                    installCatalogPlugin(
-                                      plugin.id
-                                    )
-                                  }
                                 >
-                                  {isInstalled
-                                    ? '✓ Instalado'
-                                    : 'Instalar'}
-                                </button>
-
+                                  {isInstalled ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className="plugin-action-btn"
+                                        title="Configuración del plugin"
+                                        onClick={() => setConfigPlugin(plugin)}
+                                      >
+                                        ⚙️
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="plugin-action-btn"
+                                        title="Ficha técnica e información"
+                                        onClick={() => setInfoPlugin(plugin)}
+                                      >
+                                        ℹ️
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="plugin-action-btn danger"
+                                        title="Desinstalar plugin"
+                                        onClick={() => deleteInstalled(plugin.id)}
+                                      >
+                                        🗑️
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="btn btn-secondary"
+                                      style={{
+                                        fontSize: 11,
+                                        padding: '4px 10px',
+                                      }}
+                                      onClick={() =>
+                                        installCatalogPlugin(plugin.id)
+                                      }
+                                    >
+                                      Instalar
+                                    </button>
+                                  )}
+                                </div>
                               </td>
 
                             </tr>
