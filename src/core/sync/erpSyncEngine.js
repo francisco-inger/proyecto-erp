@@ -8,6 +8,7 @@
 */
 
 import { getTenantData, setTenantData, getActiveTenantId } from '../utils/formatters'
+import { cloudSync } from './cloudSyncService'
 
 export const STORAGE_KEYS = {
   VENTAS: 'ventas_orders_v1',
@@ -32,6 +33,8 @@ function safeGet(key, def = []) {
 function safeSet(key, val) {
   try {
     setTenantData(key, val)
+    // Sincronizar en la nube en segundo plano
+    cloudSync.pushCollection(key, val)
   } catch (e) {
     console.error(`[erpSync] Error setting ${key}:`, e)
   }

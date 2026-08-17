@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { usePWA } from '../hooks/usePWA'
 import { PWAInstallBanner } from '../components/PWAInstallBanner'
+import { cloudSync } from '../sync/cloudSyncService'
 
 export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollapse }) {
   const { user, logout } = useAuth()
@@ -23,6 +24,7 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showPWAModal, setShowPWAModal] = useState(false)
   const [toast, setToast] = useState(null)
+<<<<<<< HEAD
   // Reloj y Fecha en tiempo real
   const [currentDateTime, setCurrentDateTime] = useState(new Date())
 
@@ -32,6 +34,10 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+=======
+  const [cloudStatus, setCloudStatus] = useState(cloudSync.config.status)
+  const [isSyncing, setIsSyncing] = useState(false)
+>>>>>>> 4d24351 (feat: integrado conector de sincronizacion centralizada Cloud con Supabase y estado en vivo en Topbar y Ajustes)
 
   const searchInputRef = useRef(null)
   const notifRef = useRef(null)
@@ -208,6 +214,25 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
     }, 500)
   }
 
+  useEffect(() => {
+    const unsub = cloudSync.onStatusChange((cfg) => {
+      setCloudStatus(cfg.status)
+    })
+    return unsub
+  }, [])
+
+  const handleManualCloudSync = async () => {
+    setIsSyncing(true)
+    showToastMsg('🔄 Sincronizando datos con la nube del equipo...')
+    const res = await cloudSync.syncAllNow()
+    setIsSyncing(false)
+    if (res.success) {
+      showToastMsg(`✅ Datos sincronizados con el equipo (${res.timestamp})`)
+    } else {
+      showToastMsg('⚠️ Error al sincronizar con la nube')
+    }
+  }
+
   return (
     <header className="topbar" style={{ position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -333,34 +358,33 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
                 No se encontraron resultados para "{searchQuery}"
               </div>
             ) : (
-              filteredSearch.map((item, i) => (
+              filteredSearch.map((m) => (
                 <div
-                  key={i}
+                  key={m.path}
                   onMouseDown={() => {
-                    navigate(item.path)
+                    navigate(m.path)
                     setSearchQuery('')
+                    setIsSearchFocused(false)
                   }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
+                    gap: 10,
+                    padding: '9px 14px',
                     cursor: 'pointer',
-                    borderBottom: '1px solid #F1F5F9',
                     fontSize: 13,
-                    color: '#0F172A',
-                    transition: 'background 120ms',
+                    color: '#1E293B',
+                    borderBottom: '1px solid #F1F5F9',
+                    transition: 'background 100ms ease',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = '#EFF6FF'}
                   onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 16 }}>{item.icon}</span>
-                    <span style={{ fontWeight: 600 }}>{item.title}</span>
+                  <span style={{ fontSize: 16 }}>{m.icon}</span>
+                  <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600 }}>{m.title}</span>
+                    <span style={{ fontSize: 10, color: '#94A3B8', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>{m.cat}</span>
                   </div>
-                  <span style={{ fontSize: 11, color: '#64748B', background: '#F1F5F9', padding: '2px 8px', borderRadius: 4 }}>
-                    {item.cat}
-                  </span>
                 </div>
               ))
             )}
@@ -370,7 +394,7 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
       </div>
 
       {/* ── Acciones Derecha ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
 
         {/* ── Widget de Fecha y Hora en Tiempo Real ── */}
         <div
@@ -401,6 +425,76 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
             </span>
           </div>
         </div>
+
+        {/* Botón e Indicador de Sincronización Cloud con el Equipo */}
+        <button
+          onClick={handleManualCloudSync}
+          disabled={isSyncing}
+          title="Sincronización en la Nube con el Equipo (Supabase / Cloud Hub)"
+          style={{
+            background: cloudStatus === 'online' ? '#F0FDF4' : cloudStatus === 'syncing' ? '#FEFCE8' : '#FEF2F2',
+            border: `1px solid ${cloudStatus === 'online' ? '#BBF7D0' : cloudStatus === 'syncing' ? '#FEF08A' : '#FECACA'}`,
+            borderRadius: 8,
+            padding: '5px 10px',
+            cursor: 'pointer',
+            fontSize: 12,
+            color: cloudStatus === 'online' ? '#166534' : cloudStatus === 'syncing' ? '#854D0E' : '#991B1B',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontWeight: 700,
+            transition: 'all 150ms ease',
+          }}
+        >
+          <span style={{
+            display: 'inline-block',
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: cloudStatus === 'online' ? '#22C55E' : cloudStatus === 'syncing' ? '#EAB308' : '#EF4444',
+            boxShadow: `0 0 6px ${cloudStatus === 'online' ? '#22C55E' : '#EF4444'}`,
+          }} />
+          <span className="topbar-cloud-text">{isSyncing ? 'Sincronizando...' : 'Cloud Activo'}</span>
+        </button>
+
+        {/* Botón Descargar / Instalar PWA */}
+        {!isInstalled && (
+          <button
+            onClick={() => {
+              if (isInstallable) {
+                promptInstall()
+              } else {
+                setShowPWAModal(true)
+              }
+            }}
+            title="Instalar APPEX ERP como aplicación en tu ordenador o móvil"
+            style={{
+              background: 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(30,58,138,0.15))',
+              border: '1px solid #93C5FD',
+              borderRadius: 8,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: 13,
+              color: '#1E40AF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontWeight: 700,
+              transition: 'all 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2563EB'
+              e.currentTarget.style.color = '#FFFFFF'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(30,58,138,0.15))'
+              e.currentTarget.style.color = '#1E40AF'
+            }}
+          >
+            <span>📲</span>
+            <span className="topbar-pwa-btn-text">Instalar App</span>
+          </button>
+        )}
 
         {/* 1. Botón Escáner de Barra / QR */}
         <button

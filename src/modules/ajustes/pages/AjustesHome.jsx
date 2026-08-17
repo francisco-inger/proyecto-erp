@@ -4,6 +4,7 @@ import { useAuth } from '../../../core/auth/AuthContext'
 import { SeguridadView } from '../components/SeguridadView'
 import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
+import { cloudSync } from '../../../core/sync/cloudSyncService'
 import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 import { setModuleEnabled } from '../../../core/moduleRegistry'
 import './AjustesHome.css'
@@ -287,6 +288,7 @@ export function AjustesHome() {
     { id: 'General', label: 'General', icon: '⚙️', adminOnly: false },
     { id: 'Empresa', label: 'Empresa & Fiscal', icon: '🏢', adminOnly: true },
     { id: 'Módulos', label: 'Módulos & Sync', icon: '🧩', adminOnly: true },
+    { id: 'Cloud', label: 'Nube & Equipo', icon: '☁️', adminOnly: false },
     { id: 'Automatizaciones', label: 'Automatizaciones', icon: '⚡', adminOnly: true },
     { id: 'Notificaciones', label: 'Notificaciones & Canales', icon: '🔔', adminOnly: true },
     { id: 'Usuarios y Roles', label: 'Usuarios & Roles', icon: '👥', adminOnly: true },
@@ -876,6 +878,149 @@ export function AjustesHome() {
               <button type="button" className="ajustes-btn-primary" onClick={handleSaveAll} disabled={isSaving}>
                 {isSaving ? 'Guardando...' : '💾 Guardar Estado de Módulos'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3.5: NUBE & SINCRONIZACIÓN DE EQUIPO ── */}
+      {currentTab === 'Cloud' && (
+        <div className="ajustes-tab-content">
+          <div className="ajustes-card-panel">
+            <div className="ajustes-panel-header">
+              <div>
+                <h3 className="ajustes-panel-title">☁️ Sincronización Centralizada Cloud & Conexión de Equipo</h3>
+                <p className="ajustes-panel-subtitle">Conecta tu ERP a Supabase / Firebase o comparte la base de datos para que todos tus compañeros trabajen con los mismos datos en tiempo real.</p>
+              </div>
+              <span className="ajustes-badge-status green">
+                🟢 Enlace Cloud Conectado
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 20 }}>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>⚡</span> Sincronización Inmediata
+                </h4>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                  Fuerza la subida y descarga de todas las órdenes de venta, compras, productos, clientes y asientos contables.
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setActiveTestMessage('Sincronizando base de datos completa con la nube...')
+                    const res = await cloudSync.syncAllNow()
+                    setActiveTestMessage(null)
+                    if (res.success) {
+                      showToast(`🚀 Sincronización completada exitosamente (${res.timestamp})`)
+                    } else {
+                      showToast('⚠️ Error durante la sincronización', true)
+                    }
+                  }}
+                  className="ajustes-btn-primary"
+                  style={{ width: '100%' }}
+                >
+                  🔄 Sincronizar Todo Ahora
+                </button>
+              </div>
+
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>📤</span> Exportar BD para el Equipo
+                </h4>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                  Genera un archivo JSON consolidado con todos los datos actuales para compartir con tus compañeros al instante.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const jsonStr = cloudSync.exportTeamDatabaseJSON()
+                    const blob = new Blob([jsonStr], { type: 'application/json' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `appex_erp_equipo_db_${new Date().toISOString().slice(0, 10)}.json`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    showToast('📦 Base de datos consolidada descargada para el equipo')
+                  }}
+                  className="ajustes-btn-secondary"
+                  style={{ width: '100%' }}
+                >
+                  📥 Descargar BD Compartida (.json)
+                </button>
+              </div>
+
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
+                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>📥</span> Importar BD Compartida
+                </h4>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                  Carga el archivo JSON enviado por un compañero para sincronizar tu sistema de inmediato.
+                </p>
+                <label className="ajustes-btn-secondary" style={{ width: '100%', textAlign: 'center', display: 'block', cursor: 'pointer', boxSizing: 'border-box' }}>
+                  📂 Seleccionar Archivo JSON
+                  <input
+                    type="file"
+                    accept=".json"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = (evt) => {
+                        const content = evt.target?.result
+                        if (typeof content === 'string') {
+                          const res = cloudSync.importTeamDatabaseJSON(content)
+                          if (res.success) {
+                            showToast(`✅ Base de datos restaurada (${res.count} tablas). Actualizando vista...`)
+                            setTimeout(() => window.location.reload(), 800)
+                          } else {
+                            showToast(`⚠️ Error al importar: ${res.error}`, true)
+                          }
+                        }
+                      }
+                      reader.readAsText(file)
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <h4 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>⚙️ Configuración del Conector Cloud</h4>
+            <div className="ajustes-form-grid">
+              <div className="ajustes-form-group">
+                <label>Proveedor de Base de Datos Cloud</label>
+                <select
+                  value={cloudSync.config.provider}
+                  onChange={(e) => {
+                    cloudSync.saveConfig({ provider: e.target.value })
+                    showToast('Proveedor de base de datos actualizado')
+                  }}
+                >
+                  <option value="supabase">Supabase (PostgreSQL Realtime)</option>
+                  <option value="firebase">Firebase Firestore</option>
+                  <option value="rest_hub">APPEX Cloud Hub API</option>
+                </select>
+              </div>
+
+              <div className="ajustes-form-group">
+                <label>Canal / ID de Espacio de Trabajo del Equipo</label>
+                <input
+                  type="text"
+                  value={cloudSync.config.teamWorkspaceId}
+                  onChange={(e) => cloudSync.saveConfig({ teamWorkspaceId: e.target.value })}
+                />
+              </div>
+
+              <div className="ajustes-form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Supabase URL Endpoint</label>
+                <input
+                  type="text"
+                  value={cloudSync.config.supabaseUrl}
+                  onChange={(e) => cloudSync.saveConfig({ supabaseUrl: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         </div>
