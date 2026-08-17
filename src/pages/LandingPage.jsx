@@ -202,37 +202,42 @@ export function LandingPage() {
               <span className="mockup-dot red" />
               <span className="mockup-dot yellow" />
               <span className="mockup-dot green" />
-              <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 10 }}>appex.erp / panel-ejecutivo-en-tiempo-real</span>
+              <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 10, fontFamily: 'monospace' }}>https://appex-erp.cloud / executive-dashboard</span>
             </div>
 
-            <div className="landing-mockup-inner" style={{ gridTemplateColumns: '1.2fr 0.8fr' }}>
-              <div style={{ background: '#FFFFFF', padding: '18px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div className="landing-mockup-inner" style={{ background: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', padding: '20px', borderRadius: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              <div style={{ background: 'linear-gradient(145deg, #1E293B 0%, #0F172A 100%)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.25)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                   <div>
-                    <strong style={{ fontSize: 15, color: '#0F172A' }}>📈 Ventas & Proyecciones Fiscales</strong>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>Sincronización multi-sucursal en vivo</div>
+                    <strong style={{ fontSize: 15, color: '#FFFFFF' }}>📈 Facturación & Comprobantes DGII</strong>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>Conciliación automática en tiempo real</div>
                   </div>
-                  <span style={{ fontSize: 11, background: '#DCFCE7', color: '#166534', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
-                    ● En Tiempo Real
+                  <span style={{ fontSize: 11, background: 'rgba(16, 185, 129, 0.2)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
+                    ● En Vivo
                   </span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div style={{ padding: '10px 14px', background: '#EFF6FF', borderRadius: '8px', borderLeft: '4px solid #2563EB', fontSize: 12 }}>
-                    <strong>RD$ 418,000.00</strong> — Facturado este mes <span style={{ color: '#2563EB', fontWeight: 700 }}>(+18.4% vs mes anterior)</span>
+                  <div style={{ padding: '12px 14px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '8px', borderLeft: '4px solid #3B82F6', fontSize: 13, color: '#E2E8F0' }}>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: '#60A5FA', marginBottom: 2 }}>RD$ 1,428,500.00</div>
+                    <span>Ingresos del mes (+22.8% vs período anterior)</span>
                   </div>
-                  <div style={{ padding: '10px 14px', background: '#F0FDF4', borderRadius: '8px', borderLeft: '4px solid #10B981', fontSize: 12 }}>
-                    <strong>Comprobantes Fiscales B01 & B02:</strong> 100% conciliados y reportados
+                  <div style={{ padding: '10px 14px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '8px', borderLeft: '4px solid #10B981', fontSize: 12, color: '#A7F3D0' }}>
+                    ✓ <strong>B01 Crédito Fiscal:</strong> 142 emitidos | <strong>B02 Consumo:</strong> 894 emitidos
                   </div>
                 </div>
               </div>
 
-              <div style={{ background: '#FFFFFF', padding: '18px', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <strong style={{ fontSize: 14, color: '#0F172A' }}>📦 Estado del Inventario & Finanzas</strong>
-                <div style={{ fontSize: 22, fontWeight: 900, color: '#2563EB' }}>728 Unidades en Stock</div>
-                <div style={{ fontSize: 11, color: '#059669', background: '#F0FDF4', padding: '8px', borderRadius: '8px', fontWeight: 600 }}>
-                  ✓ 715 Disponibles para Venta<br />
-                  ✓ 2 Puntos de Reorden Notificados<br />
-                  ✓ Flujo Neto: RD$ 1,580,000.00
+              <div style={{ background: 'linear-gradient(145deg, #1E293B 0%, #0F172A 100%)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.25)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <strong style={{ fontSize: 14, color: '#FFFFFF' }}>📦 Inventario & Multialmacén</strong>
+                    <span style={{ fontSize: 11, background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>3 Sucursales</span>
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#38BDF8', marginBottom: 6 }}>12,840 Unidades</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>Valoración Kardex: <strong style={{ color: '#E2E8F0' }}>RD$ 8,950,200.00</strong></div>
+                </div>
+                <div style={{ fontSize: 12, color: '#E2E8F0', background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  ⚡ <strong>Alertas:</strong> 0 quiebres de stock · 4 órdenes de compra en tránsito
                 </div>
               </div>
             </div>
