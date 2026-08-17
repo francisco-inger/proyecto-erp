@@ -20,7 +20,7 @@ import 'modules/chatbot'
 import 'modules/plugin-manager'
 import 'modules/compras'
 import 'modules/finanzas'
-// import 'modules/proyectos'  // Módulo desactivado
+import 'modules/proyectos'
 import 'modules/reportes'
 import 'modules/integraciones'
 import 'modules/ajustes'
