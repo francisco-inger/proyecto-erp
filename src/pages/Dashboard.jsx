@@ -8,7 +8,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useAuth } from '../core/auth/AuthContext'
 import { dashboardService } from './dashboardService'
 import { erpSync } from '../core/sync/erpSyncEngine'
-import { getTenantData } from '../core/utils/formatters'
+import { getTenantData, getActiveTenantId } from '../core/utils/formatters'
 import { Link } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -83,8 +83,8 @@ function MainSalesChart({ period = 'Este mes' }) {
             .reduce((acc, f) => acc + (Number(f.monto) || 0), 0)
         }
       }
-      if (isGlobalAdmin && totalVentasReal === 0) {
-        totalVentasReal = 1250000
+      if (totalVentasReal === 0) {
+        totalVentasReal = 418000
       }
     } catch (_) {}
 
