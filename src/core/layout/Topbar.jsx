@@ -346,7 +346,7 @@ export function Topbar({ onToggleMobileMenu }) {
               if (isInstallable) {
                 promptInstall()
               } else {
-                setShowPWAModal(true)
+                openInstallModal()
               }
             }}
             title="Instalar APPEX ERP como aplicación en tu ordenador o móvil"
@@ -1158,10 +1158,6 @@ export function Topbar({ onToggleMobileMenu }) {
         }}>
           {toast}
         </div>
-      )}
-      {/* ── Modal PWA invocado desde el botón superior ── */}
-      {showPWAModal && (
-        <PWAInstallBanner showModalOverride={true} onCloseModalOverride={() => setShowPWAModal(false)} />
       )}
     </header>
   )

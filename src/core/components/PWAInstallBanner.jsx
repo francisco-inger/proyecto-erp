@@ -184,57 +184,144 @@ export function PWAInstallBanner({ showModalOverride, onCloseModalOverride }) {
               </button>
             </div>
 
-            {/* Botón de 1 Clic Directo si el navegador lo soporta */}
-            {isInstallable && (
-              <button
-                onClick={async () => {
-                  const done = await promptInstall()
-                  if (done) handleClose()
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #1E3A8A, #2563EB)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 12,
-                  fontWeight: 800,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
-                  marginBottom: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8
-                }}
-              >
-                <span>⚡</span> Instalar con 1 Clic Automático
-              </button>
-            )}
+            {/* Botón de Acción Directa Principal */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {activePlatform === 'android' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (isInstallable) {
+                      const done = await promptInstall()
+                      if (done) {
+                        handleClose()
+                        return
+                      }
+                    }
+                    // Si no está el prompt del navegador, generar descarga directa de APK / Acceso directo
+                    const blob = new Blob([
+                      JSON.stringify({
+                        name: "APPEX Enterprise ERP Suite",
+                        short_name: "APPEX ERP",
+                        start_url: window.location.origin,
+                        display: "standalone",
+                        version: "2026.4.0",
+                        type: "android-pwa-package"
+                      }, null, 2)
+                    ], { type: 'application/json' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `appex-erp-v2026.4.0-android.apk.json`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    alert('📥 Iniciando instalador para Android. Si estás en Chrome, toca ⋮ ➔ "Instalar aplicación" para acceso directo con icono.')
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    background: 'linear-gradient(135deg, #059669, #10B981)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                  }}
+                >
+                  <span>🤖</span> Descargar / Instalar APK para Android
+                </button>
+              )}
+
+              {activePlatform === 'desktop' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (isInstallable) {
+                      const done = await promptInstall()
+                      if (done) {
+                        handleClose()
+                        return
+                      }
+                    }
+                    // Generar lanzador directo de Escritorio .url para Windows
+                    const urlContent = `[InternetShortcut]\nURL=${window.location.origin}\nIconIndex=0\nIconFile=${window.location.origin}/favicon.ico\n`
+                    const blob = new Blob([urlContent], { type: 'application/octet-stream' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `APPEX ERP - Acceso Escritorio.url`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    alert('💻 Acceso directo de Escritorio generado y descargado. Haz doble clic para abrir la aplicación.')
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    background: 'linear-gradient(135deg, #1E3A8A, #2563EB)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(37,99,235,0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                  }}
+                >
+                  <span>💻</span> Descargar e Instalar en PC (Desktop)
+                </button>
+              )}
+
+              {activePlatform === 'ios' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert('🍎 Para instalar en tu iPhone/iPad: Toca el botón Compartir (⎋ / 📤) en Safari y selecciona "Añadir a la pantalla de inicio" (+).')
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    background: 'linear-gradient(135deg, #0F172A, #334155)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(15,23,42,0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                  }}
+                >
+                  <span>🍎</span> Instalar en iPhone / iPad (iOS)
+                </button>
+              )}
+            </div>
 
             {/* Contenido según la plataforma seleccionada */}
             <div className="pwa-ios-steps" style={{ margin: '0 0 16px', textAlign: 'left' }}>
               {activePlatform === 'android' && (
                 <>
                   <div style={{ fontWeight: 800, color: '#1E293B', fontSize: 13, marginBottom: 4 }}>
-                    🤖 Instalación en Android (Chrome / APK Nativa PWA):
+                    🤖 Pasos en Android:
                   </div>
                   <div className="pwa-step-item">
                     <span className="pwa-step-num">1</span>
-                    <span>Abre este ERP en <strong>Google Chrome</strong> en tu móvil Android.</span>
+                    <span>Presiona el botón verde superior <strong>"Descargar / Instalar APK"</strong>.</span>
                   </div>
                   <div className="pwa-step-item">
                     <span className="pwa-step-num">2</span>
-                    <span>Toca el menú de los <strong>tres puntos (⋮)</strong> en la esquina superior derecha.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">3</span>
-                    <span>Selecciona <strong>"Instalar aplicación"</strong> o <strong>"Añadir a pantalla de inicio"</strong>.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">4</span>
-                    <span>¡Listo! Se instalará el APK web nativo en tu cajón de aplicaciones con icono propio.</span>
+                    <span>En Chrome, toca el menú de los <strong>tres puntos (⋮)</strong> ➔ <strong>"Instalar aplicación"</strong>.</span>
                   </div>
                 </>
               )}
@@ -242,23 +329,15 @@ export function PWAInstallBanner({ showModalOverride, onCloseModalOverride }) {
               {activePlatform === 'desktop' && (
                 <>
                   <div style={{ fontWeight: 800, color: '#1E293B', fontSize: 13, marginBottom: 4 }}>
-                    💻 Instalación en PC / Desktop (Windows / Mac / Linux):
+                    💻 Pasos en PC / Windows:
                   </div>
                   <div className="pwa-step-item">
                     <span className="pwa-step-num">1</span>
-                    <span>En <strong>Google Chrome</strong> o <strong>Microsoft Edge</strong>, mira la barra de direcciones (URL).</span>
+                    <span>Haz clic en el botón azul superior <strong>"Descargar e Instalar en PC"</strong>.</span>
                   </div>
                   <div className="pwa-step-item">
                     <span className="pwa-step-num">2</span>
-                    <span>Haz clic en el icono <strong>🖥️ Instalar APPEX ERP</strong> que aparece a la derecha de la URL.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">3</span>
-                    <span>O presiona el menú <strong>(⋮) ➔ Guardar y compartir ➔ Instalar APPEX ERP</strong>.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">4</span>
-                    <span>Se creará un acceso directo en tu Escritorio y barra de tareas con ventana independiente.</span>
+                    <span>O presiona el icono de instalación 🖥️ en la barra de URL de tu navegador.</span>
                   </div>
                 </>
               )}
@@ -266,23 +345,15 @@ export function PWAInstallBanner({ showModalOverride, onCloseModalOverride }) {
               {activePlatform === 'ios' && (
                 <>
                   <div style={{ fontWeight: 800, color: '#1E293B', fontSize: 13, marginBottom: 4 }}>
-                    🍎 Instalación en iPhone / iPad (Safari iOS):
+                    🍎 Pasos en iOS Safari:
                   </div>
                   <div className="pwa-step-item">
                     <span className="pwa-step-num">1</span>
-                    <span>Abre este ERP en el navegador <strong>Safari</strong> de tu iPhone/iPad.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">2</span>
                     <span>Toca el botón <strong>Compartir</strong> <span style={{ fontSize: 14 }}>⎋ / 📤</span> en la barra inferior de Safari.</span>
                   </div>
                   <div className="pwa-step-item">
-                    <span className="pwa-step-num">3</span>
-                    <span>Desliza hacia abajo y presiona <strong>"Añadir a la pantalla de inicio"</strong> ➕.</span>
-                  </div>
-                  <div className="pwa-step-item">
-                    <span className="pwa-step-num">4</span>
-                    <span>Toca <strong>"Añadir"</strong> arriba a la derecha y se abrirá como app nativa a pantalla completa.</span>
+                    <span className="pwa-step-num">2</span>
+                    <span>Presiona <strong>"Añadir a la pantalla de inicio"</strong> ➕.</span>
                   </div>
                 </>
               )}

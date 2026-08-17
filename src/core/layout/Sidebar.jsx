@@ -285,7 +285,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
                   if (isInstallable) {
                     promptInstall()
                   } else {
-                    setShowPWAModal(true)
+                    openInstallModal()
                   }
                 }}
                 style={{
@@ -330,11 +330,6 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
           setShowPlanModal(false)
         }}
       />
-
-      {/* Modal de Instalación PWA */}
-      {showPWAModal && (
-        <PWAInstallBanner showModalOverride={true} onCloseModalOverride={() => setShowPWAModal(false)} />
-      )}
     </aside>
   )
 }
