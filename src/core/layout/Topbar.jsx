@@ -10,7 +10,7 @@ import { useAuth } from '../auth/AuthContext'
 import { usePWA } from '../hooks/usePWA'
 import { PWAInstallBanner } from '../components/PWAInstallBanner'
 
-export function Topbar({ onToggleMobileMenu }) {
+export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollapse }) {
   const { user, logout } = useAuth()
   const { isInstallable, isInstalled, promptInstall } = usePWA()
   const navigate = useNavigate()
@@ -210,7 +210,7 @@ export function Topbar({ onToggleMobileMenu }) {
 
   return (
     <header className="topbar" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {/* Botón Hamburguesa para Móvil y Tablet */}
         <button
           className="topbar-hamburger-btn"
@@ -220,6 +220,31 @@ export function Topbar({ onToggleMobileMenu }) {
         >
           ☰
         </button>
+
+        {/* Botón Plegar / Desplegar Sidebar en Escritorio */}
+        {onToggleCollapse && (
+          <button
+            className="topbar-desktop-collapse-btn"
+            onClick={onToggleCollapse}
+            title={isCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'}
+            aria-label="Plegar / Desplegar barra lateral"
+            style={{
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: 8,
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontSize: 14,
+              color: '#334155',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 120ms ease',
+            }}
+          >
+            {isCollapsed ? '⏭️' : '⏮️'}
+          </button>
+        )}
 
         {/* ── Búsqueda estilo Pill ── */}
         <div className="topbar-search-wrapper" style={{ position: 'relative' }}>

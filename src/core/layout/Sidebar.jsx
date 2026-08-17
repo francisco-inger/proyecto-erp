@@ -86,7 +86,7 @@ const SUBMENUS = {
 
 const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','reportes','chatbot','integraciones','plugin-manager','ajustes']
 
-export function Sidebar({ isMobileOpen, onCloseMobile }) {
+export function Sidebar({ isMobileOpen, onCloseMobile, isCollapsed = false, onToggleCollapse }) {
   const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -126,24 +126,38 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
   }
 
   return (
-    <aside className={`sidebar ${isMobileOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isMobileOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-top">
         <div className="sidebar-brand-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="sidebar-brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img
               src="/branding/logo_appex.jpg"
               alt="APPEX ERP Logo"
-              style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: 2 }}
+              style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain', background: '#FFFFFF', border: '1px solid #E2E8F0', padding: 2, flexShrink: 0 }}
             />
-            <div style={{ overflow: 'hidden' }}>
-              <span className="sidebar-brand-name" style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: 140 }} title={empresa.razonSocial}>
-                {empresa.nombreComercial || empresa.razonSocial}
-              </span>
-              <span className="sidebar-brand-tag" style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
-                RNC: {empresa.rnc}
-              </span>
-            </div>
+            {!isCollapsed && (
+              <div style={{ overflow: 'hidden' }}>
+                <span className="sidebar-brand-name" style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: 120 }} title={empresa.razonSocial}>
+                  {empresa.nombreComercial || empresa.razonSocial}
+                </span>
+                <span className="sidebar-brand-tag" style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
+                  RNC: {empresa.rnc}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Botón para Plegar/Desplegar la Barra Lateral */}
+          {onToggleCollapse && (
+            <button
+              className="sidebar-collapse-toggle-btn"
+              onClick={onToggleCollapse}
+              title={isCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'}
+              aria-label="Plegar / Desplegar barra lateral"
+            >
+              {isCollapsed ? '▶' : '◀'}
+            </button>
+          )}
 
           {/* Botón de cierre en vista móvil */}
           {onCloseMobile && (
@@ -158,8 +172,14 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink to="/" end className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
-            <span className="sidebar-icon">🏠</span> Dashboard
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+            title={isCollapsed ? 'Dashboard' : undefined}
+          >
+            <span className="sidebar-icon">🏠</span>
+            {!isCollapsed && <span>Dashboard</span>}
           </NavLink>
 
           {modules.map((mod) => {
@@ -172,6 +192,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
                 <div key={mod.id} className="sidebar-group">
                   <div
                     className={`sidebar-link sidebar-parent-link ${isParentActive ? 'active-parent' : ''}`}
+                    title={isCollapsed ? (MODULE_NAMES[mod.id] ?? mod.name) : undefined}
                     onClick={() => {
                       const defaultTab = mod.id === 'rrhh' ? 'Resumen RRHH' : 'Resumen'
                       if (!isParentActive) {
@@ -180,21 +201,23 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
                       setOpenSubmenus((prev) => ({ ...prev, [mod.id]: !prev[mod.id] }))
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
                       <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
-                      <span className="sidebar-mod-name">{MODULE_NAMES[mod.id] ?? mod.name}</span>
+                      {!isCollapsed && <span className="sidebar-mod-name">{MODULE_NAMES[mod.id] ?? mod.name}</span>}
                     </div>
-                    <button
-                      className="sidebar-chevron-btn"
-                      onClick={(e) => toggleSubmenu(mod.id, e)}
-                      title={isOpen ? 'Colapsar' : 'Expandir'}
-                    >
-                      {isOpen ? '⌃' : '⌄'}
-                    </button>
+                    {!isCollapsed && (
+                      <button
+                        className="sidebar-chevron-btn"
+                        onClick={(e) => toggleSubmenu(mod.id, e)}
+                        title={isOpen ? 'Colapsar' : 'Expandir'}
+                      >
+                        {isOpen ? '⌃' : '⌄'}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Submenú desplegable */}
-                  {isOpen && (
+                  {/* Submenú desplegable (visible si está abierto y no colapsado) */}
+                  {isOpen && !isCollapsed && (
                     <div className="sidebar-submenu">
                       {hasSubmenu.map((sub) => {
                         const activeTabNormalized = (currentTab || '').trim().toLowerCase()
@@ -231,9 +254,11 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
                 key={mod.id}
                 to={mod.path}
                 className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+                title={isCollapsed ? (MODULE_NAMES[mod.id] ?? mod.name) : undefined}
+                style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
               >
                 <span className="sidebar-icon">{MODULE_ICONS[mod.id] ?? '⬡'}</span>
-                <span>{MODULE_NAMES[mod.id] ?? mod.name}</span>
+                {!isCollapsed && <span>{MODULE_NAMES[mod.id] ?? mod.name}</span>}
               </NavLink>
             )
           })}
@@ -249,6 +274,29 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
         } catch (_) {}
         const planName = activePlan?.planNombre || 'Plan Enterprise Suite'
         const planBadge = activePlan?.planBadge || 'Corporativo'
+
+        if (isCollapsed) {
+          return (
+            <div
+              className="sidebar-plan-card-collapsed"
+              onClick={() => setShowPlanModal(true)}
+              title={`${planName} · Clic para gestionar plan`}
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '10px 0',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: 10,
+                cursor: 'pointer',
+                fontSize: 18,
+              }}
+            >
+              👑
+            </div>
+          )
+        }
 
         return (
           <div className="sidebar-plan-card">
