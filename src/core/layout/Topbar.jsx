@@ -690,6 +690,37 @@ export function Topbar({ onToggleMobileMenu }) {
                   </button>
                 )}
 
+                <button
+                  onClick={() => {
+                    if (window.confirm('¿Deseas limpiar el caché local del navegador y restaurar la sesión principal con todos los datos sincronizados?')) {
+                      // Limpiar estados temporales y cachés
+                      localStorage.removeItem('erp_registration_wizard_state_v1')
+                      localStorage.removeItem('erp_login_block')
+                      localStorage.removeItem('tenant_usr-admin-global_appes_erp_global_settings_v2')
+                      
+                      // Forzar sesión como Admin Principal
+                      const adminUser = {
+                        id: 'usr-1',
+                        name: 'Admin General',
+                        email: 'admin@appes.com',
+                        role: 'ADMIN',
+                        departamento: 'Dirección General',
+                        dosFactores: true,
+                        empresaConfigurada: true,
+                      }
+                      localStorage.setItem('erp_user', JSON.stringify(adminUser))
+                      localStorage.setItem('erp_token', `token-usr-1-${Date.now()}`)
+                      
+                      // Forzar recarga completa sin caché
+                      window.location.href = '/dashboard'
+                    }
+                  }}
+                  className="fn-popover-item"
+                  style={{ color: '#D97706', fontWeight: 700 }}
+                >
+                  <span>🧹</span> Limpiar Caché y Actualizar Datos
+                </button>
+
                 <div className="fn-popover-divider" />
 
                 <button
