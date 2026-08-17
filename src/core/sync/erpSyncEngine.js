@@ -202,8 +202,36 @@ export const erpSync = {
       const prods = safeGet(STORAGE_KEYS.INVENTARIO_PRODS, [])
       const movements = safeGet(STORAGE_KEYS.INVENTARIO_MOVEMENTS, [])
 
-      // Reducir stock del producto principal o más cercano
-      if (prods.length > 0) {
+      if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+        order.items.forEach(item => {
+          const prodIdx = prods.findIndex(p => 
+            p.id === item.id || 
+            (p.nombre && item.producto && p.nombre.toLowerCase() === item.producto.toLowerCase()) ||
+            (p.codigo && item.codigo && p.codigo.toLowerCase() === item.codigo.toLowerCase())
+          )
+          const qtyVendida = Number(item.cantidad) || 1
+          const itemSubtotal = Number(item.subtotal) || (qtyVendida * (Number(item.precio) || 100))
+
+          if (prodIdx >= 0) {
+            prods[prodIdx].stock = Math.max(0, (Number(prods[prodIdx].stock) || 0) - qtyVendida)
+            prods[prodIdx].ventasUds = (Number(prods[prodIdx].ventasUds) || 0) + qtyVendida
+            prods[prodIdx].ingresos = (Number(prods[prodIdx].ingresos) || 0) + itemSubtotal
+
+            movements.unshift({
+              id: Date.now() + Math.floor(Math.random() * 1000),
+              tipo: 'Salida',
+              producto: prods[prodIdx].nombre,
+              almacen: prods[prodIdx].almacen || 'Almacén Principal',
+              cantidad: -qtyVendida,
+              fecha: new Date().toLocaleDateString('es-DO'),
+              usuario: 'Ventas (Auto-Sync)',
+              referencia: order.numero || order.id,
+            })
+          }
+        })
+        safeSet(STORAGE_KEYS.INVENTARIO_PRODS, prods)
+        safeSet(STORAGE_KEYS.INVENTARIO_MOVEMENTS, movements.slice(0, 100))
+      } else if (prods.length > 0) {
         const prod = prods[0]
         const cantVendida = Math.max(1, Math.round(totalMonto / (prod.precio || 100)))
         prod.stock = Math.max(0, (Number(prod.stock) || 0) - cantVendida)

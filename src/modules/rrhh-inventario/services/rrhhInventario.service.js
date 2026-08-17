@@ -45,9 +45,26 @@ export const inventarioService = {
   },
 
   addProduct: async (prod) => {
+    let created = null
+    try {
+      const res = await apiClient.post('/products', {
+        sku: prod.codigo || prod.sku,
+        nombre: prod.nombre,
+        categoria: prod.categoria,
+        unidad_medida: prod.unidadMedida || 'Unidad',
+        precio_compra: Number(prod.costo) || 0,
+        precio_venta: Number(prod.precio) || 100,
+        stock_actual: Number(prod.stock) || 0,
+        stock_minimo: Number(prod.stockMin) || 5,
+        ubicacion_almacen: prod.almacen || 'Almacén Principal',
+        estado: 'Disponible',
+      })
+      if (res && res.id) created = res
+    } catch (_) {}
+
     const prods = getStored(STORAGE_KEYS.PRODUCTS, DEFAULT_PRODUCTS)
     const newProd = {
-      id: Date.now(),
+      id: created?.id || Date.now(),
       codigo: prod.codigo || `PROD-${Math.floor(100 + Math.random() * 900)}`,
       ventasUds: 0,
       ingresos: 0,
@@ -58,7 +75,7 @@ export const inventarioService = {
       precio: Number(prod.precio) || 100,
       costo: Number(prod.costo) || 50,
     }
-    const updated = [newProd, ...prods]
+    const updated = [newProd, ...prods.filter(p => p.id !== newProd.id)]
     setStored(STORAGE_KEYS.PRODUCTS, updated)
 
     // Registrar movimiento inicial de entrada
@@ -73,13 +90,19 @@ export const inventarioService = {
       })
     }
 
+    erpSync.emit('product_updated', { product: newProd })
     return newProd
   },
 
   updateProductStock: async (id, newStock) => {
+    try {
+      await apiClient.put(`/products/${id}`, { stock_actual: Number(newStock) })
+    } catch (_) {}
+
     const prods = getStored(STORAGE_KEYS.PRODUCTS, DEFAULT_PRODUCTS)
     const updated = prods.map((p) => (p.id === id ? { ...p, stock: Number(newStock) } : p))
     setStored(STORAGE_KEYS.PRODUCTS, updated)
+    erpSync.emit('product_updated', { id, stock: newStock })
     return updated
   },
 
@@ -87,6 +110,7 @@ export const inventarioService = {
     const prods = getStored(STORAGE_KEYS.PRODUCTS, DEFAULT_PRODUCTS)
     const updated = prods.filter((p) => p.id !== id)
     setStored(STORAGE_KEYS.PRODUCTS, updated)
+    erpSync.emit('product_updated', { id, deleted: true })
     return updated
   },
 

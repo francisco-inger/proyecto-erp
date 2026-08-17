@@ -58,14 +58,31 @@ export const crmService = {
   },
 
   addClient: async (client) => {
+    let created = null
+    try {
+      const res = await apiClient.post('/clientes', {
+        rnc_cedula: client.rnc || client.rnc_cedula || '',
+        nombre_empresa: client.nombre || client.nombre_empresa,
+        contacto_principal: client.contacto || client.contacto_principal,
+        email: client.email,
+        telefono: client.telefono,
+        direccion: client.direccion || '',
+        sector: client.sector || 'Comercial',
+        limite_credito: client.limite_credito || 0,
+        estado: client.estado || 'Activo',
+      })
+      if (res && res.id) created = res
+    } catch (_) {}
+
     const clients = getStored(STORAGE_KEYS.CLIENTS, DEFAULT_CLIENTS)
     const newClient = {
-      id: Date.now(),
+      id: created?.id || Date.now(),
       estadoTipo: client.estado === 'Activo' ? 'success' : client.estado === 'Pendiente' ? 'warning' : 'danger',
       ...client,
     }
-    const updated = [newClient, ...clients]
+    const updated = [newClient, ...clients.filter(c => c.id !== newClient.id)]
     setStored(STORAGE_KEYS.CLIENTS, updated)
+    erpSync.emit('client_updated', { client: newClient })
     return newClient
   },
 
@@ -81,6 +98,7 @@ export const crmService = {
         : c
     )
     setStored(STORAGE_KEYS.CLIENTS, updated)
+    erpSync.emit('client_updated', { id, status: newStatus })
     return updated
   },
 
@@ -88,6 +106,7 @@ export const crmService = {
     const clients = getStored(STORAGE_KEYS.CLIENTS, DEFAULT_CLIENTS)
     const updated = clients.filter((c) => c.id !== id)
     setStored(STORAGE_KEYS.CLIENTS, updated)
+    erpSync.emit('client_updated', { id, deleted: true })
     return updated
   },
 
