@@ -1,27 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { validateStrongPassword, setTenantData, getTenantKey } from '../../../core/utils/formatters'
 import './Login.css'
 
+const REGISTER_STEP_CACHE_KEY = 'erp_registration_wizard_state_v1'
+
 export function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
 
+  // ── Recuperar estado previo en caché del navegador ──
+  const cachedState = (() => {
+    try {
+      const raw = localStorage.getItem(REGISTER_STEP_CACHE_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch (_) {
+      return null
+    }
+  })()
+
   // ── Control de Pasos (1: Cuenta, 2: Plan & Pago, 3: Empresa) ──
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(() => cachedState?.currentStep || 1)
 
   // Paso 1: Datos de Usuario
-  const [form, setForm] = useState({ name: '', email: '', password: '', company: '' })
+  const [form, setForm] = useState(() => cachedState?.form || { name: '', email: '', password: '', company: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
-  const [registeredUser, setRegisteredUser] = useState(null)
+  const [registeredUser, setRegisteredUser] = useState(() => cachedState?.registeredUser || null)
 
   // Paso 2: Elección de Plan y Simulación de Pago
-  const [billingPeriod, setBillingPeriod] = useState('monthly') // monthly | annual
-  const [selectedPlan, setSelectedPlan] = useState('clinica') // emprendedor | clinica | enterprise
-  const [paymentForm, setPaymentForm] = useState({
+  const [billingPeriod, setBillingPeriod] = useState(() => cachedState?.billingPeriod || 'monthly') // monthly | annual
+  const [selectedPlan, setSelectedPlan] = useState(() => cachedState?.selectedPlan || 'clinica') // emprendedor | clinica | enterprise
+  const [paymentForm, setPaymentForm] = useState(() => cachedState?.paymentForm || {
     cardName: '',
     cardNumber: '',
     cardExp: '',
@@ -30,7 +42,7 @@ export function Register() {
   })
 
   // Paso 3: Configuración Inicial de la Empresa
-  const [companySettings, setCompanySettings] = useState({
+  const [companySettings, setCompanySettings] = useState(() => cachedState?.companySettings || {
     razonSocial: '',
     nombreComercial: '',
     rnc: '',
@@ -41,12 +53,68 @@ export function Register() {
     regimenFiscal: 'Régimen Ordinario (DGII)',
   })
 
+  // Guardar en caché del navegador en cada cambio
+  useEffect(() => {
+    try {
+      localStorage.setItem(REGISTER_STEP_CACHE_KEY, JSON.stringify({
+        currentStep,
+        form: { ...form, password: form.password ? '••••••••' : '' },
+        registeredUser,
+        billingPeriod,
+        selectedPlan,
+        paymentForm: { ...paymentForm, cardCvc: '' },
+        companySettings,
+      }))
+    } catch (_) {}
+  }, [currentStep, form, registeredUser, billingPeriod, selectedPlan, paymentForm, companySettings])
+
   function updateForm(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
   }
 
-  function updatePayment(field) {
-    return (e) => setPaymentForm((f) => ({ ...f, [field]: e.target.value }))
+  // ── Máscaras de Entrada para Pago ──
+  function handleCardNumberChange(e) {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16)
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ')
+    setPaymentForm(p => ({ ...p, cardNumber: formatted }))
+  }
+
+  function handleCardExpChange(e) {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4)
+    if (raw.length >= 2) {
+      const month = parseInt(raw.slice(0, 2), 10)
+      if (month > 12) raw = '12' + raw.slice(2)
+      if (month === 0) raw = '01' + raw.slice(2)
+      raw = raw.slice(0, 2) + '/' + raw.slice(2)
+    }
+    setPaymentForm(p => ({ ...p, cardExp: raw }))
+  }
+
+  function handleCardCvcChange(e) {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 4)
+    setPaymentForm(p => ({ ...p, cardCvc: raw }))
+  }
+
+  function handleRncChange(e) {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 9)
+    let formatted = raw
+    if (raw.length > 1 && raw.length <= 3) {
+      formatted = `${raw.slice(0, 1)}-${raw.slice(1)}`
+    } else if (raw.length > 3) {
+      formatted = `${raw.slice(0, 1)}-${raw.slice(1, 3)}-${raw.slice(3)}`
+    }
+    setCompanySettings(c => ({ ...c, rnc: formatted }))
+  }
+
+  function handleTelefonoChange(e) {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 10)
+    let formatted = raw
+    if (raw.length > 3 && raw.length <= 6) {
+      formatted = `(${raw.slice(0, 3)}) ${raw.slice(3)}`
+    } else if (raw.length > 6) {
+      formatted = `(${raw.slice(0, 3)}) ${raw.slice(3, 6)}-${raw.slice(6)}`
+    }
+    setCompanySettings(c => ({ ...c, telefono: formatted }))
   }
 
   function updateCompany(field) {
@@ -71,8 +139,8 @@ export function Register() {
       setRegisteredUser(newUser)
       setCompanySettings(prev => ({
         ...prev,
-        razonSocial: form.company || '',
-        nombreComercial: form.company || '',
+        razonSocial: form.company || prev.razonSocial || '',
+        nombreComercial: form.company || prev.nombreComercial || '',
       }))
       setCurrentStep(2)
     } catch (err) {
@@ -86,6 +154,32 @@ export function Register() {
   async function handleStep2Submit(e) {
     e.preventDefault()
     setError('')
+
+    // Validaciones estrictas de tarjeta
+    if (!paymentForm.cardName.trim()) {
+      setError('Por favor ingresa el nombre impreso en la tarjeta.')
+      return
+    }
+    const cleanCard = paymentForm.cardNumber.replace(/\s/g, '')
+    if (cleanCard.length < 15 || cleanCard.length > 16) {
+      setError('El número de tarjeta debe contener entre 15 y 16 dígitos válidos.')
+      return
+    }
+    if (!paymentForm.cardExp || !paymentForm.cardExp.includes('/') || paymentForm.cardExp.length !== 5) {
+      setError('Ingresa una fecha de expiración válida en formato MM/AA.')
+      return
+    }
+    const [expM, expY] = paymentForm.cardExp.split('/')
+    const currentYear = new Date().getFullYear() % 100
+    if (parseInt(expY, 10) < currentYear) {
+      setError('La tarjeta ingresada está vencida.')
+      return
+    }
+    if (!paymentForm.cardCvc || paymentForm.cardCvc.length < 3) {
+      setError('El código de seguridad CVC debe tener 3 o 4 dígitos.')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -167,6 +261,9 @@ export function Register() {
         }
         localStorage.setItem('erp_user', JSON.stringify(updatedSession))
       }
+
+      // Limpiar caché del wizard tras completarlo con éxito
+      localStorage.removeItem(REGISTER_STEP_CACHE_KEY)
 
       // Redirigir al Dashboard principal con sus módulos limpios
       navigate('/dashboard')
@@ -588,9 +685,9 @@ export function Register() {
                   <label>NÚMERO DE TARJETA (DÉBITO / CRÉDITO)</label>
                   <input
                     type="text"
-                    placeholder="4532 •••• •••• 8890"
+                    placeholder="4532 0000 0000 8890"
                     value={paymentForm.cardNumber}
-                    onChange={updatePayment('cardNumber')}
+                    onChange={handleCardNumberChange}
                     maxLength={19}
                     required
                   />
@@ -603,7 +700,7 @@ export function Register() {
                       type="text"
                       placeholder="12/28"
                       value={paymentForm.cardExp}
-                      onChange={updatePayment('cardExp')}
+                      onChange={handleCardExpChange}
                       maxLength={5}
                       required
                     />
@@ -614,7 +711,7 @@ export function Register() {
                       type="password"
                       placeholder="•••"
                       value={paymentForm.cardCvc}
-                      onChange={updatePayment('cardCvc')}
+                      onChange={handleCardCvcChange}
                       maxLength={4}
                       required
                     />
@@ -690,7 +787,8 @@ export function Register() {
                       type="text"
                       placeholder="1-31-00000-0"
                       value={companySettings.rnc}
-                      onChange={updateCompany('rnc')}
+                      onChange={handleRncChange}
+                      maxLength={11}
                       required
                     />
                   </div>
@@ -701,7 +799,8 @@ export function Register() {
                       type="text"
                       placeholder="(809) 555-0100"
                       value={companySettings.telefono}
-                      onChange={updateCompany('telefono')}
+                      onChange={handleTelefonoChange}
+                      maxLength={14}
                     />
                   </div>
                 </div>
