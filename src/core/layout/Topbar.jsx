@@ -22,6 +22,7 @@ export function Topbar({ onToggleMobileMenu }) {
   const [showHelp, setShowHelp] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showPWAModal, setShowPWAModal] = useState(false)
+  const [toast, setToast] = useState(null)
   // Reloj y Fecha en tiempo real
   const [currentDateTime, setCurrentDateTime] = useState(new Date())
 
