@@ -6,6 +6,7 @@ import { getEnabledModules } from '../moduleRegistry'
 import { getEmpresaActiva } from '../utils/formatters'
 import { AdquisicionPlanesModal } from '../components/AdquisicionPlanesModal'
 import { usePWA } from '../hooks/usePWA'
+import { PWAInstallBanner } from '../components/PWAInstallBanner'
 
 /* Orden y íconos del sidebar, alineados al mockup del proyecto */
 const MODULE_ICONS = {
@@ -100,6 +101,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
 
   const [openSubmenus, setOpenSubmenus] = useState({})
   const [showPlanModal, setShowPlanModal] = useState(false)
+  const [showPWAModal, setShowPWAModal] = useState(false)
   const [empresa, setEmpresa] = useState(() => getEmpresaActiva())
 
   useEffect(() => {
@@ -276,17 +278,23 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
               {user?.role === 'cliente' ? 'Mejorar mi Plan' : 'Gestionar Planes'}
             </button>
 
-            {!isInstalled && isInstallable && (
+            {!isInstalled && (
               <button
-                onClick={promptInstall}
+                onClick={() => {
+                  if (isInstallable) {
+                    promptInstall()
+                  } else {
+                    setShowPWAModal(true)
+                  }
+                }}
                 style={{
                   marginTop: 8,
                   width: '100%',
-                  background: 'rgba(37, 99, 235, 0.1)',
-                  border: '1px solid rgba(37, 99, 235, 0.3)',
-                  color: '#2563EB',
-                  padding: '6px 10px',
-                  borderRadius: 6,
+                  background: 'rgba(37, 99, 235, 0.08)',
+                  border: '1px solid rgba(37, 99, 235, 0.35)',
+                  color: '#1D4ED8',
+                  padding: '7px 10px',
+                  borderRadius: 8,
                   fontSize: 11,
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -301,12 +309,12 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
                   e.currentTarget.style.color = '#FFFFFF'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'
-                  e.currentTarget.style.color = '#2563EB'
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)'
+                  e.currentTarget.style.color = '#1D4ED8'
                 }}
                 title="Instalar APPEX ERP como aplicación nativa en tu ordenador o móvil"
               >
-                <span>📲</span> Instalar App Nativa
+                <span>📲</span> Instalar App Nativa (PWA)
               </button>
             )}
           </div>
@@ -321,6 +329,11 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
           setShowPlanModal(false)
         }}
       />
+
+      {/* Modal de Instalación PWA */}
+      {showPWAModal && (
+        <PWAInstallBanner showModalOverride={true} onCloseModalOverride={() => setShowPWAModal(false)} />
+      )}
     </aside>
   )
 }

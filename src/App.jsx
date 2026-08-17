@@ -37,6 +37,7 @@ import { AppShell } from './core/layout/AppShell'
 import { Dashboard } from './pages/Dashboard'
 import { NotFound } from './pages/NotFound'
 import { getEnabledModules } from './core/moduleRegistry'
+import { PWAInstallBanner } from './core/components/PWAInstallBanner'
 
 function RootNavigator() {
   const { isAuthenticated } = useAuth()
@@ -48,6 +49,9 @@ export default function App() {
 
   return (
     <AuthProvider>
+      {/* Componente Global PWA (Píldora flotante, estado offline y modal de instalación) */}
+      <PWAInstallBanner />
+
       <Routes>
         {/* Landing Page Pública de Captación y Conversión */}
         <Route path="/" element={<RootNavigator />} />

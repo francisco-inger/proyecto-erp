@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import { AdquisicionPlanesModal } from '../../../core/components/AdquisicionPlanesModal'
+import { usePWA } from '../../../core/hooks/usePWA'
+import { PWAInstallBanner } from '../../../core/components/PWAInstallBanner'
 
 export function PlanEmpresarialView({ onShowToast }) {
+  const { isInstallable, isInstalled, isOnline, promptInstall } = usePWA()
+  const [showPWAModal, setShowPWAModal] = useState(false)
   const [showPlansModal, setShowPlansModal] = useState(false)
   const [stats, setStats] = useState({
     storageUsedMB: 342,
@@ -410,6 +414,115 @@ export function PlanEmpresarialView({ onShowToast }) {
         </div>
       </div>
 
+      {/* ── Tarjeta PWA y Modo Offline ── */}
+      <div style={{
+        background: '#FFFFFF',
+        borderRadius: 14,
+        border: '1px solid #E2E8F0',
+        padding: '22px 24px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: '#EFF6FF', border: '1px solid #DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+              📲
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A' }}>
+                Aplicación Web Progresiva (PWA) & Modo Offline
+              </h3>
+              <span style={{ fontSize: 12, color: '#64748B' }}>
+                Instala APPEX ERP como programa de escritorio en Windows/Mac o app nativa en Android/iOS
+              </span>
+            </div>
+          </div>
+          <span style={{
+            background: isInstalled ? '#ECFDF5' : '#EFF6FF',
+            color: isInstalled ? '#059669' : '#2563EB',
+            fontSize: 12,
+            fontWeight: 800,
+            padding: '4px 10px',
+            borderRadius: 8,
+            border: `1px solid ${isInstalled ? '#A7F3D0' : '#BFDBFE'}`
+          }}>
+            {isInstalled ? '✅ App Instalada (Standalone)' : '⚡ Lista para Descargar / Instalar'}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #F1F5F9' }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Service Worker</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', marginTop: 2 }}>v2.1.0 (Activo)</div>
+          </div>
+          <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #F1F5F9' }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Caché & Respaldo Offline</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#059669', marginTop: 2 }}>Operativo al 100%</div>
+          </div>
+          <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #F1F5F9' }}>
+            <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Conexión a Internet</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: isOnline ? '#059669' : '#DC2626', marginTop: 2 }}>
+              {isOnline ? '🟢 En Línea' : '🔴 Sin Conexión'}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {!isInstalled && (
+            <button
+              onClick={() => {
+                if (isInstallable) promptInstall()
+                else setShowPWAModal(true)
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #1E3A8A, #2563EB)',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '10px 18px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 4px 12px rgba(37,99,235,0.25)'
+              }}
+            >
+              <span>📲</span> Instalar en este Dispositivo
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                  regs.forEach(r => r.update())
+                  onShowToast?.('🔄 Service Worker y caché PWA actualizados a la última versión')
+                })
+              }
+            }}
+            style={{
+              background: '#F8FAFC',
+              color: '#334155',
+              border: '1px solid #CBD5E1',
+              padding: '10px 16px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <span>🔄</span> Forzar Actualización de PWA
+          </button>
+        </div>
+      </div>
+
       {/* Modal interactivo de Adquisición de Planes */}
       <AdquisicionPlanesModal
         isOpen={showPlansModal}
@@ -419,6 +532,11 @@ export function PlanEmpresarialView({ onShowToast }) {
           setShowPlansModal(false)
         }}
       />
+
+      {/* Modal PWA */}
+      {showPWAModal && (
+        <PWAInstallBanner showModalOverride={true} onCloseModalOverride={() => setShowPWAModal(false)} />
+      )}
     </div>
   )
 }

@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePWA } from '../core/hooks/usePWA'
+import { PWAInstallBanner } from '../core/components/PWAInstallBanner'
 import './LandingPage.css'
 
 export function LandingPage() {
+  const { isInstallable, isInstalled, promptInstall } = usePWA()
+  const [showPWAModal, setShowPWAModal] = useState(false)
   const [billingPeriod, setBillingPeriod] = useState('monthly') // 'monthly' | 'annual'
   const [openFaq, setOpenFaq] = useState(null)
 
@@ -49,6 +53,18 @@ export function LandingPage() {
           </nav>
 
           <div className="landing-nav-actions">
+            {!isInstalled && (
+              <button
+                onClick={() => {
+                  if (isInstallable) promptInstall()
+                  else setShowPWAModal(true)
+                }}
+                className="landing-btn-login"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderColor: '#93C5FD', color: '#1D4ED8' }}
+              >
+                <span>📲</span> Instalar App
+              </button>
+            )}
             <Link to="/login" className="landing-btn-login">
               Iniciar Sesión
             </Link>
@@ -81,6 +97,18 @@ export function LandingPage() {
             <Link to="/login" className="landing-btn-outline-lg">
               📅 Iniciar Sesión / Demo
             </Link>
+            {!isInstalled && (
+              <button
+                onClick={() => {
+                  if (isInstallable) promptInstall()
+                  else setShowPWAModal(true)
+                }}
+                className="landing-btn-outline-lg"
+                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              >
+                <span>📲</span> Descargar App (PWA)
+              </button>
+            )}
           </div>
 
           <div className="landing-trust-pills">
@@ -460,6 +488,10 @@ export function LandingPage() {
           © 2026 APPEX Technologies SRL. Todos los derechos reservados. Cumplimiento de Privacidad y Normativa Fiscal DGII.
         </div>
       </footer>
+
+      {showPWAModal && (
+        <PWAInstallBanner showModalOverride={true} onCloseModalOverride={() => setShowPWAModal(false)} />
+      )}
     </div>
   )
 }
