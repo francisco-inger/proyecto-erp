@@ -97,9 +97,17 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
   const [showPWAModal, setShowPWAModal] = useState(false)
   const [empresa, setEmpresa] = useState(() => getEmpresaActiva())
 
+  const [modulesVersion, setModulesVersion] = useState(0)
+
   useEffect(() => {
     setEmpresa(getEmpresaActiva())
   }, [user, location.pathname])
+
+  useEffect(() => {
+    const handleModuleChange = () => setModulesVersion((v) => v + 1)
+    window.addEventListener('erp:modules_changed', handleModuleChange)
+    return () => window.removeEventListener('erp:modules_changed', handleModuleChange)
+  }, [])
 
   const all = getEnabledModules().filter((m) => canAccess(user?.role, m.id))
   const modules = [...all].sort((a, b) => {

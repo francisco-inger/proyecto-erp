@@ -202,9 +202,15 @@ export function AjustesHome() {
     setIsSaving(true)
     setTimeout(() => {
       setTenantData(STORAGE_SETTINGS_KEY, settings)
+      // Aplicar estado de cada módulo al registry central
+      if (settings.modulos) {
+        Object.entries(settings.modulos).forEach(([modKey, isEnabled]) => {
+          setModuleEnabled(modKey, isEnabled)
+        })
+      }
       setIsSaving(false)
       showToast('💾 Configuración guardada y sincronizada globalmente')
-      erpSync.dispatch('settings:update', settings)
+      erpSync.emit('settings:update', settings)
     }, 400)
   }
 
@@ -820,7 +826,9 @@ export function AjustesHome() {
                 <h3 className="ajustes-panel-title">🧩 Matriz de Módulos del Sistema ERP</h3>
                 <p className="ajustes-panel-subtitle">Habilita o deshabilita los módulos del sistema según las necesidades operativas de tu empresa.</p>
               </div>
-              <span className="ajustes-badge-status green">8 / 8 Módulos Operativos</span>
+              <span className="ajustes-badge-status green">
+                {Object.values(settings.modulos || {}).filter(v => v !== false).length} / 8 Módulos Operativos
+              </span>
             </div>
 
             <div className="ajustes-modules-grid">
