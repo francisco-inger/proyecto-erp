@@ -181,6 +181,8 @@ export const inventarioService = {
 // Mantener compatibilidad con importaciones previas
 export const rrhhInventarioService = {
   ...inventarioService,
+  getProducts: () => inventarioService.listProducts(),
+  getCategories: () => inventarioService.listCategories(),
   listEmployees: () => apiClient.get('/rrhh/employees'),
   listInventory: () => inventarioService.listProducts(),
 }
