@@ -17,6 +17,26 @@ body {
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
 
 /* Utilidad para ocultar barras de scroll innecesarias conservando el desplazamiento */
@@ -201,18 +221,15 @@ button, input, select {
   gap: 12px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
+  padding-right: 2px;
+  scrollbar-width: none; /* Firefox: oculta la barra pero permite scroll */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
 .sidebar-top::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-top::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 4px;
+  display: none; /* Chrome, Safari, Opera: barra invisible ultra-limpia */
+  width: 0;
+  height: 0;
 }
 
 .sidebar-brand-container {
