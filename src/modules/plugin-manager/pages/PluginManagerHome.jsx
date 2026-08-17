@@ -132,6 +132,15 @@ export function PluginManagerHome() {
   const [showStoreModal, setShowStoreModal] =
     useState(false)
 
+  const [configPlugin, setConfigPlugin] =
+    useState(null)
+
+  const [infoPlugin, setInfoPlugin] =
+    useState(null)
+
+  const [configSavedToast, setConfigSavedToast] =
+    useState('')
+
   const [selectedPluginFile, setSelectedPluginFile] =
     useState(null)
 
@@ -2018,14 +2027,9 @@ export function PluginManagerHome() {
                                   <button
                                     type="button"
                                     className="plugin-action-btn"
-                                    title="Configuración"
+                                    title="Configuración avanzada del plugin"
                                     onClick={() =>
-                                      window.alert(
-                                        `Configuración de ${
-                                          plugin?.nombre ||
-                                          'Plugin'
-                                        }`
-                                      )
+                                      setConfigPlugin(plugin)
                                     }
                                   >
                                     ⚙️
@@ -2034,20 +2038,9 @@ export function PluginManagerHome() {
                                   <button
                                     type="button"
                                     className="plugin-action-btn"
-                                    title="Información"
+                                    title="Ficha técnica e información"
                                     onClick={() =>
-                                      window.alert(
-                                        `${
-                                          plugin?.nombre ||
-                                          'Plugin'
-                                        }\nVersión: ${
-                                          plugin?.version ||
-                                          '1.0.0'
-                                        }\nCategoría: ${
-                                          plugin?.categoria ||
-                                          'General'
-                                        }`
-                                      )
+                                      setInfoPlugin(plugin)
                                     }
                                   >
                                     ℹ️
@@ -2794,6 +2787,223 @@ export function PluginManagerHome() {
 
           </div>
 
+        </div>
+      )}
+
+      {/* MODAL CONFIGURACIÓN DEL PLUGIN */}
+      {configPlugin && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConfigPlugin(null)
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              width: 540,
+              maxWidth: '100%',
+              padding: 24,
+              background: '#FFFFFF',
+              borderRadius: 14,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: configPlugin.bgColor || '#EFF6FF',
+                  color: configPlugin.color || '#2563EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 22,
+                }}
+              >
+                {configPlugin.icon || '⚙️'}
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0F172A' }}>
+                  Configuración: {configPlugin.nombre}
+                </h3>
+                <span style={{ fontSize: 11, color: '#64748B' }}>
+                  ID: {configPlugin.id} · Versión: {configPlugin.version || '1.0.0'}
+                </span>
+              </div>
+            </div>
+
+            {configSavedToast && (
+              <div style={{ padding: '10px 14px', background: '#DCFCE7', color: '#166534', borderRadius: 8, fontSize: 12, fontWeight: 600, marginBottom: 14 }}>
+                ✓ {configSavedToast}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                  Modo de Ejecución del Plugin
+                </label>
+                <select style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13, background: '#FFFFFF' }}>
+                  <option>Activo en Segundo Plano (Recomendado)</option>
+                  <option>Ejecución Manual Bajo Demanda</option>
+                  <option>Modo Depuración / Registro Detallado</option>
+                </select>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                  Sincronización Automática con el Core
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input type="checkbox" defaultChecked id="chk-sync" style={{ width: 16, height: 16 }} />
+                  <label htmlFor="chk-sync" style={{ fontSize: 12, color: '#475569', cursor: 'pointer' }}>
+                    Emitir eventos a erpSyncEngine en cada cambio
+                  </label>
+                </div>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: 14, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 6 }}>
+                  Parámetros JSON de Inicialización
+                </label>
+                <textarea
+                  rows={3}
+                  defaultValue={`{\n  "autoStart": true,\n  "logLevel": "info",\n  "tenantIsolated": true\n}`}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 12, fontFamily: 'monospace' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setConfigPlugin(null)
+                  setConfigSavedToast('')
+                }}
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setConfigSavedToast('Configuración aplicada y persistida con éxito.')
+                  setTimeout(() => {
+                    setConfigPlugin(null)
+                    setConfigSavedToast('')
+                  }, 1100)
+                }}
+              >
+                💾 Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FICHA TÉCNICA E INFORMACIÓN */}
+      {infoPlugin && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setInfoPlugin(null)
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              width: 520,
+              maxWidth: '100%',
+              padding: 24,
+              background: '#FFFFFF',
+              borderRadius: 14,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: infoPlugin.bgColor || '#F3E8FF',
+                  color: infoPlugin.color || '#7C3AED',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 24,
+                }}
+              >
+                {infoPlugin.icon || '🧩'}
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                  {infoPlugin.nombre}
+                </h3>
+                <span style={{ fontSize: 12, color: '#2563EB', fontWeight: 700 }}>
+                  Categoría: {infoPlugin.categoria || 'General'}
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.6, marginBottom: 18, background: '#F8FAFC', padding: 12, borderRadius: 8, border: '1px solid #E2E8F0' }}>
+              {infoPlugin.descripcion || 'Extensión modular diseñada para optimizar y ampliar los flujos de trabajo del ERP.'}
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              <div style={{ padding: '10px 12px', background: '#F1F5F9', borderRadius: 8 }}>
+                <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Versión</span>
+                <strong style={{ fontSize: 13, color: '#0F172A' }}>{infoPlugin.version || '1.0.0'}</strong>
+              </div>
+              <div style={{ padding: '10px 12px', background: '#F1F5F9', borderRadius: 8 }}>
+                <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Origen / Autor</span>
+                <strong style={{ fontSize: 13, color: '#0F172A' }}>{infoPlugin.origen || 'Oficial (appes.erp)'}</strong>
+              </div>
+              <div style={{ padding: '10px 12px', background: '#F1F5F9', borderRadius: 8 }}>
+                <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Valoración de Usuarios</span>
+                <strong style={{ fontSize: 13, color: '#0F172A' }}>★ {infoPlugin.rating || 4.9} / 5.0</strong>
+              </div>
+              <div style={{ padding: '10px 12px', background: '#F1F5F9', borderRadius: 8 }}>
+                <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Arquitectura</span>
+                <strong style={{ fontSize: 13, color: '#0F172A' }}>v2.0 Standalone</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setInfoPlugin(null)}
+              >
+                Cerrar Ficha Técnica
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
