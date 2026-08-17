@@ -24,7 +24,6 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showPWAModal, setShowPWAModal] = useState(false)
   const [toast, setToast] = useState(null)
-<<<<<<< HEAD
   // Reloj y Fecha en tiempo real
   const [currentDateTime, setCurrentDateTime] = useState(new Date())
 
@@ -34,10 +33,9 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
     }, 1000)
     return () => clearInterval(timer)
   }, [])
-=======
+
   const [cloudStatus, setCloudStatus] = useState(cloudSync.config.status)
   const [isSyncing, setIsSyncing] = useState(false)
->>>>>>> 4d24351 (feat: integrado conector de sincronizacion centralizada Cloud con Supabase y estado en vivo en Topbar y Ajustes)
 
   const searchInputRef = useRef(null)
   const notifRef = useRef(null)
