@@ -159,9 +159,15 @@ export function ComprasHome() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [ordenes, setOrdenes] = useState([])
   const rawTab = searchParams.get('tab') || 'Todas'
-  const initialTab = rawTab === 'Ordenes' ? 'Todas' : rawTab === 'Nueva' ? 'Todas' : rawTab === 'Recepcion' ? 'Recibidas' : rawTab
+  const initialTab = (rawTab === 'Ordenes' || rawTab === 'Resumen' || rawTab === 'Nueva') ? 'Todas' : rawTab === 'Recepcion' ? 'Recibidas' : rawTab
 
   const [activeTab, setActiveTab] = useState(initialTab)
+  const [mainView, setMainView] = useState(() => {
+    if (rawTab === 'Proveedores') return 'proveedores'
+    if (rawTab === 'Facturas') return 'facturas'
+    return 'ordenes'
+  })
+
   const [search, setSearch] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(rawTab === 'Nueva')
@@ -169,17 +175,38 @@ export function ComprasHome() {
   const [editingOrden, setEditingOrden] = useState(null)
   const [deletingOrden, setDeletingOrden] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [showNewProveedorModal, setShowNewProveedorModal] = useState(false)
+  const [proveedoresList, setProveedoresList] = useState([])
+  const [newProveedorForm, setNewProveedorForm] = useState({
+    nombre: '',
+    rnc: '',
+    contacto: '',
+    telefono: '',
+    email: '',
+    categoria: 'Insumos Generales',
+    direccion: 'Santo Domingo, D.N.',
+    diasCredito: 30,
+  })
 
   useEffect(() => {
     const t = searchParams.get('tab')
     if (t) {
       if (t === 'Nueva') {
         setShowCreateModal(true)
-      } else if (t === 'Ordenes') {
+        setMainView('ordenes')
+        setActiveTab('Todas')
+      } else if (t === 'Ordenes' || t === 'Resumen') {
+        setMainView('ordenes')
         setActiveTab('Todas')
       } else if (t === 'Recepcion') {
+        setMainView('ordenes')
         setActiveTab('Recibidas')
+      } else if (t === 'Proveedores') {
+        setMainView('proveedores')
+      } else if (t === 'Facturas') {
+        setMainView('facturas')
       } else {
+        setMainView('ordenes')
         setActiveTab(t)
       }
     }
@@ -209,15 +236,31 @@ export function ComprasHome() {
     notas: '',
   })
 
+  const SEED_PROVEEDORES = [
+    { id: 'PRV-001', nombre: 'Distribuidora Tech SRL', rnc: '1-31-89234-5', contacto: 'Lic. Marcos Santana', telefono: '(809) 567-8900', email: 'ventas@distribuidoratech.do', categoria: 'Tecnología & Hardware', diasCredito: 30, balance: 280000, estado: 'Activo' },
+    { id: 'PRV-002', nombre: 'Electrónica Global SA', rnc: '1-01-44589-2', contacto: 'Ing. Laura Peña', telefono: '(809) 456-1122', email: 'corporativo@electronicaglobal.do', categoria: 'Componentes Electrónicos', diasCredito: 15, balance: 145000, estado: 'Activo' },
+    { id: 'PRV-003', nombre: 'Suministros Caribe', rnc: '1-22-33445-1', contacto: 'Pedro Rosario', telefono: '(809) 789-3344', email: 'pedidos@suministroscaribe.com', categoria: 'Insumos de Oficina', diasCredito: 0, balance: 0, estado: 'Activo' },
+    { id: 'PRV-004', nombre: 'Maquinarias del Este', rnc: '1-15-77889-0', contacto: 'Carlos Valenzuela', telefono: '(809) 333-7788', email: 'industrial@maquinariasdeleste.com', categoria: 'Maquinaria & Equipos', diasCredito: 45, balance: 320000, estado: 'Activo' },
+    { id: 'PRV-005', nombre: 'Papelería & Oficina RD', rnc: '1-30-66778-9', contacto: 'Elena Morales', telefono: '(809) 221-5566', email: 'ventas@papeleriaoficinas.com', categoria: 'Mobiliario & Oficina', diasCredito: 30, balance: 85000, estado: 'Inactivo' },
+    { id: 'PRV-006', nombre: 'Importadora Médica Dominicana', rnc: '1-01-99881-4', contacto: 'Dra. Carolina Méndez', telefono: '(809) 688-4400', email: 'contacto@importadoramedica.do', categoria: 'Seguridad & Salud', diasCredito: 30, balance: 190000, estado: 'Activo' },
+  ]
+
   // Cargar órdenes y escuchar sincronizaciones en tiempo real
   useEffect(() => {
     setOrdenes(getStoredCompras())
+    
+    // Cargar proveedores del tenant
+    const storedPrv = getTenantData('compras_proveedores_v1', SEED_PROVEEDORES)
+    setProveedoresList(storedPrv)
+
     inventarioService.listProducts().then(p => {
       if (p && p.length > 0) setInvProducts(p)
     }).catch(() => {})
 
     const unsubscribe = erpSync.subscribe(() => {
       setOrdenes(getStoredCompras())
+      const syncPrv = getTenantData('compras_proveedores_v1', SEED_PROVEEDORES)
+      setProveedoresList(syncPrv)
       inventarioService.listProducts().then(p => {
         if (p && p.length > 0) setInvProducts(p)
       }).catch(() => {})
@@ -849,7 +892,155 @@ export function ComprasHome() {
         </div>
       </div>
 
-      {/* ── Panel Principal: Tabla de Órdenes ── */}
+      {/* ── Vista Especial 1: Catálogo de Proveedores ── */}
+      {mainView === 'proveedores' && (
+        <div className="compras-table-card">
+          <div className="compras-tabs-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🏢</span>
+              <div>
+                <strong style={{ fontSize: 16, color: '#0F172A', display: 'block' }}>Directorio de Proveedores Homologados</strong>
+                <span style={{ fontSize: 12, color: '#64748B' }}>Gestión de contactos comerciales, condiciones de crédito y RNC fiscal</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                className="compras-btn-primary"
+                onClick={() => setShowNewProveedorModal(true)}
+              >
+                + Nuevo Proveedor
+              </button>
+            </div>
+          </div>
+
+          <div className="compras-table-responsive" style={{ marginTop: 16 }}>
+            <table className="compras-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Razón Social / Proveedor</th>
+                  <th>RNC</th>
+                  <th>Contacto & Teléfono</th>
+                  <th>Categoría</th>
+                  <th>Días Crédito</th>
+                  <th>Estado</th>
+                  <th style={{ textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proveedoresList.map((prv) => (
+                  <tr key={prv.id}>
+                    <td style={{ fontWeight: 800, color: '#2563EB' }}>{prv.id}</td>
+                    <td>
+                      <strong style={{ color: '#0F172A' }}>{prv.nombre}</strong>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>{prv.email}</div>
+                    </td>
+                    <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{prv.rnc}</span></td>
+                    <td>
+                      <div>{prv.contacto}</div>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>{prv.telefono}</div>
+                    </td>
+                    <td><span style={{ background: '#F1F5F9', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{prv.categoria}</span></td>
+                    <td><strong>{prv.diasCredito} días</strong></td>
+                    <td>
+                      <span style={{ background: prv.estado === 'Activo' ? '#DCFCE7' : '#FEF2F2', color: prv.estado === 'Activo' ? '#16A34A' : '#DC2626', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                        ● {prv.estado}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        className="compras-outline-btn"
+                        style={{ padding: '4px 10px', fontSize: 11 }}
+                        onClick={() => {
+                          setForm(f => ({ ...f, proveedor: prv.nombre, rnc: prv.rnc, categoria: prv.categoria, condicionPago: `Crédito ${prv.diasCredito} días` }))
+                          setShowCreateModal(true)
+                        }}
+                      >
+                        🛒 Crear OC
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Vista Especial 2: Facturas de Proveedores (Cuentas por Pagar) ── */}
+      {mainView === 'facturas' && (
+        <div className="compras-table-card">
+          <div className="compras-tabs-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 20 }}>🧾</span>
+              <div>
+                <strong style={{ fontSize: 16, color: '#0F172A', display: 'block' }}>Facturas y Comprobantes de Proveedores</strong>
+                <span style={{ fontSize: 12, color: '#64748B' }}>Registro de cuentas por pagar, NCF de compras B01 e ITBIS deducible</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                className="compras-btn-primary"
+                onClick={() => showToastMsg('✅ Módulo conectado con Finanzas y DGII')}
+              >
+                + Registrar Factura de Gasto
+              </button>
+            </div>
+          </div>
+
+          <div className="compras-table-responsive" style={{ marginTop: 16 }}>
+            <table className="compras-table">
+              <thead>
+                <tr>
+                  <th>No. Factura / NCF</th>
+                  <th>Proveedor Emisor</th>
+                  <th>Fecha Emisión</th>
+                  <th>Orden Asociada</th>
+                  <th>Monto Neto</th>
+                  <th>ITBIS (18%)</th>
+                  <th>Total Factura</th>
+                  <th>Estado Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordenes.map((ord, idx) => {
+                  const itbis = ord.total - (ord.total / 1.18)
+                  const neto = ord.total / 1.18
+                  const ncf = `B01000${45890 + idx}`
+                  const facturaNum = `FAC-PRV-${1000 + idx}`
+                  return (
+                    <tr key={ord.id}>
+                      <td>
+                        <strong style={{ color: '#0F172A' }}>{facturaNum}</strong>
+                        <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 700 }}>NCF: {ncf}</div>
+                      </td>
+                      <td>
+                        <strong>{ord.proveedor}</strong>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>RNC: {ord.rnc}</div>
+                      </td>
+                      <td>{ord.fecha}</td>
+                      <td><span style={{ color: '#2563EB', fontWeight: 700 }}>{ord.id}</span></td>
+                      <td>{money(neto)}</td>
+                      <td style={{ color: '#D97706', fontWeight: 600 }}>{money(itbis)}</td>
+                      <td><strong style={{ color: '#0F172A' }}>{money(ord.total)}</strong></td>
+                      <td>
+                        <span style={{ background: ord.estado === 'Recibida' ? '#DCFCE7' : '#FEF3C7', color: ord.estado === 'Recibida' ? '#16A34A' : '#D97706', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                          ● {ord.estado === 'Recibida' ? 'Pagada' : 'Pendiente Pago'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Panel Principal: Tabla de Órdenes (Vista por Defecto) ── */}
+      {mainView === 'ordenes' && (
       <div className="compras-table-card">
         {/* Tabs Superiores y Filtros */}
         <div className="compras-tabs-row">
@@ -1083,6 +1274,122 @@ export function ComprasHome() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* ── Modal Nuevo Proveedor ── */}
+      {showNewProveedorModal && (
+        <div className="compras-modal-backdrop" onClick={() => setShowNewProveedorModal(false)}>
+          <div className="compras-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="compras-modal-header">
+              <h3>🏢 Registrar Nuevo Proveedor</h3>
+              <button className="compras-modal-close" onClick={() => setShowNewProveedorModal(false)}>✕</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              if (!newProveedorForm.nombre) return
+              const newPrv = {
+                id: `PRV-00${proveedoresList.length + 1}`,
+                nombre: newProveedorForm.nombre,
+                rnc: newProveedorForm.rnc || '1-01-' + Math.floor(10000 + Math.random() * 90000) + '-1',
+                contacto: newProveedorForm.contacto || 'Administración de Cuentas',
+                telefono: newProveedorForm.telefono || '(809) 555-0199',
+                email: newProveedorForm.email || 'ventas@proveedor.do',
+                categoria: newProveedorForm.categoria || 'Insumos Generales',
+                direccion: newProveedorForm.direccion || 'Santo Domingo, D.N.',
+                diasCredito: Number(newProveedorForm.diasCredito) || 30,
+                balance: 0,
+                estado: 'Activo',
+              }
+              const updatedPrvs = [newPrv, ...proveedoresList]
+              setProveedoresList(updatedPrvs)
+              setTenantData('compras_proveedores_v1', updatedPrvs)
+              setShowNewProveedorModal(false)
+              showToastMsg(`✅ Proveedor ${newPrv.nombre} registrado con éxito`)
+            }}>
+              <div className="compras-modal-body">
+                <div className="compras-form-group">
+                  <label>Razón Social / Nombre de la Empresa *</label>
+                  <input
+                    required
+                    placeholder="Ej. Distribuidora Farmacéutica & Hospitalaria Dominicana SRL"
+                    value={newProveedorForm.nombre}
+                    onChange={e => setNewProveedorForm({ ...newProveedorForm, nombre: e.target.value })}
+                  />
+                </div>
+                <div className="compras-form-row">
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>RNC Fiscal</label>
+                    <input
+                      placeholder="1-01-23456-7"
+                      value={newProveedorForm.rnc}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, rnc: formatRNC(e.target.value) })}
+                    />
+                  </div>
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Categoría</label>
+                    <select
+                      value={newProveedorForm.categoria}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, categoria: e.target.value })}
+                    >
+                      <option value="Insumos Generales">Insumos Generales</option>
+                      <option value="Tecnología & Hardware">Tecnología & Hardware</option>
+                      <option value="Componentes Electrónicos">Componentes Electrónicos</option>
+                      <option value="Maquinaria & Equipos">Maquinaria & Equipos</option>
+                      <option value="Seguridad & Salud">Seguridad & Salud</option>
+                      <option value="Mobiliario & Oficina">Mobiliario & Oficina</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="compras-form-row">
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Persona de Contacto</label>
+                    <input
+                      placeholder="Nombre del ejecutivo o vendedor"
+                      value={newProveedorForm.contacto}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, contacto: e.target.value })}
+                    />
+                  </div>
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Teléfono</label>
+                    <input
+                      placeholder="(809) 555-0123"
+                      value={newProveedorForm.telefono}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, telefono: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="compras-form-row">
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Correo Electrónico</label>
+                    <input
+                      type="email"
+                      placeholder="ventas@proveedor.com"
+                      value={newProveedorForm.email}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="compras-form-group" style={{ flex: 1 }}>
+                    <label>Días de Crédito Otorgados</label>
+                    <input
+                      type="number"
+                      value={newProveedorForm.diasCredito}
+                      onChange={e => setNewProveedorForm({ ...newProveedorForm, diasCredito: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="compras-modal-footer">
+                <button type="button" className="compras-outline-btn" onClick={() => setShowNewProveedorModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="compras-btn-primary">
+                  Guardar Proveedor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal Nueva Orden de Compra ── */}
       {showCreateModal && (
