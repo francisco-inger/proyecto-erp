@@ -5,8 +5,9 @@ import { PluginManagerHome } from './pages/PluginManagerHome'
 registerModule({
   id: 'plugin-manager',
   name: 'Plugins',
-  path: '/plugins',
+  path: '/plugin-manager',
   color: 'var(--color-plugins)',
   requiredRole: ROLES.ADMIN,
   element: <PluginManagerHome />,
 })
+
