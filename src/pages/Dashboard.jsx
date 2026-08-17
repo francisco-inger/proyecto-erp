@@ -8,6 +8,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useAuth } from '../core/auth/AuthContext'
 import { dashboardService } from './dashboardService'
 import { erpSync } from '../core/sync/erpSyncEngine'
+import { getTenantData } from '../core/utils/formatters'
 import { Link } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -66,25 +67,21 @@ function MainSalesChart({ period = 'Este mes' }) {
 
   // Obtener ventas reales desde localStorage / BD
   const chartData = useMemo(() => {
-    let rawVentas = []
+    let totalVentasReal = 0
     try {
-      const stored = localStorage.getItem('ventas_orders_v1')
-      if (stored) rawVentas = JSON.parse(stored)
-    } catch (_) {}
-
-    let rawFinanzas = []
-    try {
-      const storedFin = localStorage.getItem('appes_erp_finanzas_data_v3')
-      if (storedFin) {
-        const fin = JSON.parse(storedFin)
-        if (fin.comprobantes) {
-          rawFinanzas = fin.comprobantes.filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
+      const vtas = getTenantData('ventas_orders_v1', [])
+      if (Array.isArray(vtas)) {
+        totalVentasReal = vtas.reduce((acc, v) => acc + (Number(v.total) || 0), 0)
+      }
+      if (totalVentasReal === 0) {
+        const fin = getTenantData('appes_erp_finanzas_data_v3', null)
+        if (fin && Array.isArray(fin.comprobantes)) {
+          totalVentasReal = fin.comprobantes
+            .filter(c => c.tipo === 'Ingreso' && c.estado !== 'Anulado')
+            .reduce((acc, f) => acc + (Number(f.monto) || 0), 0)
         }
       }
     } catch (_) {}
-
-    const totalVentasReal = rawVentas.reduce((acc, v) => acc + (Number(v.total) || 0), 0) ||
-      rawFinanzas.reduce((acc, f) => acc + (Number(f.monto) || 0), 0) || 1250000
 
     const mult = selectedPeriod === 'Mes anterior' ? 0.88 : selectedPeriod === 'Año actual' ? 3.8 : 1.0
 
@@ -100,7 +97,7 @@ function MainSalesChart({ period = 'Este mes' }) {
         label: `Día ${day}`,
       }
     })
-  }, [selectedPeriod])
+  }, [selectedPeriod, getTenantData])
 
   const W = 600, H = 220
   const padLeft = 45, padRight = 20, padTop = 20, padBottom = 30
@@ -722,25 +719,26 @@ export function Dashboard() {
             <strong>Actividades Recientes</strong>
             <Link to="/ventas" className="dash-header-link">Ver todas</Link>
           </div>
-          <ul className="dash-list">
-            {(actividades.length > 0 ? actividades : [
-              { id: 1, tipo: 'venta', texto: 'Nueva venta confirmada en sistema', sub: 'Cliente: Farmacia Los Hidalgos', hora: 'Hoy' },
-              { id: 2, tipo: 'factura', texto: 'Comprobante de Ingreso generado', sub: 'Cuenta: Banco Popular', hora: 'Hoy' },
-              { id: 3, tipo: 'pago', texto: 'Orden de Compra procesada', sub: 'Proveedor: Distribuidora Tech', hora: 'Hoy' },
-              { id: 4, tipo: 'cliente', texto: 'Auditoría de seguridad y 2FA activa', sub: 'Usuario: admin@appes.com', hora: 'Hoy' },
-            ]).slice(0, 4).map((act, i) => (
-              <li key={i} className="dash-list-item">
-                <div className={`dash-item-icon ${act.tipo === 'venta' ? 'green' : act.tipo === 'pago' ? 'purple' : act.tipo === 'factura' ? 'blue' : 'orange'}`}>
-                  {act.tipo === 'venta' ? '🛒' : act.tipo === 'pago' ? '💳' : act.tipo === 'factura' ? '📄' : '👤'}
-                </div>
-                <div className="dash-item-content">
-                  <span className="dash-item-title">{act.texto}</span>
-                  <span className="dash-item-sub">{act.sub}</span>
-                </div>
-                <span className="dash-item-time">{act.hora}</span>
-              </li>
-            ))}
-          </ul>
+          {actividades.length === 0 ? (
+            <div style={{ padding: '32px 12px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+              <span>📋 No hay actividades transaccionales registradas</span>
+            </div>
+          ) : (
+            <ul className="dash-list">
+              {actividades.slice(0, 4).map((act, i) => (
+                <li key={i} className="dash-list-item">
+                  <div className={`dash-item-icon ${act.tipo === 'venta' ? 'green' : act.tipo === 'pago' ? 'purple' : act.tipo === 'factura' ? 'blue' : 'orange'}`}>
+                    {act.tipo === 'venta' ? '🛒' : act.tipo === 'pago' ? '💳' : act.tipo === 'factura' ? '📄' : '👤'}
+                  </div>
+                  <div className="dash-item-content">
+                    <span className="dash-item-title">{act.texto}</span>
+                    <span className="dash-item-sub">{act.sub}</span>
+                  </div>
+                  <span className="dash-item-time">{act.hora}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Inventario Resumen */}
@@ -751,19 +749,19 @@ export function Dashboard() {
           <ul className="dash-inv-grid-list">
             <li className="dash-inv-row">
               <span className="dash-inv-label">📦 Total Productos</span>
-              <strong className="dash-inv-val">{inventarioSummary.total ?? 1245}</strong>
+              <strong className="dash-inv-val">{inventarioSummary.total ?? 0}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">✅ Stock Disponible</span>
-              <strong className="dash-inv-val text-success">{inventarioSummary.disponible ?? 890}</strong>
+              <strong className="dash-inv-val text-success">{inventarioSummary.disponible ?? 0}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">⚠️ Stock Bajo</span>
-              <strong className="dash-inv-val text-warning">{inventarioSummary.stockBajo ?? 120}</strong>
+              <strong className="dash-inv-val text-warning">{inventarioSummary.stockBajo ?? 0}</strong>
             </li>
             <li className="dash-inv-row">
               <span className="dash-inv-label">🔴 Sin Stock</span>
-              <strong className="dash-inv-val text-danger">{inventarioSummary.sinStock ?? 35}</strong>
+              <strong className="dash-inv-val text-danger">{inventarioSummary.sinStock ?? 0}</strong>
             </li>
           </ul>
           <Link to="/rrhh-inventario" className="dash-bottom-link">
@@ -779,23 +777,24 @@ export function Dashboard() {
               <option>Este mes</option>
             </select>
           </div>
-          <ul className="dash-list">
-            {(topProductos.length > 0 ? topProductos : [
-              { nombre: 'Paracetamol 500mg (Caja 100)', precio: 125, unidades: 140, img: '💊' },
-              { nombre: 'Amoxicilina 500mg (Frasco)', precio: 220, unidades: 110, img: '💊' },
-              { nombre: 'Alcohol 70% Desnaturalizado', precio: 85, unidades: 95, img: '🧪' },
-              { nombre: 'Vitamina C 1000mg Efervescente', precio: 340, unidades: 75, img: '📦' },
-            ]).slice(0, 4).map((p, i) => (
-              <li key={i} className="dash-list-item">
-                <div className="dash-prod-thumb">{p.img || '📦'}</div>
-                <div className="dash-item-content">
-                  <span className="dash-item-title">{p.nombre}</span>
-                  <span className="dash-item-sub">{fmtMoney(p.precio)}</span>
-                </div>
-                <span className="dash-prod-units">{p.unidades} uds.</span>
-              </li>
-            ))}
-          </ul>
+          {topProductos.length === 0 ? (
+            <div style={{ padding: '32px 12px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+              <span>📦 No hay productos registrados en catálogo</span>
+            </div>
+          ) : (
+            <ul className="dash-list">
+              {topProductos.slice(0, 4).map((p, i) => (
+                <li key={i} className="dash-list-item">
+                  <div className="dash-prod-thumb">{p.img || '📦'}</div>
+                  <div className="dash-item-content">
+                    <span className="dash-item-title">{p.nombre}</span>
+                    <span className="dash-item-sub">{fmtMoney(p.precio)}</span>
+                  </div>
+                  <span className="dash-prod-units">{p.unidades} uds.</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <Link to="/ventas" className="dash-bottom-link">
             Ver todos los productos →
           </Link>
@@ -813,29 +812,29 @@ export function Dashboard() {
             <div className="dash-fin-row">
               <span className="dash-fin-label">Ingresos</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.ingresos?.value ?? 1250000)}</strong>
-                <span className="dash-pct-tag success">↑ 12.5%</span>
+                <strong>{fmtMoney(financieroSummary.ingresos?.value ?? 0)}</strong>
+                <span className="dash-pct-tag success">0%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Gastos</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.gastos?.value ?? 850000)}</strong>
-                <span className="dash-pct-tag danger">↓ 5.2%</span>
+                <strong>{fmtMoney(financieroSummary.gastos?.value ?? 0)}</strong>
+                <span className="dash-pct-tag danger">0%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Utilidad Neta</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.utilidad?.value ?? 400000)}</strong>
-                <span className="dash-pct-tag success">↑ 18.7%</span>
+                <strong>{fmtMoney(financieroSummary.utilidad?.value ?? 0)}</strong>
+                <span className="dash-pct-tag success">0%</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Margen de Beneficio</span>
               <div className="dash-fin-values">
-                <strong>{financieroSummary.margen?.value ?? 32}%</strong>
-                <span className="dash-pct-tag success">↑ 6.2%</span>
+                <strong>{financieroSummary.margen?.value ?? 0}%</strong>
+                <span className="dash-pct-tag success">0%</span>
               </div>
             </div>
           </div>
@@ -922,205 +921,6 @@ export function Dashboard() {
             Personaliza tus accesos rápidos en ajustes →
           </span>
         </div>
-      </div>
-
-      {/* ── Sección Institucional & Pie de Página Corporativo ── */}
-      <div className="dash-corporate-section">
-        {/* Banner de Identidad Corporativa: Misión, Visión y Valores */}
-        <div className="dash-corporate-card">
-          <div className="dash-corporate-header">
-            <div className="dash-corporate-badge">
-              <span>🏢</span> IDENTIDAD & CULTURA CORPORATIVA
-            </div>
-            <h2 className="dash-corporate-title">Misión, Visión y Valores Empresariales</h2>
-            <p className="dash-corporate-desc">
-              Impulsando la transformación digital y la excelencia operativa de las organizaciones mediante tecnología de clase mundial.
-            </p>
-          </div>
-
-          <div className="dash-mv-grid">
-            {/* Tarjeta de Misión */}
-            <div className="dash-mv-card mission">
-              <div className="dash-mv-icon-wrap">
-                <span className="dash-mv-icon">🎯</span>
-                <span className="dash-mv-tag">Propósito Fundamental</span>
-              </div>
-              <h3 className="dash-mv-heading">Nuestra Misión</h3>
-              <p className="dash-mv-text">
-                Proveer a las empresas una suite de gestión empresarial inteligente, escalable e integrada que automatice procesos críticos, optimice la toma de decisiones basada en datos y potencie la productividad de cada equipo de trabajo.
-              </p>
-            </div>
-
-            {/* Tarjeta de Visión */}
-            <div className="dash-mv-card vision">
-              <div className="dash-mv-icon-wrap">
-                <span className="dash-mv-icon">🔭</span>
-                <span className="dash-mv-tag">Destino Estratégico</span>
-              </div>
-              <h3 className="dash-mv-heading">Nuestra Visión</h3>
-              <p className="dash-mv-text">
-                Consolidarnos como la plataforma ERP en la nube y ecosistema de inteligencia de negocios líder en la República Dominicana y el Caribe, reconocida por su innovación continua, seguridad de nivel bancario y excelencia en el servicio al cliente.
-              </p>
-            </div>
-          </div>
-
-          {/* Valores Corporativos */}
-          <div className="dash-values-wrapper">
-            <div className="dash-values-header">
-              <span className="dash-values-title">✨ Nuestros Valores Fundamentales</span>
-            </div>
-            <div className="dash-values-grid">
-              <div className="dash-val-item">
-                <div className="dash-val-icon-box blue">💡</div>
-                <div className="dash-val-content">
-                  <strong>Innovación Continua</strong>
-                  <p>Desarrollamos soluciones vanguardistas adaptadas a los retos empresariales del futuro.</p>
-                </div>
-              </div>
-
-              <div className="dash-val-item">
-                <div className="dash-val-icon-box green">🛡️</div>
-                <div className="dash-val-content">
-                  <strong>Integridad & Seguridad</strong>
-                  <p>Protegemos la confidencialidad, trazabilidad y máxima seguridad de cada dato corporativo.</p>
-                </div>
-              </div>
-
-              <div className="dash-val-item">
-                <div className="dash-val-icon-box purple">🤝</div>
-                <div className="dash-val-content">
-                  <strong>Compromiso con el Cliente</strong>
-                  <p>Acompañamos estratégicamente a cada organización para asegurar su éxito y crecimiento continuo.</p>
-                </div>
-              </div>
-
-              <div className="dash-val-item">
-                <div className="dash-val-icon-box orange">⚡</div>
-                <div className="dash-val-content">
-                  <strong>Agilidad & Eficiencia</strong>
-                  <p>Optimizamos tiempos de respuesta y simplificamos operaciones complejas con fluidez.</p>
-                </div>
-              </div>
-
-              <div className="dash-val-item">
-                <div className="dash-val-icon-box pink">🏆</div>
-                <div className="dash-val-content">
-                  <strong>Excelencia & Calidad</strong>
-                  <p>Mantenemos los más altos estándares globales en ingeniería de software y soporte técnico.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Ubicación & Canales de Contacto Directo */}
-        <div className="dash-location-grid">
-          {/* Tarjeta de Ubicación Geográfica */}
-          <div className="card dash-location-card">
-            <div className="dash-card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 18 }}>📍</span>
-                <strong>Sede Principal & Ubicación</strong>
-              </div>
-              <span className="dash-status-pill green">Sede Operativa</span>
-            </div>
-
-            <div className="dash-location-body">
-              <div className="dash-location-address-box">
-                <div className="dash-location-icon">🏢</div>
-                <div className="dash-location-info">
-                  <strong>APPEX Technologies & Enterprise Suite</strong>
-                  <p>Av. Winston Churchill #109, Torre Empresarial Blue Mall, Piso 14, Sector Piantini, Santo Domingo, Distrito Nacional, República Dominicana.</p>
-                  <span className="dash-location-postal">Código Postal: 10148 · Coordenadas: 18.4721° N, 69.9405° W</span>
-                </div>
-              </div>
-
-              <div className="dash-sedes-row">
-                <div className="dash-sede-chip active">
-                  <span className="sede-dot" /> Santo Domingo (Headquarters)
-                </div>
-                <div className="dash-sede-chip">
-                  <span className="sede-dot" /> Santiago de los Caballeros (Tech Hub)
-                </div>
-                <div className="dash-sede-chip">
-                  <span className="sede-dot" /> Miami, FL (Enlace Internacional)
-                </div>
-              </div>
-
-              <div className="dash-location-actions">
-                <a
-                  href="https://maps.google.com/?q=Torre+Empresarial+Blue+Mall+Santo+Domingo"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="dash-maps-btn"
-                >
-                  🗺️ Abrir Ubicación en Google Maps
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Tarjeta de Contacto y Horarios */}
-          <div className="card dash-location-card">
-            <div className="dash-card-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 18 }}>📞</span>
-                <strong>Contacto & Soporte Corporativo</strong>
-              </div>
-              <span className="dash-status-pill blue">Atención 24/7</span>
-            </div>
-
-            <div className="dash-contact-list">
-              <div className="dash-contact-item">
-                <div className="dash-contact-icon">📱</div>
-                <div>
-                  <span className="dash-contact-label">Central Telefónica / PBX</span>
-                  <strong className="dash-contact-val">+1 (809) 555-0199 / +1 (809) 555-0200</strong>
-                </div>
-              </div>
-
-              <div className="dash-contact-item">
-                <div className="dash-contact-icon">✉️</div>
-                <div>
-                  <span className="dash-contact-label">Correo Electrónico Oficial</span>
-                  <strong className="dash-contact-val">contacto@appes.erp · soporte@appes.erp</strong>
-                </div>
-              </div>
-
-              <div className="dash-contact-item">
-                <div className="dash-contact-icon">🕒</div>
-                <div>
-                  <span className="dash-contact-label">Horario de Operaciones</span>
-                  <strong className="dash-contact-val">Lunes a Viernes: 8:00 AM – 6:00 PM | Sábados: 9:00 AM – 1:00 PM</strong>
-                </div>
-              </div>
-
-              <div className="dash-contact-item">
-                <div className="dash-contact-icon">🛡️</div>
-                <div>
-                  <span className="dash-contact-label">Soporte Técnico de Emergencia</span>
-                  <strong className="dash-contact-val">Mesa de ayuda crítica y monitoreo de servidores activo 24/7</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Barra de Pie de Página Final del Sistema ── */}
-        <footer className="dash-footer-bar">
-          <div className="dash-footer-left">
-            <span className="dash-footer-logo">APPEX.ERP</span>
-            <span className="dash-footer-version">Enterprise Suite · v2026.4.0</span>
-            <span className="dash-footer-divider">|</span>
-            <span className="dash-footer-uptime">
-              <span className="uptime-dot" /> Todos los sistemas operativos (99.99% Uptime)
-            </span>
-          </div>
-
-          <div className="dash-footer-right">
-            <span>© 2026 APPEX Technologies SRL. Todos los derechos reservados.</span>
-          </div>
-        </footer>
       </div>
     </div>
   )
