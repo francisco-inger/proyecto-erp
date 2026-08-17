@@ -37,36 +37,42 @@ export const ventasService = {
   },
 
   createOrder: async (order) => {
+    let created = null
     try {
       const res = await apiClient.post('/sales/orders', order)
-      if (res) return res
+      if (res && res.id) created = res
     } catch (_) {}
-    const current = getLocalOrders()
-    const newOrder = {
-      ...order,
-      id: String(Date.now()),
-      numero: `PED-${Math.floor(1000 + Math.random() * 9000)}`,
-      fecha: order.fecha || new Date().toISOString().slice(0, 10),
-      fechaCreacion: new Date().toISOString(),
-      estado: order.estado || 'Pendiente',
+
+    if (!created) {
+      created = {
+        ...order,
+        id: String(Date.now()),
+        numero: order.numero || `PED-${Math.floor(1000 + Math.random() * 9000)}`,
+        fecha: order.fecha || new Date().toISOString().slice(0, 10),
+        fechaCreacion: new Date().toISOString(),
+        estado: order.estado || 'Pendiente',
+        total: Number(order.total) || 0,
+      }
     }
-    const updated = [newOrder, ...current]
+    const current = getLocalOrders()
+    const updated = [created, ...current.filter(o => o.id !== created.id)]
     saveLocalOrders(updated)
-    erpSync.syncSaleOrder(newOrder, 'create')
-    return newOrder
+    erpSync.syncSaleOrder(created, 'create')
+    return created
   },
 
   updateOrderStatus: async (id, estado) => {
+    let updatedObj = null
     try {
       const res = await apiClient.patch(`/sales/orders/${id}/status`, { estado })
-      if (res) return res
+      if (res && res.id) updatedObj = res
     } catch (_) {}
+
     const current = getLocalOrders()
-    let updatedObj = null
     const updated = current.map(o => {
-      if (o.id === id) {
+      if (String(o.id) === String(id)) {
         const item = { ...o, estado }
-        updatedObj = item
+        if (!updatedObj) updatedObj = item
         return item
       }
       return o
