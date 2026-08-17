@@ -134,15 +134,39 @@ export function getEmpresaActiva() {
     const userRaw = localStorage.getItem('erp_user')
     const user = userRaw ? JSON.parse(userRaw) : null
 
-    // 1. Si existe configuración de empresa guardada para este tenant
-    const settings = getTenantData('appes_erp_global_settings_v2', null) || (() => {
-      try {
-        const raw = localStorage.getItem('appes_erp_global_settings_v2')
-        return raw ? JSON.parse(raw) : {}
-      } catch (_) { return {} }
-    })()
+    // Si el usuario en sesión es Administrador principal del sistema o del dominio principal
+    const tenantId = getActiveTenantId()
+    const isGlobalAdmin = (
+      tenantId === 'usr-admin-global' ||
+      tenantId === 'usr-1' ||
+      tenantId === 'usr-2' ||
+      tenantId === 'usr-3' ||
+      tenantId === 'usr-4' ||
+      tenantId === 'usr-5' ||
+      tenantId === 'usr-6' ||
+      tenantId === 'usr-7' ||
+      (user?.email && user.email.toLowerCase().endsWith('@appes.com')) ||
+      (user?.role === 'ADMIN' && (!user?.companyName || user.companyName === 'General' || user.companyName === 'Tecnología' || user.companyName === 'el punto aquel'))
+    )
 
-    const nombreEmpresa = settings.razonSocial || settings.nombreComercial || user?.departamento || user?.name || 'Mi Empresa'
+    if (isGlobalAdmin) {
+      return {
+        razonSocial: 'APPEX Dominicana SRL',
+        nombreComercial: 'APPEX ERP',
+        rnc: '1-31-89023-4',
+        telefono: '(809) 555-0100',
+        direccion: 'Torre Empresarial Blue Mall, Piso 14, Piantini, Santo Domingo',
+        email: 'contacto@appes.com',
+        ciudad: 'Santo Domingo',
+        moneda: 'DOP',
+        sector: 'Tecnología & Enterprise',
+      }
+    }
+
+    // 1. Si existe configuración de empresa guardada para este tenant específico
+    const settings = getTenantData('appes_erp_global_settings_v2', null) || {}
+
+    const nombreEmpresa = settings.razonSocial || settings.nombreComercial || user?.companyName || user?.departamento || 'Mi Empresa'
     const rnc = settings.rnc || '1-31-00000-0'
     const telefono = settings.telefono || settings.telefonoPrincipal || '(809) 000-0000'
     const direccion = settings.direccion || settings.direccionFiscal || 'República Dominicana'
