@@ -147,35 +147,6 @@ export function Sidebar({ isMobileOpen, onCloseMobile, isCollapsed = false, onTo
             )}
           </div>
 
-          {/* Botón de 3 Rayitas para Plegar/Desplegar la Barra Lateral */}
-          {onToggleCollapse && (
-            <button
-              className="sidebar-collapse-toggle-btn"
-              onClick={onToggleCollapse}
-              title={isCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'}
-              aria-label="Plegar / Desplegar barra lateral"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 3,
-                width: 28,
-                height: 28,
-                background: '#F1F5F9',
-                border: '1px solid #E2E8F0',
-                borderRadius: 6,
-                cursor: 'pointer',
-                padding: 5,
-                transition: 'all 120ms ease',
-              }}
-            >
-              <span style={{ display: 'block', width: 14, height: 2, background: '#475569', borderRadius: 2 }} />
-              <span style={{ display: 'block', width: 10, height: 2, background: '#475569', borderRadius: 2 }} />
-              <span style={{ display: 'block', width: 14, height: 2, background: '#475569', borderRadius: 2 }} />
-            </button>
-          )}
-
           {/* Botón de cierre en vista móvil */}
           {onCloseMobile && (
             <button
