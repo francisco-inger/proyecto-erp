@@ -47,6 +47,25 @@ export function getActiveTenantId() {
     const userRaw = localStorage.getItem('erp_user')
     if (userRaw) {
       const user = JSON.parse(userRaw)
+      // Si es un usuario del sistema principal (admin o personal de la empresa principal)
+      const email = (user.email || '').toLowerCase()
+      if (
+        user.id === 'usr-1' ||
+        user.id === 'usr-2' ||
+        user.id === 'usr-3' ||
+        user.id === 'usr-4' ||
+        user.id === 'usr-5' ||
+        user.id === 'usr-6' ||
+        user.id === 'usr-7' ||
+        email.endsWith('@appes.com') ||
+        email === 'admin@appes.com' ||
+        email === 'francisco@appes.com' ||
+        user.role === 'ADMIN' && !user.tenantId
+      ) {
+        return 'usr-admin-global'
+      }
+
+      if (user.tenantId) return user.tenantId
       if (user.id) return user.id
       if (user.email) return user.email.toLowerCase().replace(/[^a-z0-9]/g, '_')
     }
@@ -71,9 +90,9 @@ export function getTenantData(baseKey, defaultValue = []) {
     const raw = localStorage.getItem(key)
     if (raw) return JSON.parse(raw)
     
-    // Si el usuario es el administrador general y no hay datos con prefijo, permitir fallback si existe
+    // Si el usuario es el sistema principal y no hay datos con prefijo tenant_, leer la clave base histórica
     const tenantId = getActiveTenantId()
-    if (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') {
+    if (tenantId === 'usr-admin-global' || tenantId.startsWith('usr-1') || tenantId.startsWith('usr-2')) {
       const legacyRaw = localStorage.getItem(baseKey)
       if (legacyRaw) return JSON.parse(legacyRaw)
     }
