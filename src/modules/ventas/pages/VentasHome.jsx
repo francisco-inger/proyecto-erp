@@ -99,9 +99,9 @@ export function VentasHome() {
   }
 
   // Métricas KPI
-  const ventasEsteMes = 0.00
-  const totalPedidos = orders.length
   const ventasAcumuladas = orders.reduce((acc, curr) => acc + (Number(curr.total) || 0), 0)
+  const ventasEsteMes = ventasAcumuladas
+  const totalPedidos = orders.length
   const clientesUnicos = new Set(orders.map(o => o.cliente)).size
 
   // Selección de Producto del Inventario
