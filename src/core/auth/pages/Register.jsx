@@ -72,6 +72,10 @@ export function Register() {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
   }
 
+  function updatePayment(field) {
+    return (e) => setPaymentForm((p) => ({ ...p, [field]: e.target.value }))
+  }
+
   // ── Máscaras de Entrada para Pago ──
   function handleCardNumberChange(e) {
     const raw = e.target.value.replace(/\D/g, '').slice(0, 16)
