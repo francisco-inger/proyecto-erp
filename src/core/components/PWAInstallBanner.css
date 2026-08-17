@@ -1,0 +1,183 @@
+/* PWA Install Banner & Offline Toast Styles */
+
+.pwa-offline-alert {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #DC2626;
+  color: #FFFFFF;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.4);
+  z-index: 9999;
+  animation: pwaSlideDown 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pwa-online-restored-alert {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #16A34A;
+  color: #FFFFFF;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px -5px rgba(22, 163, 74, 0.4);
+  z-index: 9999;
+  animation: pwaSlideDown 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pwa-floating-install-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  z-index: 1050;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 200ms ease;
+  backdrop-filter: blur(8px);
+}
+
+.pwa-floating-install-pill:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 20px 35px rgba(37, 99, 235, 0.45);
+}
+
+.pwa-pill-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin-left: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwa-pill-close:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Modal Instructivo iOS */
+.pwa-ios-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.pwa-ios-modal {
+  background: #FFFFFF;
+  border-radius: 20px;
+  max-width: 440px;
+  width: 100%;
+  padding: 26px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: pwaPopIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.pwa-ios-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E2E8F0;
+}
+
+.pwa-ios-steps {
+  text-align: left;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.pwa-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pwa-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@keyframes pwaSlideDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes pwaPopIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .pwa-floating-install-pill {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+    justify-content: center;
+  }
+}

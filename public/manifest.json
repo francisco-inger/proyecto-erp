@@ -1,7 +1,27 @@
 {
-  "short_name": "APPEX ERP",
+  "id": "/appex-erp",
   "name": "APPEX Enterprise Suite ERP",
-  "description": "Sistema de Gestión y Control Empresarial Integral",
+  "short_name": "APPEX ERP",
+  "description": "Sistema de Gestión y Control Empresarial Integral — Facturación DGII, Inventario, Finanzas, RRHH y CRM",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#0F172A",
+  "theme_color": "#1E3A8A",
+  "orientation": "any",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": [
+    "business",
+    "productivity",
+    "finance",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/branding/logo_appex.jpg",
@@ -16,10 +36,42 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
-  "background_color": "#0F172A",
-  "theme_color": "#1E3A8A",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "scope": "/"
+  "shortcuts": [
+    {
+      "name": "Dashboard General",
+      "short_name": "Dashboard",
+      "description": "Acceso directo al panel principal de control",
+      "url": "/dashboard",
+      "icons": [{ "src": "/branding/logo_appex.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ventas & Facturación",
+      "short_name": "Ventas",
+      "description": "Emisión de facturas y control de cobros",
+      "url": "/ventas",
+      "icons": [{ "src": "/branding/logo_appex.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inventario & Stock",
+      "short_name": "Inventario",
+      "description": "Catálogo de productos, stock y almacenes",
+      "url": "/rrhh-inventario?tab=Productos",
+      "icons": [{ "src": "/branding/logo_appex.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Finanzas & Flujo",
+      "short_name": "Finanzas",
+      "description": "Cuentas bancarias, ingresos y gastos",
+      "url": "/finanzas",
+      "icons": [{ "src": "/branding/logo_appex.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Clientes (CRM)",
+      "short_name": "CRM",
+      "description": "Gestión de clientes y prospectos",
+      "url": "/crm",
+      "icons": [{ "src": "/branding/logo_appex.jpg", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

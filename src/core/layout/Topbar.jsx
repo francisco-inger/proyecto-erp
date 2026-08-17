@@ -7,9 +7,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { usePWA } from '../hooks/usePWA'
 
 export function Topbar({ onToggleMobileMenu }) {
   const { user, logout } = useAuth()
+  const { isInstallable, isInstalled, promptInstall } = usePWA()
   const navigate = useNavigate()
 
   // Estados interactivos
@@ -633,6 +635,19 @@ export function Topbar({ onToggleMobileMenu }) {
                 >
                   <span>💻</span> Diagnóstico del Sistema
                 </button>
+
+                {!isInstalled && isInstallable && (
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false)
+                      promptInstall()
+                    }}
+                    className="fn-popover-item"
+                    style={{ color: '#2563EB', fontWeight: 700 }}
+                  >
+                    <span>📲</span> Instalar App Nativa (PWA)
+                  </button>
+                )}
 
                 <div className="fn-popover-divider" />
 

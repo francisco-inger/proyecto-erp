@@ -5,6 +5,7 @@ import { canAccess } from '../rbac/permissions'
 import { getEnabledModules } from '../moduleRegistry'
 import { getEmpresaActiva } from '../utils/formatters'
 import { AdquisicionPlanesModal } from '../components/AdquisicionPlanesModal'
+import { usePWA } from '../hooks/usePWA'
 
 /* Orden y íconos del sidebar, alineados al mockup del proyecto */
 const MODULE_ICONS = {
@@ -113,6 +114,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
   })
 
   const currentTab = searchParams.get('tab') || 'Resumen'
+  const { isInstallable, isInstalled, promptInstall } = usePWA()
 
   const toggleSubmenu = (modId, e) => {
     e.preventDefault()
@@ -273,6 +275,40 @@ export function Sidebar({ isMobileOpen, onCloseMobile }) {
             >
               {user?.role === 'cliente' ? 'Mejorar mi Plan' : 'Gestionar Planes'}
             </button>
+
+            {!isInstalled && isInstallable && (
+              <button
+                onClick={promptInstall}
+                style={{
+                  marginTop: 8,
+                  width: '100%',
+                  background: 'rgba(37, 99, 235, 0.1)',
+                  border: '1px solid rgba(37, 99, 235, 0.3)',
+                  color: '#2563EB',
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  transition: 'all 120ms ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#2563EB'
+                  e.currentTarget.style.color = '#FFFFFF'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)'
+                  e.currentTarget.style.color = '#2563EB'
+                }}
+                title="Instalar APPEX ERP como aplicación nativa en tu ordenador o móvil"
+              >
+                <span>📲</span> Instalar App Nativa
+              </button>
+            )}
           </div>
         )
       })()}

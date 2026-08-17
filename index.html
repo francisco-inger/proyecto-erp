@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>APPEX · Sistema de Gestión Empresarial</title>
     
-    <!-- Soporte de Aplicación Móvil PWA (Android / Windows / Chrome / iOS) -->
+    <!-- Soporte de Aplicación Web Progresiva PWA (Android, iOS, Windows, Mac) -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1E3A8A" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -13,6 +13,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="APPEX ERP" />
     <link rel="apple-touch-icon" href="/branding/logo_appex.jpg" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/branding/logo_appex.jpg" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/branding/logo_appex.jpg" />
+    <meta name="msapplication-TileColor" content="#1E3A8A" />
+    <meta name="msapplication-TileImage" content="/branding/logo_appex.jpg" />
+    <meta name="application-name" content="APPEX ERP" />
+    <meta name="format-detection" content="telephone=no" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -26,7 +32,13 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {})
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((registration) => {
+              console.log('[PWA] Service Worker registrado exitosamente:', registration.scope)
+            })
+            .catch((err) => {
+              console.warn('[PWA] Error al registrar Service Worker:', err)
+            })
         })
       }
     </script>

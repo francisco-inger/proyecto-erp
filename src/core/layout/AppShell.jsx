@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { PWAInstallBanner } from '../components/PWAInstallBanner'
 
 export function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -14,6 +15,9 @@ export function AppShell() {
 
   return (
     <div className={`app-shell ${mobileMenuOpen ? 'mobile-sidebar-open' : ''}`}>
+      {/* Banner y detector de estado PWA Offline / Instalación */}
+      <PWAInstallBanner />
+
       {/* Backdrop oscuro para móvil */}
       {mobileMenuOpen && (
         <div
