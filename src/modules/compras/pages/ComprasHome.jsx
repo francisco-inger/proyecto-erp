@@ -158,13 +158,14 @@ function saveStoredCompras(data) {
 export function ComprasHome() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [ordenes, setOrdenes] = useState([])
-  const rawTab = searchParams.get('tab') || 'Todas'
+  const rawTab = searchParams.get('tab') || 'Resumen'
   const initialTab = (rawTab === 'Ordenes' || rawTab === 'Resumen' || rawTab === 'Nueva') ? 'Todas' : rawTab === 'Recepcion' ? 'Recibidas' : rawTab
 
   const [activeTab, setActiveTab] = useState(initialTab)
   const [mainView, setMainView] = useState(() => {
     if (rawTab === 'Proveedores') return 'proveedores'
     if (rawTab === 'Facturas') return 'facturas'
+    if (rawTab === 'Resumen') return 'resumen'
     return 'ordenes'
   })
 
@@ -195,7 +196,9 @@ export function ComprasHome() {
         setShowCreateModal(true)
         setMainView('ordenes')
         setActiveTab('Todas')
-      } else if (t === 'Ordenes' || t === 'Resumen') {
+      } else if (t === 'Resumen') {
+        setMainView('resumen')
+      } else if (t === 'Ordenes') {
         setMainView('ordenes')
         setActiveTab('Todas')
       } else if (t === 'Recepcion') {
@@ -891,6 +894,127 @@ export function ComprasHome() {
           </div>
         </div>
       </div>
+
+      {/* ── Vista Resumen: Dashboard de Compras ── */}
+      {mainView === 'resumen' && (
+        <div>
+          {/* KPI Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
+            {[
+              { label: 'Compras Acumuladas', value: money(ordenes.reduce((a, o) => a + (o.total || 0), 0)), icon: '💰', color: '#2563EB', bg: '#EFF6FF' },
+              { label: 'Total de Órdenes', value: ordenes.length, icon: '📋', color: '#7C3AED', bg: '#F5F3FF' },
+              { label: 'Proveedores Activos', value: new Set(ordenes.map(o => o.proveedor)).size, icon: '🏢', color: '#059669', bg: '#ECFDF5' },
+              { label: 'Pendientes / En Tránsito', value: ordenes.filter(o => o.estado === 'Pendiente' || o.estado === 'En Tránsito').length, icon: '🚚', color: '#D97706', bg: '#FFFBEB' },
+              { label: 'Órdenes Recibidas', value: ordenes.filter(o => o.estado === 'Recibida').length, icon: '✅', color: '#16A34A', bg: '#DCFCE7' },
+              { label: 'Órdenes Canceladas', value: ordenes.filter(o => o.estado === 'Cancelada').length, icon: '❌', color: '#DC2626', bg: '#FEF2F2' },
+            ].map((kpi) => (
+              <div key={kpi.label} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: kpi.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                  {kpi.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{kpi.label}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: kpi.color, lineHeight: 1 }}>{kpi.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desglose por Categoría + Últimas Órdenes */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            {/* Desglose por Categoría */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <strong style={{ fontSize: 14, color: '#0F172A', display: 'block', marginBottom: 16 }}>📊 Compras por Categoría</strong>
+              {(() => {
+                const catMap = {}
+                ordenes.forEach(o => {
+                  const cat = o.categoria || 'Sin Categoría'
+                  catMap[cat] = (catMap[cat] || 0) + (o.total || 0)
+                })
+                const total = ordenes.reduce((a, o) => a + (o.total || 0), 0)
+                const COLORS = ['#2563EB', '#7C3AED', '#059669', '#D97706', '#DC2626', '#0EA5E9']
+                return Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([cat, val], i) => {
+                  const pct = total > 0 ? Math.round((val / total) * 100) : 0
+                  return (
+                    <div key={cat} style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: '#334155', fontWeight: 600 }}>{cat}</span>
+                        <span style={{ fontSize: 12, color: '#64748B' }}>{pct}% · {money(val)}</span>
+                      </div>
+                      <div style={{ background: '#F1F5F9', borderRadius: 99, height: 6, overflow: 'hidden' }}>
+                        <div style={{ background: COLORS[i % COLORS.length], height: '100%', width: `${pct}%`, borderRadius: 99, transition: 'width 0.4s ease' }} />
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+
+            {/* Estado General de Órdenes */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <strong style={{ fontSize: 14, color: '#0F172A', display: 'block', marginBottom: 16 }}>📋 Estado General de Órdenes</strong>
+              {[
+                { estado: 'Pendiente', color: '#F59E0B', bg: '#FEF3C7' },
+                { estado: 'En Tránsito', color: '#0EA5E9', bg: '#E0F2FE' },
+                { estado: 'Recibida', color: '#16A34A', bg: '#DCFCE7' },
+                { estado: 'Cancelada', color: '#DC2626', bg: '#FEF2F2' },
+              ].map(({ estado, color, bg }) => {
+                const count = ordenes.filter(o => o.estado === estado).length
+                const total = ordenes.reduce((a, o) => a + (Number(o.total) && o.estado === estado ? o.total : 0), 0)
+                return (
+                  <div key={estado} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#334155', fontWeight: 600 }}>{estado}</span>
+                    <span style={{ background: bg, color, fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>{count} órdenes</span>
+                    <span style={{ fontSize: 12, color: '#64748B', minWidth: 90, textAlign: 'right' }}>{money(total)}</span>
+                  </div>
+                )
+              })}
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '2px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ fontSize: 13, color: '#0F172A' }}>Total Acumulado</strong>
+                <strong style={{ fontSize: 15, color: '#2563EB' }}>{money(ordenes.reduce((a, o) => a + (o.total || 0), 0))}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Últimas 5 Órdenes */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <strong style={{ fontSize: 14, color: '#0F172A' }}>🕐 Últimas Órdenes de Compra</strong>
+              <button className="compras-outline-btn" onClick={() => setMainView('ordenes')} style={{ fontSize: 12 }}>
+                Ver todas →
+              </button>
+            </div>
+            <table className="compras-table">
+              <thead>
+                <tr>
+                  <th>ID Orden</th>
+                  <th>Proveedor</th>
+                  <th>Fecha</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordenes.slice(0, 5).map(o => (
+                  <tr key={o.id}>
+                    <td><span style={{ color: '#2563EB', fontWeight: 700 }}>{o.id}</span></td>
+                    <td><strong>{o.proveedor}</strong></td>
+                    <td>{o.fecha}</td>
+                    <td><strong>{money(o.total)}</strong></td>
+                    <td>
+                      <span className={`compras-pill-badge ${o.estado.toLowerCase().replace(' ', '-').replace('á', 'a')}`}>
+                        <span className="compras-badge-dot" />
+                        {o.estado}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ── Vista Especial 1: Catálogo de Proveedores ── */}
       {mainView === 'proveedores' && (
