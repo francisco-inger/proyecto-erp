@@ -1,4 +1,5 @@
-/* rrhh.service.js — Servicio de Recursos Humanos con multi-tenant por empresa */
+import { apiClient } from '../../../core/api/apiClient'
+import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
 
 const KEY = 'rrhh_data_v1'
@@ -77,21 +78,40 @@ export const rrhhService = {
     return s.empleados
   },
   async addEmpleado(emp) {
+    try {
+      await apiClient.post('/rrhh/employees', {
+        cedula: emp.cedula || `001-${Date.now().toString().slice(-7)}-1`,
+        nombre: (emp.nombre || '').split(' ')[0] || emp.nombre,
+        apellido: (emp.nombre || '').split(' ').slice(1).join(' ') || 'Empleado',
+        email: emp.email || `empleado${Date.now()}@appes.com`,
+        telefono: emp.telefono || '(809) 555-0100',
+        departamento: emp.departamento || 'General',
+        cargo: emp.cargo || 'Especialista',
+        salario_mensual: Number(emp.salario) || 50000,
+        fecha_ingreso: emp.fechaIngreso || new Date().toISOString().slice(0, 10),
+        estado: emp.estado || 'Activo',
+      })
+    } catch (_) {}
+
     const s = getStore() || seed()
-    s.empleados.push({ ...emp, id: 'e' + Date.now() })
+    const newEmp = { ...emp, id: 'e' + Date.now() }
+    s.empleados.push(newEmp)
     saveStore(s)
+    erpSync.emit('employee_updated', { employee: newEmp })
     return s.empleados
   },
   async updateEmpleado(id, changes) {
     const s = getStore() || seed()
     s.empleados = s.empleados.map((e) => e.id === id ? { ...e, ...changes } : e)
     saveStore(s)
+    erpSync.emit('employee_updated', { id, changes })
     return s.empleados
   },
   async deleteEmpleado(id) {
     const s = getStore() || seed()
     s.empleados = s.empleados.filter((e) => e.id !== id)
     saveStore(s)
+    erpSync.emit('employee_updated', { id, deleted: true })
     return s.empleados
   },
 
