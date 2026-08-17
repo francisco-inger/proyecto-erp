@@ -24,26 +24,27 @@ export function VentasHome() {
   const [selectedId, setSelectedId] = useState(null)
   const rawTab = searchParams.get('tab') || 'Resumen'
 
-  const [statusFilter, setStatusFilter] = useState('Todos')
+  // Mapear el tab de URL a un statusFilter válido
+  const tabToFilter = (t) => {
+    if (!t || t === 'Resumen' || t === 'Nueva Venta') return 'Todos'
+    if (t === 'Facturas' || t === 'NCF') return 'Confirmado'
+    if (t === 'Cotizaciones') return 'Pendiente'
+    if (t === 'Cobros') return 'Entregado'
+    return 'Todos'
+  }
+
+  const [statusFilter, setStatusFilter] = useState(() => tabToFilter(rawTab))
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(rawTab === 'Nueva Venta')
   const [toast, setToast] = useState(null)
 
+  // Sincronizar filtro cuando cambia la tab en la URL
   useEffect(() => {
     const t = searchParams.get('tab')
-    if (t) {
-      if (t === 'Nueva Venta') {
-        setShowCreateModal(true)
-      } else if (t === 'Facturas' || t === 'NCF') {
-        setStatusFilter('Confirmado')
-      } else if (t === 'Cotizaciones') {
-        setStatusFilter('Pendiente')
-      } else if (t === 'Cobros') {
-        setStatusFilter('Entregado')
-      } else {
-        setStatusFilter('Todos')
-      }
+    if (t === 'Nueva Venta') {
+      setShowCreateModal(true)
     }
+    setStatusFilter(tabToFilter(t))
   }, [searchParams])
 
   // Integraciones con otros módulos
@@ -84,6 +85,9 @@ export function VentasHome() {
       if (data.length > 0 && !selectedId) {
         setSelectedId(data[0].id)
       }
+      // Re-apply filter from URL after data arrives (race condition fix)
+      const t = searchParams.get('tab')
+      if (t) setStatusFilter(tabToFilter(t))
     } catch (err) {
       console.warn('[VentasHome] Error loading synchronized data:', err)
     }
@@ -506,48 +510,64 @@ export function VentasHome() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map(o => (
-                <tr
-                  key={o.id}
-                  className={selectedId === o.id ? 'selected' : ''}
-                  onClick={() => setSelectedId(o.id)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td>
-                    <div className="ventas-order-cell">
-                      <span className="ventas-doc-icon">📄</span>
-                      <strong>{o.numero}</strong>
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>
+                      {statusFilter === 'Pendiente' ? '🕒' : statusFilter === 'Confirmado' ? '✅' : statusFilter === 'Entregado' ? '📦' : '📋'}
                     </div>
-                  </td>
-                  <td>{o.cliente}</td>
-                  <td>{o.fecha}</td>
-                  <td>
-                    <span className={`ventas-pill-badge ${o.estado.toLowerCase()}`}>
-                      {o.estado === 'Confirmado' && '✓ '}
-                      {o.estado === 'Enviado' && '📦 '}
-                      {o.estado === 'Entregado' && '✓ '}
-                      {o.estado === 'Pendiente' && '🕒 '}
-                      {o.estado === 'Cancelado' && '✗ '}
-                      {o.estado}
+                    <strong style={{ display: 'block', marginBottom: 4 }}>
+                      No hay registros de {statusFilter === 'Todos' ? 'pedidos' : statusFilter === 'Confirmado' ? 'facturas confirmadas' : statusFilter === 'Pendiente' ? 'cotizaciones pendientes' : statusFilter === 'Entregado' ? 'cobros entregados' : 'pedidos'} aún
+                    </strong>
+                    <span style={{ fontSize: 12 }}>
+                      Crea el primer pedido desde el botón <strong>+ Nuevo Pedido / Factura</strong>
                     </span>
                   </td>
-                  <td><strong>{money(o.total)}</strong></td>
-                  <td>
-                    <select
-                      className="ventas-action-select"
-                      value={o.estado}
-                      onClick={e => e.stopPropagation()}
-                      onChange={e => handleChangeStatus(o.id, e.target.value)}
-                    >
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Confirmado">Confirmado</option>
-                      <option value="Enviado">Enviado</option>
-                      <option value="Entregado">Entregado</option>
-                      <option value="Cancelado">Cancelado</option>
-                    </select>
-                  </td>
                 </tr>
-              ))}
+              ) : (
+                filteredOrders.map(o => (
+                  <tr
+                    key={o.id}
+                    className={selectedId === o.id ? 'selected' : ''}
+                    onClick={() => setSelectedId(o.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <td>
+                      <div className="ventas-order-cell">
+                        <span className="ventas-doc-icon">📄</span>
+                        <strong>{o.numero}</strong>
+                      </div>
+                    </td>
+                    <td>{o.cliente}</td>
+                    <td>{o.fecha}</td>
+                    <td>
+                      <span className={`ventas-pill-badge ${o.estado.toLowerCase()}`}>
+                        {o.estado === 'Confirmado' && '✓ '}
+                        {o.estado === 'Enviado' && '📦 '}
+                        {o.estado === 'Entregado' && '✓ '}
+                        {o.estado === 'Pendiente' && '🕒 '}
+                        {o.estado === 'Cancelado' && '✗ '}
+                        {o.estado}
+                      </span>
+                    </td>
+                    <td><strong>{money(o.total)}</strong></td>
+                    <td>
+                      <select
+                        className="ventas-action-select"
+                        value={o.estado}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => handleChangeStatus(o.id, e.target.value)}
+                      >
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Confirmado">Confirmado</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Entregado">Entregado</option>
+                        <option value="Cancelado">Cancelado</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
 

@@ -14,8 +14,13 @@ const SEED_ORDERS = [
 
 function getLocalOrders() {
   const tenantId = getActiveTenantId()
-  const defaultVal = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global') ? SEED_ORDERS : []
-  return getTenantData(STORAGE_KEY, defaultVal)
+  const current = getTenantData(STORAGE_KEY, null)
+  if (Array.isArray(current) && current.length > 0) {
+    return current
+  }
+  // Inicializar con pedidos seed si aún no tiene datos
+  setTenantData(STORAGE_KEY, SEED_ORDERS)
+  return SEED_ORDERS
 }
 
 function saveLocalOrders(orders) {
