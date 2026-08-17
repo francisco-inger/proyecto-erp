@@ -41,12 +41,12 @@ export function LandingPage() {
           <Link to="/" className="landing-brand">
             <img src="/branding/logo_appex.jpg" alt="APPEX Logo" className="landing-logo-img" />
             <div className="landing-brand-text">
-              APPEX<span>.MED</span>
+              APPEX<span>.ERP</span>
             </div>
           </Link>
 
           <nav className="landing-nav-links">
-            <a href="#modulos">Módulos</a>
+            <a href="#modulos">Módulos ERP</a>
             <a href="#precios">Planes & Precios</a>
             <a href="#seguridad">Seguridad Multi-Tenant</a>
             <a href="#faq">Preguntas Frecuentes</a>
@@ -65,8 +65,8 @@ export function LandingPage() {
                 <span>📲</span> Instalar App
               </button>
             )}
-            <Link to="/login" className="landing-btn-login">
-              Iniciar Sesión
+            <Link to="/login" className="landing-btn-login" style={{ fontWeight: 700 }}>
+              🔑 Ingresar al Sistema
             </Link>
             <Link to="/register" className="landing-btn-cta">
               🚀 Probar Gratis
@@ -79,15 +79,15 @@ export function LandingPage() {
       <section className="landing-hero">
         <div className="landing-hero-container">
           <div className="landing-hero-badge">
-            <span>✦</span> LA PLATAFORMA SAAS MÉDICA N°1 PARA CLÍNICAS Y CENTROS DE SALUD
+            <span>✦</span> SUITE EMPRESARIAL ERP MULTI-MODULAR PARA EMPRESAS Y NEGOCIOS
           </div>
 
           <h1 className="landing-hero-title">
-            Elimina el caos administrativo de tu clínica, reduce el ausentismo de pacientes y duplica tu rentabilidad médica.
+            Control total de tu negocio: Ventas, Facturación Fiscal DGII, Compras, Inventario y Finanzas en Tiempo Real.
           </h1>
 
           <p className="landing-hero-subtitle">
-            Centraliza en una sola plataforma en la nube la agenda multi-consultorio, expedientes clínicos digitales y facturación fiscal con NCF automatizada. Diseñado para directores médicos y administradores que exigen control absoluto y cero fricción.
+            Centraliza en una sola plataforma en la nube la gestión comercial, control multialmacén, comprobantes fiscales automatizados y tesorería con arquitectura segura multi-tenant.
           </p>
 
           <div className="landing-hero-ctas">
