@@ -15,9 +15,16 @@ export const ROLES = {
 }
 
 export const PLAN_MODULES = {
+  // Aliases unificados para soportar tanto onboarding, registro y modal de planes
   plan_startup: ['ventas', 'crm', 'rrhh-inventario', 'reportes', 'chatbot'],
+  emprendedor: ['ventas', 'crm', 'rrhh-inventario', 'reportes', 'chatbot'],
+  
   plan_profesional: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'reportes', 'chatbot'],
+  clinica: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'reportes', 'chatbot'],
+  empresarial: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'reportes', 'chatbot'],
+
   plan_enterprise: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'rrhh', 'finanzas', 'reportes', 'chatbot', 'integraciones', 'plugin-manager', 'ajustes'],
+  enterprise: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'rrhh', 'finanzas', 'reportes', 'chatbot', 'integraciones', 'plugin-manager', 'ajustes'],
 }
 
 /**
@@ -29,19 +36,27 @@ export function getActivePlan() {
     const userRaw = localStorage.getItem('erp_user')
     if (userRaw) {
       const user = JSON.parse(userRaw)
-      if (user.planContratado && PLAN_MODULES[user.planContratado]) {
+      const rawPlanId = user.planContratado || user.plan
+      if (rawPlanId && PLAN_MODULES[rawPlanId]) {
         const nombres = {
-          plan_startup: 'Plan Básico',
+          plan_startup: 'Plan Emprendedor',
+          emprendedor: 'Plan Emprendedor',
           plan_profesional: 'Plan Profesional',
+          clinica: 'Plan Empresarial Pro',
+          empresarial: 'Plan Empresarial Pro',
           plan_enterprise: 'Plan Enterprise Suite',
+          enterprise: 'Plan Enterprise Suite',
         }
+        const isEnt = rawPlanId === 'plan_enterprise' || rawPlanId === 'enterprise'
+        const isPro = rawPlanId === 'plan_profesional' || rawPlanId === 'clinica' || rawPlanId === 'empresarial'
+
         return {
-          planId: user.planContratado,
-          planNombre: nombres[user.planContratado] || 'Plan Activo',
+          planId: rawPlanId,
+          planNombre: nombres[rawPlanId] || 'Plan Activo',
           planBadge: 'Suscripción Activa',
           estado: 'Activo',
-          maxUsuarios: user.planContratado === 'plan_enterprise' ? 999 : user.planContratado === 'plan_profesional' ? 10 : 2,
-          espacioGB: user.planContratado === 'plan_enterprise' ? 50 : 10,
+          maxUsuarios: isEnt ? 999 : isPro ? 15 : 3,
+          espacioGB: isEnt ? 50 : isPro ? 20 : 5,
         }
       }
     }
