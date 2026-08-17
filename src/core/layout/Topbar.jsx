@@ -22,7 +22,15 @@ export function Topbar({ onToggleMobileMenu }) {
   const [showHelp, setShowHelp] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showPWAModal, setShowPWAModal] = useState(false)
-  const [toast, setToast] = useState(null)
+  // Reloj y Fecha en tiempo real
+  const [currentDateTime, setCurrentDateTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const searchInputRef = useRef(null)
   const notifRef = useRef(null)
@@ -337,7 +345,37 @@ export function Topbar({ onToggleMobileMenu }) {
       </div>
 
       {/* ── Acciones Derecha ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+
+        {/* ── Widget de Fecha y Hora en Tiempo Real ── */}
+        <div
+          className="topbar-datetime-widget"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+            border: '1px solid #DBEAFE',
+            padding: '5px 12px',
+            borderRadius: 10,
+            fontSize: 12,
+            color: '#1E3A8A',
+            fontWeight: 700,
+            boxShadow: '0 1px 3px rgba(37, 99, 235, 0.08)',
+            userSelect: 'none',
+          }}
+          title="Hora y Fecha oficial del Sistema en Tiempo Real"
+        >
+          <span style={{ fontSize: 14 }}>🕒</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#1E40AF', letterSpacing: '0.02em', fontVariantNumeric: 'tabular-nums' }}>
+              {currentDateTime.toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+            </span>
+            <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600, textTransform: 'capitalize' }}>
+              {currentDateTime.toLocaleDateString('es-DO', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
 
         {/* 1. Botón Escáner de Barra / QR */}
         <button
