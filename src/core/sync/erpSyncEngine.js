@@ -7,6 +7,8 @@
   - Auditoría & Notificaciones en Tiempo Real
 */
 
+import { getTenantData, setTenantData, getActiveTenantId } from '../utils/formatters'
+
 export const STORAGE_KEYS = {
   VENTAS: 'ventas_orders_v1',
   COMPRAS: 'compras_orders_v1',
@@ -21,8 +23,7 @@ export const STORAGE_KEYS = {
 
 function safeGet(key, def = []) {
   try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : def
+    return getTenantData(key, def)
   } catch {
     return def
   }
@@ -30,7 +31,7 @@ function safeGet(key, def = []) {
 
 function safeSet(key, val) {
   try {
-    localStorage.setItem(key, JSON.stringify(val))
+    setTenantData(key, val)
   } catch (e) {
     console.error(`[erpSync] Error setting ${key}:`, e)
   }

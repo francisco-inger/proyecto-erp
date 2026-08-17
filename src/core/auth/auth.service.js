@@ -145,16 +145,19 @@ export async function register({ name, email, password, company }) {
     empresaConfigurada: false,
   }
 
-  // Inicializar almacenamiento aislado y limpio para la nueva empresa del usuario
+  // Inicializar almacenamiento aislado con prefijo tenant_ para la nueva empresa registrada
   try {
-    localStorage.setItem('ventas_orders_v1', JSON.stringify([]))
-    localStorage.setItem('compras_orders_v1', JSON.stringify([]))
-    localStorage.setItem('appes_crm_clients_v1', JSON.stringify([]))
-    localStorage.setItem('appes_crm_opportunities_v1', JSON.stringify([]))
-    localStorage.setItem('appes_crm_contacts_v1', JSON.stringify([]))
-    localStorage.setItem('appes_crm_activities_v1', JSON.stringify([]))
-    localStorage.setItem('appes_finanzas_data_v1', JSON.stringify({ comprobantes: [], cuentas: [] }))
-    localStorage.setItem('appes_erp_finanzas_data_v3', JSON.stringify({ comprobantes: [], cuentas: [], presupuestos: [], conciliaciones: [] }))
+    const tenantKeyPrefix = `tenant_${nuevoUsuario.id}_`
+    localStorage.setItem(`${tenantKeyPrefix}ventas_orders_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}compras_orders_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_crm_clients_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_crm_opportunities_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_crm_contacts_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_crm_activities_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_inventory_products_v1`, JSON.stringify([]))
+    localStorage.setItem(`${tenantKeyPrefix}appes_erp_finanzas_data_v3`, JSON.stringify({ cuentas: [], comprobantes: [], presupuestos: [], conciliaciones: [] }))
+    localStorage.setItem(`${tenantKeyPrefix}rrhh_data_v1`, JSON.stringify({ empleados: [], asistencia: [], nomina: [], vacaciones: [], desempeno: [], reclutamiento: [] }))
+    localStorage.setItem(`${tenantKeyPrefix}appes_proyectos_data_v1`, JSON.stringify([]))
   } catch (_) {}
 
   // Guardar sesión para onboarding inmediato
