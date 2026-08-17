@@ -234,40 +234,38 @@ export function Topbar({ onToggleMobileMenu, isCollapsed = false, onToggleCollap
   return (
     <header className="topbar" style={{ position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Botón Hamburguesa para Móvil y Tablet */}
+        {/* Botón de 3 Rayitas (Hamburguesa Premium) para Plegar/Desplegar Menú */}
         <button
           className="topbar-hamburger-btn"
-          onClick={onToggleMobileMenu}
-          title="Menú de Navegación"
-          aria-label="Abrir Menú"
+          onClick={() => {
+            if (window.innerWidth <= 1024) {
+              onToggleMobileMenu?.()
+            } else {
+              onToggleCollapse?.()
+            }
+          }}
+          title={isCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'}
+          aria-label="Alternar barra lateral"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 4,
+            width: 36,
+            height: 36,
+            background: isCollapsed ? '#EFF6FF' : '#F8FAFC',
+            border: `1px solid ${isCollapsed ? '#BFDBFE' : '#E2E8F0'}`,
+            borderRadius: 8,
+            cursor: 'pointer',
+            padding: 8,
+            transition: 'all 150ms ease',
+          }}
         >
-          ☰
+          <span style={{ display: 'block', width: 18, height: 2, background: isCollapsed ? '#2563EB' : '#334155', borderRadius: 2, transition: 'all 150ms ease' }} />
+          <span style={{ display: 'block', width: isCollapsed ? 12 : 18, height: 2, background: isCollapsed ? '#2563EB' : '#334155', borderRadius: 2, transition: 'all 150ms ease' }} />
+          <span style={{ display: 'block', width: 18, height: 2, background: isCollapsed ? '#2563EB' : '#334155', borderRadius: 2, transition: 'all 150ms ease' }} />
         </button>
-
-        {/* Botón Plegar / Desplegar Sidebar en Escritorio */}
-        {onToggleCollapse && (
-          <button
-            className="topbar-desktop-collapse-btn"
-            onClick={onToggleCollapse}
-            title={isCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'}
-            aria-label="Plegar / Desplegar barra lateral"
-            style={{
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              borderRadius: 8,
-              padding: '6px 10px',
-              cursor: 'pointer',
-              fontSize: 14,
-              color: '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 120ms ease',
-            }}
-          >
-            {isCollapsed ? '⏭️' : '⏮️'}
-          </button>
-        )}
 
         {/* ── Búsqueda estilo Pill ── */}
         <div className="topbar-search-wrapper" style={{ position: 'relative' }}>
