@@ -364,32 +364,38 @@ export const INITIAL_FINANZAS_DATA = {
 export const finanzasService = {
   // Sincronizar con el backend o recuperar de almacenamiento local reactivo
   getData: async () => {
-    let cuentas = INITIAL_FINANZAS_DATA.cuentas
-    let comprobantes = INITIAL_FINANZAS_DATA.comprobantes
-    let presupuestos = INITIAL_FINANZAS_DATA.presupuestos
-    let conciliaciones = INITIAL_FINANZAS_DATA.conciliaciones
+    const tenantId = getActiveTenantId()
+    const isGlobalAdmin = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global')
+    const defaultState = isGlobalAdmin ? INITIAL_FINANZAS_DATA : { cuentas: [], comprobantes: [], presupuestos: [], conciliaciones: [] }
 
-    // Intento de conexión con backend API
+    let cuentas = []
+    let comprobantes = []
+    let presupuestos = []
+    let conciliaciones = []
+
+    // Sincronización con almacenamiento local de Finanzas por Tenant
     try {
-      const [resCuentas, resComprobantes] = await Promise.allSettled([
-        apiClient.get('/finanzas/cuentas'),
-        apiClient.get('/finanzas/movimientos'),
-      ])
-
-      if (resCuentas.status === 'fulfilled' && Array.isArray(resCuentas.value) && resCuentas.value.length > 0) {
-        cuentas = resCuentas.value
+      const local = getTenantData(STORAGE_KEY, null)
+      if (local) {
+        cuentas = local.cuentas || []
+        comprobantes = local.comprobantes || []
+        presupuestos = local.presupuestos || []
+        conciliaciones = local.conciliaciones || []
+      } else {
+        cuentas = defaultState.cuentas || []
+        comprobantes = defaultState.comprobantes || []
+        presupuestos = defaultState.presupuestos || []
+        conciliaciones = defaultState.conciliaciones || []
       }
-      if (resComprobantes.status === 'fulfilled' && Array.isArray(resComprobantes.value) && resComprobantes.value.length > 0) {
-        comprobantes = resComprobantes.value
-      }
-    } catch (_) {}
+    } catch (e) {
+      console.warn('Error en storage', e)
+    }
 
-    // 2. Sincronización cruzada con módulos del ERP (Ventas, Compras y Nómina RRHH)
+    // 2. Sincronización cruzada con módulos del ERP (Ventas, Compras y Nómina RRHH) usando el tenant en sesión
     try {
       // Sincronizar Ingresos generados desde Ventas
-      const rawVentas = localStorage.getItem('ventas_orders_v1')
-      if (rawVentas) {
-        const ventas = JSON.parse(rawVentas)
+      const ventas = getTenantData('ventas_orders_v1', [])
+      if (Array.isArray(ventas)) {
         ventas.forEach((v) => {
           const yaExiste = comprobantes.some((c) => c.descripcion && c.descripcion.includes(v.numero))
           if (!yaExiste && (v.estado === 'Confirmado' || v.estado === 'Entregado' || v.estado === 'Enviado')) {
@@ -402,8 +408,8 @@ export const finanzasService = {
               fecha: fechaFormateada,
               fechaRaw: v.fecha || '2025-08-12',
               descripcion: `Cobro pedido ${v.numero} - ${v.cliente}`,
-              cuenta: 'Banco Popular 960-123456',
-              cuentaId: 'cta-1',
+              cuenta: cuentas[0]?.nombre || 'Caja General',
+              cuentaId: cuentas[0]?.id || 'cta-1',
               monto: Number(v.total) || 0,
               estado: 'Aprobado',
               creadoPor: 'ventas.auto',
@@ -415,9 +421,8 @@ export const finanzasService = {
       }
 
       // Sincronizar Gastos generados desde Órdenes de Compra
-      const rawCompras = localStorage.getItem('compras_orders_v1')
-      if (rawCompras) {
-        const compras = JSON.parse(rawCompras)
+      const compras = getTenantData('compras_orders_v1', [])
+      if (Array.isArray(compras)) {
         compras.forEach((oc) => {
           const yaExiste = comprobantes.some((c) => c.descripcion && c.descripcion.includes(oc.id))
           if (!yaExiste && (oc.estado === 'Recibida' || oc.estado === 'En Tránsito')) {
@@ -428,8 +433,8 @@ export const finanzasService = {
               fecha: oc.fecha || '08/08/2025',
               fechaRaw: '2025-08-08',
               descripcion: `Pago Orden de Compra ${oc.id} - ${oc.proveedor}`,
-              cuenta: 'Banco Popular 960-123456',
-              cuentaId: 'cta-1',
+              cuenta: cuentas[0]?.nombre || 'Caja General',
+              cuentaId: cuentas[0]?.id || 'cta-1',
               monto: Number(oc.total) || 0,
               estado: 'Aprobado',
               creadoPor: 'compras.auto',
@@ -441,61 +446,35 @@ export const finanzasService = {
       }
 
       // Sincronizar Nómina Calculada desde RRHH
-      const rawRRHH = localStorage.getItem('rrhh_data_v1')
-      if (rawRRHH) {
-        const rrhhData = JSON.parse(rawRRHH)
-        if (rrhhData && Array.isArray(rrhhData.nomina)) {
-          const totalNominaCalculada = rrhhData.nomina
-            .filter((n) => n.estado === 'Calculado')
-            .reduce((acc, n) => acc + (Number(n.netoPagar) || 0), 0)
+      const rrhhData = getTenantData('rrhh_data_v1', null)
+      if (rrhhData && Array.isArray(rrhhData.nomina)) {
+        const totalNominaCalculada = rrhhData.nomina
+          .filter((n) => n.estado === 'Calculado')
+          .reduce((acc, n) => acc + (Number(n.netoPagar) || 0), 0)
 
-          if (totalNominaCalculada > 0) {
-            const yaExisteNomina = comprobantes.some((c) => c.descripcion && c.descripcion.includes('Pago de Nómina General'))
-            if (!yaExisteNomina) {
-              comprobantes.push({
-                id: 'rrhh-nom-1',
-                numero: 'EG-000099',
-                tipo: 'Gasto',
-                fecha: '15/08/2025',
-                fechaRaw: '2025-08-15',
-                descripcion: 'Pago de Nómina General RRHH quincenal',
-                cuenta: 'Banco Popular 960-123456',
-                cuentaId: 'cta-1',
-                monto: totalNominaCalculada,
-                estado: 'Aprobado',
-                creadoPor: 'rrhh.sistema',
-                categoria: 'Sueldos y Salarios',
-                clienteProveedor: 'Nómina de Empleados',
-              })
-            }
+        if (totalNominaCalculada > 0) {
+          const yaExisteNomina = comprobantes.some((c) => c.id === 'eg-nomina-rrhh-auto')
+          if (!yaExisteNomina) {
+            comprobantes.push({
+              id: 'eg-nomina-rrhh-auto',
+              numero: 'EG-NOM-001',
+              tipo: 'Gasto',
+              fecha: '15/08/2025',
+              fechaRaw: '2025-08-15',
+              descripcion: 'Pago de Nómina General RRHH quincenal',
+              cuenta: cuentas[0]?.nombre || 'Caja General',
+              cuentaId: cuentas[0]?.id || 'cta-1',
+              monto: totalNominaCalculada,
+              estado: 'Aprobado',
+              creadoPor: 'rrhh.sistema',
+              categoria: 'Sueldos y Salarios',
+              clienteProveedor: 'Nómina de Empleados',
+            })
           }
         }
       }
     } catch (e) {
       console.warn('Error sincronizando datos cruzados entre módulos', e)
-    }
-
-    // Sincronización con almacenamiento local de Finanzas por Tenant
-    try {
-      const tenantId = getActiveTenantId()
-      const isGlobalAdmin = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global')
-      const emptyState = { cuentas: [], comprobantes: [], presupuestos: [], conciliaciones: [] }
-      const defaultState = isGlobalAdmin ? INITIAL_FINANZAS_DATA : emptyState
-      
-      const local = getTenantData(STORAGE_KEY, null)
-      if (local) {
-        if (local.cuentas) cuentas = local.cuentas
-        if (local.comprobantes) comprobantes = local.comprobantes
-        if (local.presupuestos) presupuestos = local.presupuestos
-        if (local.conciliaciones) conciliaciones = local.conciliaciones
-      } else {
-        cuentas = defaultState.cuentas || []
-        comprobantes = defaultState.comprobantes || []
-        presupuestos = defaultState.presupuestos || []
-        conciliaciones = defaultState.conciliaciones || []
-      }
-    } catch (e) {
-      console.warn('Error en storage', e)
     }
 
     // Calcular en tiempo real todas las métricas para que nada sea estático
