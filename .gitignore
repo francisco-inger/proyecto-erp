@@ -3,9 +3,8 @@ dist
 .env
 .DS_Store
 .env.local
-
-# .NET
-bin/
-obj/
-*.user
-*.suo
+*.sqlite
+*.sqlite3
+*.db
+*.docx
+.vscode/
