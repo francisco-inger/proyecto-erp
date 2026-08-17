@@ -94,15 +94,12 @@ export function getTenantData(baseKey, defaultValue = []) {
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Object.keys(parsed).length > 0) return parsed
     }
     
-    // Si el usuario es el sistema principal y no hay datos con prefijo tenant_, leer la clave base histórica
-    const tenantId = getActiveTenantId()
-    if (tenantId === 'usr-admin-global' || tenantId.startsWith('usr-1') || tenantId.startsWith('usr-2')) {
-      const legacyRaw = localStorage.getItem(baseKey)
-      if (legacyRaw) {
-        const legacyParsed = JSON.parse(legacyRaw)
-        if (Array.isArray(legacyParsed) && legacyParsed.length > 0) return legacyParsed
-        if (legacyParsed && typeof legacyParsed === 'object' && !Array.isArray(legacyParsed) && Object.keys(legacyParsed).length > 0) return legacyParsed
-      }
+    // Si no hay datos con prefijo tenant_, leer la clave base compartida de la empresa
+    const legacyRaw = localStorage.getItem(baseKey)
+    if (legacyRaw) {
+      const legacyParsed = JSON.parse(legacyRaw)
+      if (Array.isArray(legacyParsed) && legacyParsed.length > 0) return legacyParsed
+      if (legacyParsed && typeof legacyParsed === 'object' && !Array.isArray(legacyParsed) && Object.keys(legacyParsed).length > 0) return legacyParsed
     }
   } catch (_) {}
   return defaultValue

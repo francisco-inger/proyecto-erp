@@ -364,9 +364,7 @@ export const INITIAL_FINANZAS_DATA = {
 export const finanzasService = {
   // Sincronizar con el backend o recuperar de almacenamiento local reactivo
   getData: async () => {
-    const tenantId = getActiveTenantId()
-    const isGlobalAdmin = (tenantId === 'usr-1' || tenantId === 'usr-2' || tenantId === 'usr-admin-global')
-    const defaultState = isGlobalAdmin ? INITIAL_FINANZAS_DATA : { cuentas: [], comprobantes: [], presupuestos: [], conciliaciones: [] }
+    const defaultState = INITIAL_FINANZAS_DATA
 
     let cuentas = []
     let comprobantes = []
