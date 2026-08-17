@@ -317,15 +317,18 @@ button, input, select {
 .sidebar-chevron-btn {
   background: none;
   border: none;
-  color: var(--color-ink-soft);
-  font-size: 13px;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 4px 6px;
   border-radius: 4px;
+  transition: all 120ms ease;
 }
 .sidebar-chevron-btn:hover {
   color: #2563EB;
-  background: #E2E8F0;
+  background: #EFF6FF;
 }
 
 /* Submenú */
