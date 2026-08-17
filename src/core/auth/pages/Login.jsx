@@ -11,8 +11,8 @@ export function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [email, setEmail] = useState('admin@appes.com')
-  const [password, setPassword] = useState('Admin2024!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [intentos, setIntentos] = useState(0)
@@ -200,7 +200,7 @@ export function Login() {
                       id="recup-email"
                       type="email"
                       required
-                      placeholder="admin@appes.com"
+                      placeholder="correo@empresa.com"
                       value={emailRecuperacion}
                       onChange={e => setEmailRecuperacion(e.target.value)}
                     />
@@ -361,7 +361,7 @@ export function Login() {
                   <input
                     id="email"
                     type="email"
-                    placeholder="admin@appes.com"
+                    placeholder="usuario@empresa.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     disabled={loading || bloqueado}
