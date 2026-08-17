@@ -16,8 +16,8 @@ export const ROLES = {
 
 export const PLAN_MODULES = {
   plan_startup: ['ventas', 'crm', 'rrhh-inventario', 'reportes', 'chatbot'],
-  plan_profesional: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'proyectos', 'reportes', 'chatbot'],
-  plan_enterprise: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'rrhh', 'finanzas', 'proyectos', 'reportes', 'chatbot', 'integraciones', 'plugin-manager', 'ajustes'],
+  plan_profesional: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'finanzas', 'reportes', 'chatbot'],
+  plan_enterprise: ['ventas', 'compras', 'crm', 'rrhh-inventario', 'rrhh', 'finanzas', 'reportes', 'chatbot', 'integraciones', 'plugin-manager', 'ajustes'],
 }
 
 /**

@@ -1123,8 +1123,35 @@ export function RrhhInventarioHome() {
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="inv-toolbar">
             <span style={{ fontWeight: 700, color: 'var(--color-ink)' }}>Kardex Valorizado (Método Promedio Ponderado)</span>
-            <button className="inv-btn-primary" onClick={() => showToastMsg('Reporte Kardex descargado')}>
-              📥 Exportar Kardex (Excel)
+            <button
+              className="inv-btn-primary"
+              onClick={() => {
+                const headers = ['Producto', 'SKU', 'Existencias', 'Costo Unit.', 'Precio Venta', 'Valor Total Stock', 'Margen %']
+                const rows = products.map(p => {
+                  const margen = p.precio > 0 ? (((p.precio - p.costo) / p.precio) * 100).toFixed(1) : '0'
+                  return [
+                    `"${p.nombre}"`,
+                    `"${p.codigo || ''}"`,
+                    p.stock,
+                    p.costo,
+                    p.precio,
+                    p.stock * p.costo,
+                    `"${margen}%"`,
+                  ]
+                })
+                const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                const url = URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.setAttribute('href', url)
+                link.setAttribute('download', `kardex_inventario_${new Date().toISOString().slice(0, 10)}.csv`)
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                showToastMsg('✅ Reporte Kardex exportado correctamente en CSV')
+              }}
+            >
+              📥 Exportar Kardex (Excel/CSV)
             </button>
           </div>
 

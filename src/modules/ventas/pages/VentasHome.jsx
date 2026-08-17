@@ -36,6 +36,8 @@ export function VentasHome() {
         setShowCreateModal(true)
       } else if (t === 'Facturas' || t === 'NCF') {
         setStatusFilter('Confirmado')
+      } else if (t === 'Cotizaciones') {
+        setStatusFilter('Pendiente')
       } else if (t === 'Cobros') {
         setStatusFilter('Entregado')
       } else {

@@ -92,7 +92,6 @@ export function Topbar({ onToggleMobileMenu }) {
     { title: 'Recursos Humanos y Nómina', path: '/rrhh', icon: '👤', cat: 'Módulos' },
     { title: 'Finanzas y Flujo de Caja', path: '/finanzas', icon: '💲', cat: 'Módulos' },
     { title: 'Clientes y CRM', path: '/crm', icon: '👥', cat: 'Módulos' },
-    { title: 'Proyectos Activos', path: '/proyectos', icon: '📁', cat: 'Módulos' },
     { title: 'Reportes y Estadísticas', path: '/reportes', icon: '📊', cat: 'Módulos' },
     { title: 'AI Chatbot Asistente', path: '/chatbot', icon: '🤖', cat: 'Inteligencia Artificial' },
     { title: 'Integraciones Externas', path: '/integraciones', icon: '🔗', cat: 'Conectores' },

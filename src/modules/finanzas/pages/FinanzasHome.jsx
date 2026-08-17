@@ -13,6 +13,8 @@ import { TransferenciasTab } from '../components/TransferenciasTab'
 import { ConciliacionesTab } from '../components/ConciliacionesTab'
 import { PresupuestoTab } from '../components/PresupuestoTab'
 import { ReportesFinancierosTab } from '../components/ReportesFinancierosTab'
+import { ImpuestosTab } from '../components/ImpuestosTab'
+import { MonedasTab } from '../components/MonedasTab'
 import './FinanzasHome.css'
 
 export function FinanzasHome() {
@@ -274,11 +276,21 @@ export function FinanzasHome() {
         />
       )}
 
-      {activeTabLower === 'presupuesto' && (
+      {(activeTabLower === 'presupuesto' || activeTabLower === 'presupuestos') && (
         <PresupuestoTab
           presupuestos={data.presupuestos}
           onNuevoPresupuesto={handleNuevoPresupuesto}
         />
+      )}
+
+      {(activeTabLower === 'impuestos' || activeTabLower === 'impuestos dgii') && (
+        <ImpuestosTab
+          comprobantes={data.comprobantes}
+        />
+      )}
+
+      {(activeTabLower === 'monedas' || activeTabLower === 'monedas & tasas') && (
+        <MonedasTab />
       )}
 
       {/* Modal para Crear Comprobante Global */}

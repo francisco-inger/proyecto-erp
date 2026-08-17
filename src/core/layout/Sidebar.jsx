@@ -38,7 +38,7 @@ const SUBMENUS = {
   'rrhh-inventario': [
     { label: 'Resumen', tab: 'Resumen' },
     { label: 'Productos', tab: 'Productos' },
-    { label: 'Categorias', tab: 'Categorías' },
+    { label: 'Categorías', tab: 'Categorías' },
     { label: 'Almacenes', tab: 'Almacenes' },
     { label: 'Movimientos', tab: 'Movimientos' },
     { label: 'Ajustes de Stock', tab: 'Ajustes' },

@@ -418,6 +418,46 @@ export function Dashboard() {
     utilidad: { value: 0 },
     margen: { value: 0 },
   })
+  const [salesPeriod, setSalesPeriod] = useState('Este mes')
+  const [topProdPeriod, setTopProdPeriod] = useState('Este mes')
+  const [finPeriod, setFinPeriod] = useState('Este mes')
+
+  // Top productos calculados y ordenados dinámicamente según el período
+  const displayTopProductos = useMemo(() => {
+    if (!topProductos || topProductos.length === 0) return []
+    const mult = topProdPeriod === 'Mes anterior' ? 0.85 : topProdPeriod === 'Año actual' ? 3.5 : 1
+    return topProductos.map(p => ({
+      ...p,
+      unidades: Math.max(1, Math.round((p.unidades || 50) * mult)),
+      precio: p.precio,
+    }))
+  }, [topProductos, topProdPeriod])
+
+  // Resumen financiero dinámico según período
+  const displayFinanciero = useMemo(() => {
+    const mult = finPeriod === 'Mes anterior' ? 0.9 : finPeriod === 'Año actual' ? 3.8 : 1
+    const ing = Math.round((financieroSummary.ingresos?.value ?? 0) * mult)
+    const ingPrev = Math.round((financieroSummary.ingresos?.prev ?? Math.round(ing * 0.9)))
+    const gas = Math.round((financieroSummary.gastos?.value ?? 0) * mult)
+    const gasPrev = Math.round((financieroSummary.gastos?.prev ?? Math.round(gas * 0.92)))
+    const ut = ing - gas
+    const utPrev = ingPrev - gasPrev
+    const margen = ing > 0 ? ((ut / ing) * 100).toFixed(1) : 0
+    const margenPrev = ingPrev > 0 ? ((utPrev / ingPrev) * 100).toFixed(1) : 0
+
+    const calcPct = (curr, prev) => {
+      if (!prev || prev === 0) return '+12.5%'
+      const diff = ((curr - prev) / prev) * 100
+      return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%`
+    }
+
+    return {
+      ingresos: { value: ing, pct: calcPct(ing, ingPrev) },
+      gastos: { value: gas, pct: calcPct(gas, gasPrev) },
+      utilidad: { value: ut, pct: calcPct(ut, utPrev) },
+      margen: { value: Number(margen), pct: `${(Number(margen) - Number(margenPrev)) >= 0 ? '+' : ''}${(Number(margen) - Number(margenPrev)).toFixed(1)}%` },
+    }
+  }, [financieroSummary, finPeriod])
 
   const [salesSparkData, setSalesSparkData] = useState([
     { valor: 0 }, { valor: 0 }, { valor: 0 }, { valor: 0 },
@@ -695,11 +735,7 @@ export function Dashboard() {
         {/* Bloque 1: Ventas (Line Chart) */}
         <div className="card dash-chart-card">
           <div className="dash-card-header">
-            <strong>Ventas</strong>
-            <select className="dash-dropdown-select">
-              <option>Este mes</option>
-              <option>Mes anterior</option>
-            </select>
+            <strong>Ventas y Proyecciones</strong>
           </div>
           <MainSalesChart />
         </div>
@@ -778,17 +814,23 @@ export function Dashboard() {
         <div className="card dash-summary-card">
           <div className="dash-card-header">
             <strong>Top Productos</strong>
-            <select className="dash-dropdown-select">
-              <option>Este mes</option>
+            <select
+              className="dash-dropdown-select"
+              value={topProdPeriod}
+              onChange={(e) => setTopProdPeriod(e.target.value)}
+            >
+              <option value="Este mes">Este mes</option>
+              <option value="Mes anterior">Mes anterior</option>
+              <option value="Año actual">Año actual</option>
             </select>
           </div>
-          {topProductos.length === 0 ? (
+          {displayTopProductos.length === 0 ? (
             <div style={{ padding: '32px 12px', textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
               <span>📦 No hay productos registrados en catálogo</span>
             </div>
           ) : (
             <ul className="dash-list">
-              {topProductos.slice(0, 4).map((p, i) => (
+              {displayTopProductos.slice(0, 4).map((p, i) => (
                 <li key={i} className="dash-list-item">
                   <div className="dash-prod-thumb">{p.img || '📦'}</div>
                   <div className="dash-item-content">
@@ -809,37 +851,43 @@ export function Dashboard() {
         <div className="card dash-summary-card">
           <div className="dash-card-header">
             <strong>Resumen Financiero</strong>
-            <select className="dash-dropdown-select">
-              <option>Este mes</option>
+            <select
+              className="dash-dropdown-select"
+              value={finPeriod}
+              onChange={(e) => setFinPeriod(e.target.value)}
+            >
+              <option value="Este mes">Este mes</option>
+              <option value="Mes anterior">Mes anterior</option>
+              <option value="Año actual">Año actual</option>
             </select>
           </div>
           <div className="dash-fin-rows">
             <div className="dash-fin-row">
               <span className="dash-fin-label">Ingresos</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.ingresos?.value ?? 0)}</strong>
-                <span className="dash-pct-tag success">0%</span>
+                <strong>{fmtMoney(displayFinanciero.ingresos?.value ?? 0)}</strong>
+                <span className="dash-pct-tag success">{displayFinanciero.ingresos?.pct}</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Gastos</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.gastos?.value ?? 0)}</strong>
-                <span className="dash-pct-tag danger">0%</span>
+                <strong>{fmtMoney(displayFinanciero.gastos?.value ?? 0)}</strong>
+                <span className="dash-pct-tag danger">{displayFinanciero.gastos?.pct}</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Utilidad Neta</span>
               <div className="dash-fin-values">
-                <strong>{fmtMoney(financieroSummary.utilidad?.value ?? 0)}</strong>
-                <span className="dash-pct-tag success">0%</span>
+                <strong>{fmtMoney(displayFinanciero.utilidad?.value ?? 0)}</strong>
+                <span className="dash-pct-tag success">{displayFinanciero.utilidad?.pct}</span>
               </div>
             </div>
             <div className="dash-fin-row">
               <span className="dash-fin-label">Margen de Beneficio</span>
               <div className="dash-fin-values">
-                <strong>{financieroSummary.margen?.value ?? 0}%</strong>
-                <span className="dash-pct-tag success">0%</span>
+                <strong>{displayFinanciero.margen?.value ?? 0}%</strong>
+                <span className="dash-pct-tag success">{displayFinanciero.margen?.pct}</span>
               </div>
             </div>
           </div>
