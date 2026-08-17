@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { EnterprisePicker } from '../../../core/components/EnterprisePickerModal'
@@ -155,15 +156,34 @@ function saveStoredCompras(data) {
 }
 
 export function ComprasHome() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [ordenes, setOrdenes] = useState([])
-  const [activeTab, setActiveTab] = useState('Todas')
+  const rawTab = searchParams.get('tab') || 'Todas'
+  const initialTab = rawTab === 'Ordenes' ? 'Todas' : rawTab === 'Nueva' ? 'Todas' : rawTab === 'Recepcion' ? 'Recibidas' : rawTab
+
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [search, setSearch] = useState('')
   const [openMenuId, setOpenMenuId] = useState(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(rawTab === 'Nueva')
   const [selectedOrden, setSelectedOrden] = useState(null)
   const [editingOrden, setEditingOrden] = useState(null)
   const [deletingOrden, setDeletingOrden] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
+
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t) {
+      if (t === 'Nueva') {
+        setShowCreateModal(true)
+      } else if (t === 'Ordenes') {
+        setActiveTab('Todas')
+      } else if (t === 'Recepcion') {
+        setActiveTab('Recibidas')
+      } else {
+        setActiveTab(t)
+      }
+    }
+  }, [searchParams])
   const [filters, setFilters] = useState({
     minTotal: '',
     maxTotal: '',

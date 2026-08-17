@@ -3,6 +3,7 @@
   Fidelidad exacta a la maqueta de referencia con funcionalidad interactiva completa.
 */
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ventasService } from '../services/ventas.service'
 import { crmService } from '../../crm/services/crm.service'
 import { inventarioService } from '../../rrhh-inventario/services/rrhhInventario.service'
@@ -18,12 +19,30 @@ function money(val) {
 }
 
 export function VentasHome() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
   const [selectedId, setSelectedId] = useState(null)
+  const rawTab = searchParams.get('tab') || 'Resumen'
+
   const [statusFilter, setStatusFilter] = useState('Todos')
   const [search, setSearch] = useState('')
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(rawTab === 'Nueva Venta')
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t) {
+      if (t === 'Nueva Venta') {
+        setShowCreateModal(true)
+      } else if (t === 'Facturas' || t === 'NCF') {
+        setStatusFilter('Confirmado')
+      } else if (t === 'Cobros') {
+        setStatusFilter('Entregado')
+      } else {
+        setStatusFilter('Todos')
+      }
+    }
+  }, [searchParams])
 
   // Integraciones con otros módulos
   const [crmClients, setCrmClients] = useState([])
