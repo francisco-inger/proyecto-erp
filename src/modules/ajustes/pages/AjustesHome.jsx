@@ -5,6 +5,7 @@ import { SeguridadView } from '../components/SeguridadView'
 import { PlanEmpresarialView } from '../components/PlanEmpresarialView'
 import { erpSync } from '../../../core/sync/erpSyncEngine'
 import { getTenantData, setTenantData, getActiveTenantId } from '../../../core/utils/formatters'
+import { setModuleEnabled } from '../../../core/moduleRegistry'
 import './AjustesHome.css'
 
 const STORAGE_SETTINGS_KEY = 'appes_erp_global_settings_v2'
@@ -44,7 +45,6 @@ const DEFAULT_SETTINGS = {
     compras: true,
     inventario: true,
     crm: true,
-    proyectos: true,
     finanzas: true,
     reportes: true,
     chatbot: true,
@@ -55,7 +55,6 @@ const DEFAULT_SETTINGS = {
   autoSyncComprasInventario: true,
   autoSyncVentasInventario: true,
   autoSyncVentasFinanzas: true,
-  autoSyncCrmProyectos: true,
   autoAlertasStockMinimo: true,
   autoBackupDiario: true,
 
@@ -821,7 +820,7 @@ export function AjustesHome() {
                 <h3 className="ajustes-panel-title">🧩 Matriz de Módulos del Sistema ERP</h3>
                 <p className="ajustes-panel-subtitle">Habilita o deshabilita los módulos del sistema según las necesidades operativas de tu empresa.</p>
               </div>
-              <span className="ajustes-badge-status green">9 / 9 Módulos Operativos</span>
+              <span className="ajustes-badge-status green">8 / 8 Módulos Operativos</span>
             </div>
 
             <div className="ajustes-modules-grid">
@@ -830,7 +829,6 @@ export function AjustesHome() {
                 { key: 'compras', name: 'Compras & Proveedores', icon: '🛍️', desc: 'Emisión de órdenes de compra, cotizaciones y control de embarques.' },
                 { key: 'inventario', name: 'Inventario & Kardex', icon: '📦', desc: 'Control de existencias multialmacén, movimientos y valoración.' },
                 { key: 'crm', name: 'CRM & Pipeline', icon: '👥', desc: 'Embudo de ventas, oportunidades, contactos y seguimiento comercial.' },
-                { key: 'proyectos', name: 'Proyectos & Tareas', icon: '🚀', desc: 'Tableros Kanban, cronogramas, hitos y rentabilidad por proyecto.' },
                 { key: 'finanzas', name: 'Finanzas & Tesorería', icon: '💳', desc: 'Flujo de caja, cuentas por cobrar/pagar y balances bancarios.' },
                 { key: 'reportes', name: 'Reportes & Analytics', icon: '📊', desc: 'Inteligencia de negocios, balances generales y exportaciones PDF/Excel.' },
                 { key: 'chatbot', name: 'Asistente IA / Chatbot', icon: '🤖', desc: 'Consultas en lenguaje natural y asistencia operativa 24/7.' },
@@ -844,12 +842,12 @@ export function AjustesHome() {
                         type="checkbox"
                         checked={settings.modulos[mod.key] ?? true}
                         onChange={e => {
-                          const updated = {
-                            ...settings.modulos,
-                            [mod.key]: e.target.checked
-                          }
+                          const isEnabled = e.target.checked
+                          const updated = { ...settings.modulos, [mod.key]: isEnabled }
                           setSettings({ ...settings, modulos: updated })
-                          showToast(`Módulo "${mod.name}" ${e.target.checked ? 'activado' : 'desactivado'}`)
+                          // Conectar con el moduleRegistry para que el Sidebar reaccione
+                          setModuleEnabled(mod.key, isEnabled)
+                          showToast(`Módulo "${mod.name}" ${isEnabled ? '✅ activado' : '⛔ desactivado'}`)
                         }}
                       />
                       <span className="ajustes-slider round"></span>
@@ -858,8 +856,8 @@ export function AjustesHome() {
                   <h4 className="ajustes-module-name">{mod.name}</h4>
                   <p className="ajustes-module-desc">{mod.desc}</p>
                   <div className="ajustes-module-footer">
-                    <span className={`ajustes-pill ${settings.modulos[mod.key] ? 'active' : 'inactive'}`}>
-                      {settings.modulos[mod.key] ? '● Activo' : '○ Inactivo'}
+                    <span className={`ajustes-pill ${settings.modulos[mod.key] !== false ? 'active' : 'inactive'}`}>
+                      {settings.modulos[mod.key] !== false ? '● Activo' : '○ Inactivo'}
                     </span>
                   </div>
                 </div>
@@ -945,24 +943,7 @@ export function AjustesHome() {
                 </label>
               </div>
 
-              <div className="ajustes-rule-item">
-                <div className="ajustes-rule-info">
-                  <div className="ajustes-rule-title">
-                    <span>👥 ➔ 🚀</span> Cierre de Oportunidad en CRM
-                  </div>
-                  <p className="ajustes-rule-desc">
-                    Al mover una oportunidad a la etapa de <strong>Cierre (Ganada)</strong>, crear automáticamente el proyecto en <strong>Proyectos</strong> y proyectar los ingresos en Finanzas.
-                  </p>
-                </div>
-                <label className="ajustes-switch">
-                  <input
-                    type="checkbox"
-                    checked={settings.autoSyncCrmProyectos}
-                    onChange={e => setSettings({ ...settings, autoSyncCrmProyectos: e.target.checked })}
-                  />
-                  <span className="ajustes-slider round"></span>
-                </label>
-              </div>
+
 
               <div className="ajustes-rule-item">
                 <div className="ajustes-rule-info">

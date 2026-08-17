@@ -82,16 +82,9 @@ const SUBMENUS = {
     { label: 'Facturas Proveedor', tab: 'Facturas' },
     { label: 'Recepción Stock', tab: 'Recepcion' },
   ],
-  proyectos: [
-    { label: 'Tablero Kanban', tab: 'Kanban' },
-    { label: 'Lista de Proyectos', tab: 'Proyectos' },
-    { label: 'Diagrama Gantt', tab: 'Gantt' },
-    { label: 'Control de Horas', tab: 'Horas' },
-    { label: 'Presupuestos', tab: 'Presupuestos' },
-  ],
 }
 
-const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','proyectos','reportes','chatbot','integraciones','plugin-manager','ajustes']
+const MODULE_ORDER = ['ventas','compras','rrhh-inventario','rrhh','finanzas','crm','reportes','chatbot','integraciones','plugin-manager','ajustes']
 
 export function Sidebar({ isMobileOpen, onCloseMobile }) {
   const { user } = useAuth()
