@@ -1056,6 +1056,135 @@ textarea {
   border-radius: 8px !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   COBERTURA UNIVERSAL DE MODO OSCURO PARA TODOS LOS MÓDULOS DEL ERP
+   Dashboard, Ventas, Compras, Inventario, CRM, Finanzas, RRHH, Proyectos, Reportes
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Contenedores de Tarjetas, KPIs, Cajas y Gráficos */
+[data-theme="dark"] .dashboard-kpi-card,
+[data-theme="dark"] .dashboard-chart-card,
+[data-theme="dark"] .dashboard-activity-card,
+[data-theme="dark"] .dashboard-card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .ventas-kpi-box,
+[data-theme="dark"] .ventas-filter-panel,
+[data-theme="dark"] .ventas-table-card,
+[data-theme="dark"] .compras-kpi-box,
+[data-theme="dark"] .compras-filter-panel,
+[data-theme="dark"] .compras-table-card,
+[data-theme="dark"] .inv-stat-card,
+[data-theme="dark"] .inv-filter-box,
+[data-theme="dark"] .inv-table-card,
+[data-theme="dark"] .crm-kpi-card,
+[data-theme="dark"] .crm-column,
+[data-theme="dark"] .crm-lead-card,
+[data-theme="dark"] .fn-kpi-card,
+[data-theme="dark"] .fn-submodule-container > div,
+[data-theme="dark"] .rrhh-card,
+[data-theme="dark"] .rrhh-filter-bar,
+[data-theme="dark"] .reportes-filter-card,
+[data-theme="dark"] .reportes-chart-box,
+[data-theme="dark"] .proyectos-card,
+[data-theme="dark"] .plugin-card,
+[data-theme="dark"] .integraciones-card {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fondos secundarios, barras de filtros y contenedores de acciones */
+[data-theme="dark"] .ventas-header,
+[data-theme="dark"] .compras-header,
+[data-theme="dark"] .inv-header,
+[data-theme="dark"] .crm-header,
+[data-theme="dark"] .fn-header,
+[data-theme="dark"] .rrhh-header,
+[data-theme="dark"] .filter-bar,
+[data-theme="dark"] .search-box,
+[data-theme="dark"] .action-bar,
+[data-theme="dark"] .tab-navigation,
+[data-theme="dark"] .compras-nav-tabs,
+[data-theme="dark"] .inv-tabs-nav,
+[data-theme="dark"] .rrhh-tabs-nav {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+/* Textos secundarios y leyendas */
+[data-theme="dark"] .kpi-label,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .text-secondary,
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .helper-text {
+  color: #94A3B8 !important;
+}
+
+/* Modales y Drawers en todos los módulos */
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-body,
+[data-theme="dark"] .modal-footer,
+[data-theme="dark"] .drawer-content,
+[data-theme="dark"] .enterprise-picker-modal,
+[data-theme="dark"] .ep-modal-box,
+[data-theme="dark"] .ep-item-card {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .ep-item-card:hover {
+  background-color: #334155 !important;
+}
+
+/* Botones secundarios y de contorno */
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .btn-outline,
+[data-theme="dark"] .outline-btn,
+[data-theme="dark"] .ventas-btn-secondary,
+[data-theme="dark"] .compras-btn-secondary,
+[data-theme="dark"] .inv-btn-secondary,
+[data-theme="dark"] .crm-btn-secondary,
+[data-theme="dark"] .fn-btn-secondary {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .btn-outline:hover,
+[data-theme="dark"] .outline-btn:hover,
+[data-theme="dark"] .ventas-btn-secondary:hover,
+[data-theme="dark"] .compras-btn-secondary:hover,
+[data-theme="dark"] .inv-btn-secondary:hover,
+[data-theme="dark"] .crm-btn-secondary:hover,
+[data-theme="dark"] .fn-btn-secondary:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+/* Pestañas de sub-módulos activas en Dark Mode */
+[data-theme="dark"] .compras-tab-btn.active,
+[data-theme="dark"] .inv-tab-btn.active,
+[data-theme="dark"] .rrhh-tab-btn.active,
+[data-theme="dark"] .fn-subtab-btn.active {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #60A5FA !important;
+  border-bottom-color: #3B82F6 !important;
+}
+
+/* Badges e Insignias en Tablas */
+[data-theme="dark"] .badge-gray,
+[data-theme="dark"] .badge-light {
+  background-color: #334155 !important;
+  color: #CBD5E1 !important;
+  border-color: #475569 !important;
+}
+
 
 
 
