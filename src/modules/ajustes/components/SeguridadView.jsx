@@ -436,73 +436,75 @@ export function SeguridadView({ onShowToast }) {
               <button className="fn-modal-close-btn" onClick={() => setShowUserModal(false)}>✕</button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="fn-modal-form">
-              <div className="fn-form-row">
-                <label className="fn-form-label">Nombre Completo</label>
-                <input
-                  type="text"
-                  className="fn-form-input"
-                  placeholder="Ej. Roberto De León"
-                  value={userForm.nombre}
-                  onChange={(e) => setUserForm({ ...userForm, nombre: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="fn-form-row">
-                <label className="fn-form-label">Correo Electrónico (Login)</label>
-                <input
-                  type="email"
-                  className="fn-form-input"
-                  placeholder="roberto.deleon@appes.com"
-                  value={userForm.email}
-                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="fn-form-grid-2">
+            <form onSubmit={handleCreateUser}>
+              <div className="fn-modal-body" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="fn-form-row">
-                  <label className="fn-form-label">Contraseña Temporal</label>
+                  <label className="fn-form-label">Nombre Completo</label>
                   <input
-                    type="password"
+                    type="text"
                     className="fn-form-input"
-                    placeholder="••••••••"
-                    value={userForm.password || ''}
-                    onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                    placeholder="Ej. Roberto De León"
+                    value={userForm.nombre}
+                    onChange={(e) => setUserForm({ ...userForm, nombre: e.target.value })}
                     required
                   />
                 </div>
 
                 <div className="fn-form-row">
-                  <label className="fn-form-label">Rol del Sistema</label>
-                  <select
+                  <label className="fn-form-label">Correo Electrónico (Login)</label>
+                  <input
+                    type="email"
                     className="fn-form-input"
-                    value={userForm.rol}
-                    onChange={(e) => setUserForm({ ...userForm, rol: e.target.value })}
-                  >
-                    <option value="ADMIN">ADMIN (Acceso Total de Administrador)</option>
-                    <option value="CLIENTE">CLIENTE (Acceso a su Plan Contratado)</option>
-                    <option value="VENTAS">VENTAS (Módulo Comercial)</option>
-                    <option value="CRM">CRM (Gestión de Oportunidades)</option>
-                    <option value="RRHH">RRHH (Recursos Humanos)</option>
-                    <option value="SOPORTE">SOPORTE</option>
-                  </select>
+                    placeholder="roberto.deleon@appes.com"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="fn-form-grid-2">
+                  <div className="fn-form-row">
+                    <label className="fn-form-label">Contraseña Temporal</label>
+                    <input
+                      type="password"
+                      className="fn-form-input"
+                      placeholder="••••••••"
+                      value={userForm.password || ''}
+                      onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="fn-form-row">
+                    <label className="fn-form-label">Rol del Sistema</label>
+                    <select
+                      className="fn-form-input"
+                      value={userForm.rol}
+                      onChange={(e) => setUserForm({ ...userForm, rol: e.target.value })}
+                    >
+                      <option value="ADMIN">ADMIN (Acceso Total de Administrador)</option>
+                      <option value="CLIENTE">CLIENTE (Acceso a su Plan Contratado)</option>
+                      <option value="VENTAS">VENTAS (Módulo Comercial)</option>
+                      <option value="CRM">CRM (Gestión de Oportunidades)</option>
+                      <option value="RRHH">RRHH (Recursos Humanos)</option>
+                      <option value="SOPORTE">SOPORTE</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="fn-form-row">
+                  <label className="fn-form-label">Departamento / Empresa</label>
+                  <input
+                    type="text"
+                    className="fn-form-input"
+                    placeholder="Ej: Dirección General / Tech Solutions SRL"
+                    value={userForm.departamento}
+                    onChange={(e) => setUserForm({ ...userForm, departamento: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <div className="fn-form-row">
-                <label className="fn-form-label">Departamento / Empresa</label>
-                <input
-                  type="text"
-                  className="fn-form-input"
-                  placeholder="Ej: Dirección General / Tech Solutions SRL"
-                  value={userForm.departamento}
-                  onChange={(e) => setUserForm({ ...userForm, departamento: e.target.value })}
-                />
-              </div>
-
-              <div className="fn-modal-actions">
+              <div className="fn-modal-actions" style={{ padding: '16px 24px', borderTop: '1px solid #F1F5F9', background: '#F8FAFC', margin: 0 }}>
                 <button type="button" className="fn-btn-secondary" onClick={() => setShowUserModal(false)}>
                   Cancelar
                 </button>

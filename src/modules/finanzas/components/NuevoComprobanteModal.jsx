@@ -56,102 +56,104 @@ export function NuevoComprobanteModal({ isOpen, onClose, onSave, cuentas }) {
           <button className="fn-modal-close-btn" onClick={onClose}>✕</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="fn-modal-form">
-          {error && <div className="fn-form-error">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="fn-modal-body" style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {error && <div className="fn-form-error">{error}</div>}
 
-          <div className="fn-form-row">
-            <label className="fn-form-label">Tipo de Comprobante</label>
-            <div className="fn-tipo-selector">
-              {['Ingreso', 'Gasto', 'Transferencia'].map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  className={`fn-tipo-btn ${tipo === t ? 'selected-' + t.toLowerCase() : ''}`}
-                  onClick={() => setTipo(t)}
-                >
-                  {t === 'Ingreso' && '📈 '}
-                  {t === 'Gasto' && '📉 '}
-                  {t === 'Transferencia' && '🔄 '}
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="fn-form-row">
-            <label className="fn-form-label">Descripción o Concepto</label>
-            <input
-              type="text"
-              className="fn-form-input"
-              placeholder="Ej. Cobro factura FV-001245 / Compra de insumos"
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="fn-form-grid-2">
             <div className="fn-form-row">
-              <label className="fn-form-label">Monto (RD$)</label>
+              <label className="fn-form-label">Tipo de Comprobante</label>
+              <div className="fn-tipo-selector">
+                {['Ingreso', 'Gasto', 'Transferencia'].map((t) => (
+                  <button
+                    type="button"
+                    key={t}
+                    className={`fn-tipo-btn ${tipo === t ? 'selected-' + t.toLowerCase() : ''}`}
+                    onClick={() => setTipo(t)}
+                  >
+                    {t === 'Ingreso' && '📈 '}
+                    {t === 'Gasto' && '📉 '}
+                    {t === 'Transferencia' && '🔄 '}
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="fn-form-row">
+              <label className="fn-form-label">Descripción o Concepto</label>
               <input
-                type="number"
-                step="0.01"
-                min="0"
+                type="text"
                 className="fn-form-input"
-                placeholder="0.00"
-                value={monto}
-                onChange={(e) => setMonto(e.target.value)}
+                placeholder="Ej. Cobro factura FV-001245 / Compra de insumos"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
                 required
               />
             </div>
 
-            <div className="fn-form-row">
-              <label className="fn-form-label">Estado</label>
-              <select
-                className="fn-form-select"
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
-              >
-                <option value="Aprobado">Aprobado</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Completado">Completado</option>
-              </select>
+            <div className="fn-form-grid-2">
+              <div className="fn-form-row">
+                <label className="fn-form-label">Monto (RD$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="fn-form-input"
+                  placeholder="0.00"
+                  value={monto}
+                  onChange={(e) => setMonto(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="fn-form-row">
+                <label className="fn-form-label">Estado</label>
+                <select
+                  className="fn-form-select"
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value)}
+                >
+                  <option value="Aprobado">Aprobado</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Completado">Completado</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div className="fn-form-row">
-            <EnterprisePicker
-              label={tipo === 'Transferencia' ? 'Cuenta Origen' : 'Cuenta Financiera / Banco'}
-              required
-              value={cuenta}
-              onChange={(val) => setCuenta(val)}
-              items={listadoCuentas}
-              displayField="nombre"
-              subtitleField="tipo"
-              modalTitle="Directorio de Cuentas Bancarias y Cajas"
-              icon="🏦"
-              placeholder="Escriba o explore cuenta bancaria..."
-            />
-          </div>
-
-          {tipo === 'Transferencia' && (
             <div className="fn-form-row">
               <EnterprisePicker
-                label="Cuenta Destino"
+                label={tipo === 'Transferencia' ? 'Cuenta Origen' : 'Cuenta Financiera / Banco'}
                 required
-                value={cuentaDestino}
-                onChange={(val) => setCuentaDestino(val)}
+                value={cuenta}
+                onChange={(val) => setCuenta(val)}
                 items={listadoCuentas}
                 displayField="nombre"
                 subtitleField="tipo"
-                modalTitle="Directorio de Cuentas Destino"
-                icon="🔄"
-                placeholder="Escriba o explore cuenta destino..."
+                modalTitle="Directorio de Cuentas Bancarias y Cajas"
+                icon="🏦"
+                placeholder="Escriba o explore cuenta bancaria..."
               />
             </div>
-          )}
 
-          <div className="fn-modal-actions">
+            {tipo === 'Transferencia' && (
+              <div className="fn-form-row">
+                <EnterprisePicker
+                  label="Cuenta Destino"
+                  required
+                  value={cuentaDestino}
+                  onChange={(val) => setCuentaDestino(val)}
+                  items={listadoCuentas}
+                  displayField="nombre"
+                  subtitleField="tipo"
+                  modalTitle="Directorio de Cuentas Destino"
+                  icon="🔄"
+                  placeholder="Escriba o explore cuenta destino..."
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="fn-modal-actions" style={{ padding: '16px 24px', borderTop: '1px solid #F1F5F9', background: '#F8FAFC', margin: 0 }}>
             <button type="button" className="fn-btn-secondary" onClick={onClose}>
               Cancelar
             </button>

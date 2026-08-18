@@ -726,7 +726,8 @@ textarea {
 .compras-modal-box,
 .inv-modal-box,
 .ep-modal-box,
-.crm-modal-box {
+.crm-modal-box,
+.ajustes-modal-box {
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
@@ -740,6 +741,7 @@ textarea {
 .rrhh-modal-box form,
 .inv-modal-box form,
 .crm-modal-box form,
+.ajustes-modal-box form,
 .fn-modal-card form {
   display: flex !important;
   flex-direction: column !important;
@@ -754,6 +756,7 @@ textarea {
 .compras-modal-body,
 .inv-modal-body,
 .crm-modal-body,
+.ajustes-modal-body,
 .fn-modal-form {
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -767,6 +770,7 @@ textarea {
 .rrhh-modal-footer,
 .inv-modal-footer,
 .crm-modal-footer,
+.ajustes-modal-footer,
 .fn-modal-actions {
   flex-shrink: 0 !important;
   box-sizing: border-box !important;
