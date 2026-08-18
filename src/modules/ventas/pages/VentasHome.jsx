@@ -460,13 +460,254 @@ export function VentasHome() {
     printWindow.document.close()
   }
 
+  // Exportar Informe Oficial de Ventas (PDF idéntico al sistema)
+  const handleExportVentasReportPDF = () => {
+    const printWindow = window.open('', '_blank', 'width=900,height=950')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    const totalVentas = filteredOrders.reduce((acc, o) => acc + Number(o.total || 0), 0)
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Informe Oficial de Ventas & Facturación</title>
+        <meta charset="utf-8" />
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            color: #0F172A;
+            margin: 0;
+            padding: 36px;
+            background: #FFFFFF;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #2563EB;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+          }
+          .logo-title h1 {
+            margin: 0;
+            color: #1E3A8A;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+          }
+          .logo-title p {
+            margin: 4px 0 0;
+            color: #64748B;
+            font-size: 12px;
+          }
+          .badge-box {
+            text-align: right;
+          }
+          .badge-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2563EB;
+          }
+          .badge-date {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 4px;
+          }
+          .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+          }
+          .kpi-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: center;
+          }
+          .kpi-val {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1E3A8A;
+          }
+          .kpi-lbl {
+            font-size: 11px;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 4px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+          }
+          th {
+            background: #1E3A8A;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 10px 12px;
+            text-align: left;
+          }
+          td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 12px;
+          }
+          .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+          }
+          .status-completado { background: #DCFCE7; color: #16A34A; }
+          .status-enviado { background: #DBEAFE; color: #2563EB; }
+          .status-pendiente { background: #FEF3C7; color: #D97706; }
+          .status-cancelado { background: #FEE2E2; color: #DC2626; }
+          .totals-box {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 30px;
+          }
+          .totals-table {
+            width: 320px;
+          }
+          .totals-table td {
+            padding: 6px 12px;
+            border-bottom: none;
+          }
+          .total-highlight {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1E3A8A;
+            border-top: 2px solid #E2E8F0;
+          }
+          .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 20px;
+          }
+          .signature-line {
+            width: 220px;
+            border-top: 1px solid #94A3B8;
+            text-align: center;
+            font-size: 11px;
+            color: #64748B;
+            padding-top: 6px;
+          }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-title">
+            <h1>APPEX.ERP Enterprise Suite</h1>
+            <p>Dirección Comercial & Facturación Fiscal NCF · RNC: 1-30-99887-1</p>
+            <p>Av. Winston Churchill #109, Santo Domingo, D.N.</p>
+          </div>
+          <div class="badge-box">
+            <div class="badge-title">INFORME OFICIAL DE VENTAS</div>
+            <div class="badge-date">Fecha: ${new Date().toLocaleDateString('es-DO')}</div>
+            <div class="badge-date">Filtro / Estado: <strong>${statusFilter}</strong></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #059669;">RD$ ${ventasAcumuladas.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</div>
+            <div class="kpi-lbl">Ventas Acumuladas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">${filteredOrders.length}</div>
+            <div class="kpi-lbl">Órdenes Listadas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #2563EB;">${clientesUnicos}</div>
+            <div class="kpi-lbl">Clientes Únicos</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 80px;">Número</th>
+              <th>Cliente / Razón Social</th>
+              <th>Fecha</th>
+              <th>Observaciones / Concepto</th>
+              <th style="text-align: right;">Monto Total (RD$)</th>
+              <th style="text-align: center;">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredOrders.map(o => {
+              const stClass = o.estado === 'Completado' ? 'status-completado'
+                : o.estado === 'Enviado' ? 'status-enviado'
+                : o.estado === 'Cancelado' ? 'status-cancelado' : 'status-pendiente'
+              return `
+                <tr>
+                  <td><strong style="color: #2563EB;">${o.numero}</strong></td>
+                  <td><strong>${o.cliente}</strong></td>
+                  <td>${o.fecha}</td>
+                  <td>${o.observaciones || 'Venta de productos y servicios'}</td>
+                  <td style="text-align: right; font-weight: 700;">RD$ ${Number(o.total || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                  <td style="text-align: center;">
+                    <span class="status-badge ${stClass}">● ${o.estado}</span>
+                  </td>
+                </tr>
+              `
+            }).join('')}
+          </tbody>
+        </table>
+
+        <div class="totals-box">
+          <table class="totals-table">
+            <tr class="total-highlight">
+              <td>Total Facturación Listada:</td>
+              <td style="text-align: right; color: #2563EB;">RD$ ${totalVentas.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="signatures">
+          <div class="signature-line">Director Comercial / Ventas</div>
+          <div class="signature-line">Auditoría / Contraloría Fiscal</div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.open()
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    showToastMsg('Informe de ventas en PDF preparado')
+  }
+
   // Exportar pedidos a CSV
   const handleExportCSV = () => {
     const csvContent = '\uFEFF' + [
       ['Numero', 'Cliente', 'Fecha', 'Estado', 'Total DOP', 'Observaciones'].join(','),
-      ...orders.map(o => [
+      ...filteredOrders.map(o => [
         `"${o.numero}"`,
-        `"${o.cliente}"`,
+        `"${(o.cliente || '').replace(/"/g, '""')}"`,
         `"${o.fecha}"`,
         `"${o.estado}"`,
         o.total,
@@ -583,6 +824,24 @@ export function VentasHome() {
               + Nuevo Pedido / Factura
             </button>
             <button
+              onClick={handleExportVentasReportPDF}
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              📄 Exportar PDF
+            </button>
+            <button
               onClick={handleExportCSV}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
@@ -598,25 +857,7 @@ export function VentasHome() {
                 gap: 6
               }}
             >
-              📄 Exportar a CSV
-            </button>
-            <button
-              onClick={() => window.print()}
-              style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                color: '#FFFFFF',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: 8,
-                padding: '8px 16px',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
-              }}
-            >
-              🖨️ Imprimir
+              📥 Excel / CSV
             </button>
           </div>
         </div>
