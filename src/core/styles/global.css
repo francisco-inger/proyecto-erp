@@ -1185,6 +1185,126 @@ textarea {
   border-color: #475569 !important;
 }
 
+/* ── Dashboard: Integraciones, Acciones Rápidas, Productos y Actividades ── */
+[data-theme="dark"] .dash-int-box,
+[data-theme="dark"] .dash-contact-item,
+[data-theme="dark"] .dash-contact-icon {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .dash-int-title {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .dash-int-box:hover {
+  background-color: #334155 !important;
+}
+
+[data-theme="dark"] .dash-quick-card {
+  border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .dash-quick-card.blue {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #60A5FA !important;
+  border-color: rgba(37, 99, 235, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-quick-card.green {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-quick-card.orange {
+  background-color: rgba(249, 115, 22, 0.2) !important;
+  color: #FB923C !important;
+  border-color: rgba(249, 115, 22, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-quick-card.pink {
+  background-color: rgba(236, 72, 153, 0.2) !important;
+  color: #F472B6 !important;
+  border-color: rgba(236, 72, 153, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-quick-card.purple {
+  background-color: rgba(139, 92, 246, 0.2) !important;
+  color: #A78BFA !important;
+  border-color: rgba(139, 92, 246, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-quick-card.amber {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+  color: #FBBF24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+[data-theme="dark"] .dash-item-icon {
+  background-color: #1E293B !important;
+  border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .dash-prod-thumb {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .dash-prod-units {
+  background-color: #334155 !important;
+  color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] .dash-list-item,
+[data-theme="dark"] .dash-inv-row,
+[data-theme="dark"] .dash-fin-row {
+  border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] .dash-item-title,
+[data-theme="dark"] .dash-inv-val,
+[data-theme="dark"] .dash-contact-val {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .dash-item-sub,
+[data-theme="dark"] .dash-item-time,
+[data-theme="dark"] .dash-inv-label,
+[data-theme="dark"] .dash-contact-label,
+[data-theme="dark"] .dash-sub-note {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .dash-corporate-card {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .dash-corporate-title {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .dash-corporate-desc {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .dash-corporate-badge {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #60A5FA !important;
+}
+
+[data-theme="dark"] .dash-mv-card.mission {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .dash-mv-card.vision {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+
 
 
 

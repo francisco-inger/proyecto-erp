@@ -95,4 +95,18 @@
   --color-accent-light: rgba(37, 99, 235, 0.18);
   --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.6);
+
+  /* ---- Paleta de Acciones Rápidas en Modo Oscuro ---- */
+  --action-blue-bg: rgba(37, 99, 235, 0.15);
+  --action-blue-text: #60A5FA;
+  --action-green-bg: rgba(16, 185, 129, 0.15);
+  --action-green-text: #34D399;
+  --action-orange-bg: rgba(249, 115, 22, 0.15);
+  --action-orange-text: #FB923C;
+  --action-pink-bg: rgba(236, 72, 153, 0.15);
+  --action-pink-text: #F472B6;
+  --action-purple-bg: rgba(139, 92, 246, 0.15);
+  --action-purple-text: #A78BFA;
+  --action-amber-bg: rgba(245, 158, 11, 0.15);
+  --action-amber-text: #FBBF24;
 }
