@@ -151,43 +151,52 @@ export function AjustesHome() {
     const errs = {}
 
     // Empresa
-    const rncErr = validateRNC(settings.rnc)
-    if (rncErr) errs.rnc = rncErr
-
-    const emailErr = validateEmail(settings.emailCorporativo)
-    if (emailErr) errs.emailCorporativo = emailErr
-
-    const phoneErr = validatePhone(settings.telefono)
-    if (phoneErr) errs.telefono = phoneErr
-
-    if (!settings.razonSocial || settings.razonSocial.trim().length < 3) {
-      errs.razonSocial = 'La Razón Social debe tener al menos 3 caracteres'
+    if (settings.rnc) {
+      const rncErr = validateRNC(settings.rnc)
+      if (rncErr) errs.rnc = rncErr
     }
 
-    if (!settings.direccion || settings.direccion.trim().length < 5) {
-      errs.direccion = 'La Dirección Fiscal es obligatoria'
+    if (settings.emailCorporativo) {
+      const emailErr = validateEmail(settings.emailCorporativo)
+      if (emailErr) errs.emailCorporativo = emailErr
+    }
+
+    if (settings.telefono) {
+      const phoneErr = validatePhone(settings.telefono)
+      if (phoneErr) errs.telefono = phoneErr
     }
 
     // NCFs
-    const b01Err = validateNCF(settings.ncfPrefijoB01)
-    if (b01Err) errs.ncfPrefijoB01 = b01Err
+    if (settings.ncfPrefijoB01) {
+      const b01Err = validateNCF(settings.ncfPrefijoB01)
+      if (b01Err) errs.ncfPrefijoB01 = b01Err
+    }
 
-    const b02Err = validateNCF(settings.ncfPrefijoB02)
-    if (b02Err) errs.ncfPrefijoB02 = b02Err
+    if (settings.ncfPrefijoB02) {
+      const b02Err = validateNCF(settings.ncfPrefijoB02)
+      if (b02Err) errs.ncfPrefijoB02 = b02Err
+    }
 
     // Tasas
-    const usdErr = validatePositiveNumber(settings.tasaDolar, 1)
-    if (usdErr) errs.tasaDolar = usdErr
+    if (settings.tasaDolar !== undefined) {
+      const usdErr = validatePositiveNumber(settings.tasaDolar, 1)
+      if (usdErr) errs.tasaDolar = usdErr
+    }
 
-    const eurErr = validatePositiveNumber(settings.tasaEuro, 1)
-    if (eurErr) errs.tasaEuro = eurErr
+    if (settings.tasaEuro !== undefined) {
+      const eurErr = validatePositiveNumber(settings.tasaEuro, 1)
+      if (eurErr) errs.tasaEuro = eurErr
+    }
 
-    // SMTP & Notificaciones
-    if (!settings.smtpHost) errs.smtpHost = 'El Host SMTP es obligatorio'
-    const portErr = validatePositiveNumber(settings.smtpPort, 1)
-    if (portErr) errs.smtpPort = 'Puerto inválido (ej: 587, 465)'
-    const smtpEmailErr = validateEmail(settings.smtpUser)
-    if (smtpEmailErr) errs.smtpUser = smtpEmailErr
+    // SMTP
+    if (settings.smtpPort) {
+      const portErr = validatePositiveNumber(settings.smtpPort, 1)
+      if (portErr) errs.smtpPort = 'Puerto inválido (ej: 587, 465)'
+    }
+    if (settings.smtpUser) {
+      const smtpEmailErr = validateEmail(settings.smtpUser)
+      if (smtpEmailErr) errs.smtpUser = smtpEmailErr
+    }
 
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -203,6 +212,25 @@ export function AjustesHome() {
     setIsSaving(true)
     setTimeout(() => {
       setTenantData(STORAGE_SETTINGS_KEY, settings)
+      // Guardar también copia global
+      try {
+        localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+      } catch (_) {}
+
+      // Aplicar tema inmediatamente
+      if (settings.temaVisual === 'oscuro') {
+        document.documentElement.setAttribute('data-theme', 'dark')
+      } else if (settings.temaVisual === 'auto') {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (prefersDark) {
+          document.documentElement.setAttribute('data-theme', 'dark')
+        } else {
+          document.documentElement.removeAttribute('data-theme')
+        }
+      } else {
+        document.documentElement.removeAttribute('data-theme')
+      }
+
       // Aplicar estado de cada módulo al registry central
       if (settings.modulos) {
         Object.entries(settings.modulos).forEach(([modKey, isEnabled]) => {
@@ -210,9 +238,9 @@ export function AjustesHome() {
         })
       }
       setIsSaving(false)
-      showToast('💾 Configuración guardada y sincronizada globalmente')
+      showToast('💾 Preferencias y Apariencia guardadas exitosamente')
       erpSync.emit('settings:update', settings)
-    }, 400)
+    }, 250)
   }
 
   const handleLoadDemoData = () => {
