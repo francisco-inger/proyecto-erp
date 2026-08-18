@@ -1034,6 +1034,28 @@ textarea {
   color: #6EE7B7 !important;
 }
 
+/* Botón de Sincronización Cloud en Dark Mode */
+[data-theme="dark"] button[title*="Sincronización en la Nube"] {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #4ADE80 !important;
+}
+
+/* Botones de Notificación, Ayuda (?) y Ajustes (⚙️) */
+[data-theme="dark"] button[title*="Notificaciones"],
+[data-theme="dark"] button[title*="Centro de Ayuda"],
+[data-theme="dark"] button[title*="Abrir Ajustes"] {
+  background-color: transparent !important;
+  color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] button[title*="Notificaciones"]:hover,
+[data-theme="dark"] button[title*="Centro de Ayuda"]:hover,
+[data-theme="dark"] button[title*="Abrir Ajustes"]:hover {
+  background-color: #334155 !important;
+  border-radius: 8px !important;
+}
+
 
 
 
