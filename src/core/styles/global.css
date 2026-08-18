@@ -787,6 +787,158 @@ textarea {
   box-sizing: border-box;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   ESTILOS COMPLETOS DE MODO OSCURO (DATA-THEME="DARK")
+   Aplica colores oscuros armónicos a tarjetas, paneles, inputs, textos y tablas
+   ══════════════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] body,
+[data-theme="dark"] #root,
+[data-theme="dark"] .app-shell,
+[data-theme="dark"] .main-content {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .topbar {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .sidebar-brand-name,
+[data-theme="dark"] .sidebar-link-label,
+[data-theme="dark"] .topbar-user-email,
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4,
+[data-theme="dark"] .ajustes-panel-title,
+[data-theme="dark"] .ventas-panel-title,
+[data-theme="dark"] .compras-panel-title {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .sidebar-link {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .sidebar-link:hover {
+  background-color: #334155 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .sidebar-link.active {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .ajustes-card-panel,
+[data-theme="dark"] .card,
+[data-theme="dark"] .ventas-card,
+[data-theme="dark"] .compras-card,
+[data-theme="dark"] .crm-card,
+[data-theme="dark"] .rrhh-card,
+[data-theme="dark"] .inv-card,
+[data-theme="dark"] .table-container,
+[data-theme="dark"] .table-card {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .ajustes-panel-header,
+[data-theme="dark"] .ajustes-panel-footer,
+[data-theme="dark"] .fn-modal-header,
+[data-theme="dark"] .fn-modal-actions,
+[data-theme="dark"] .ajustes-tabs-bar {
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .ajustes-panel-subtitle,
+[data-theme="dark"] .ajustes-form-group label,
+[data-theme="dark"] .field label,
+[data-theme="dark"] p {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] .ajustes-form-group input,
+[data-theme="dark"] .ajustes-form-group select,
+[data-theme="dark"] .ajustes-form-group textarea,
+[data-theme="dark"] .topbar-search-wrapper input {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .ajustes-tab-btn {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .ajustes-tab-btn:hover {
+  color: #60A5FA !important;
+  background-color: #334155 !important;
+}
+
+[data-theme="dark"] .ajustes-tab-btn.active {
+  color: #60A5FA !important;
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  border-bottom-color: #3B82F6 !important;
+}
+
+[data-theme="dark"] .fn-modal-card,
+[data-theme="dark"] .rrhh-modal-box,
+[data-theme="dark"] .ventas-modal-box,
+[data-theme="dark"] .compras-modal-box,
+[data-theme="dark"] .inv-modal-box,
+[data-theme="dark"] .ep-modal-box,
+[data-theme="dark"] .crm-modal-box {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .fn-modal-actions,
+[data-theme="dark"] .ajustes-btn-secondary {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .ajustes-btn-secondary:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] table {
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] th {
+  background-color: #0F172A !important;
+  color: #CBD5E1 !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] td {
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] tr:hover td {
+  background-color: #334155 !important;
+}
+
 
 
 
