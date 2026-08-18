@@ -898,13 +898,15 @@ export function AjustesHome() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 20 }}>
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>⚡</span> Sincronización Inmediata
-                </h4>
-                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
-                  Fuerza la subida y descarga de todas las órdenes de venta, compras, productos, clientes y asientos contables.
-                </p>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>⚡</span> Sincronización Inmediata
+                  </h4>
+                  <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                    Fuerza la subida y descarga de todas las órdenes de venta, compras, productos, clientes y asientos contables.
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={async () => {
@@ -918,19 +920,21 @@ export function AjustesHome() {
                     }
                   }}
                   className="ajustes-btn-primary"
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', justifyContent: 'center' }}
                 >
                   🔄 Sincronizar Todo Ahora
                 </button>
               </div>
 
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>📤</span> Exportar BD para el Equipo
-                </h4>
-                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
-                  Genera un archivo JSON consolidado con todos los datos actuales para compartir con tus compañeros al instante.
-                </p>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>📤</span> Exportar BD para el Equipo
+                  </h4>
+                  <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                    Genera un archivo JSON consolidado con todos los datos actuales para compartir con tus compañeros al instante.
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -940,7 +944,9 @@ export function AjustesHome() {
                     const a = document.createElement('a')
                     a.href = url
                     a.download = `appex_erp_equipo_db_${new Date().toISOString().slice(0, 10)}.json`
+                    document.body.appendChild(a)
                     a.click()
+                    document.body.removeChild(a)
                     URL.revokeObjectURL(url)
                     showToast('📦 Base de datos consolidada descargada para el equipo')
                   }}
@@ -951,18 +957,20 @@ export function AjustesHome() {
                 </button>
               </div>
 
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18 }}>
-                <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>📥</span> Importar BD Compartida
-                </h4>
-                <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
-                  Carga el archivo JSON enviado por un compañero para sincronizar tu sistema de inmediato.
-                </p>
-                <label className="ajustes-btn-secondary" style={{ width: '100%', textAlign: 'center', display: 'block', cursor: 'pointer', boxSizing: 'border-box' }}>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>📥</span> Importar BD Compartida
+                  </h4>
+                  <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px', lineHeight: 1.4 }}>
+                    Carga el archivo JSON enviado por un compañero para sincronizar tu sistema de inmediato.
+                  </p>
+                </div>
+                <label className="ajustes-btn-secondary" style={{ width: '100%', textAlign: 'center', cursor: 'pointer', boxSizing: 'border-box' }}>
                   📂 Seleccionar Archivo JSON
                   <input
                     type="file"
-                    accept=".json"
+                    accept=".json,application/json"
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0]
@@ -973,8 +981,8 @@ export function AjustesHome() {
                         if (typeof content === 'string') {
                           const res = cloudSync.importTeamDatabaseJSON(content)
                           if (res.success) {
-                            showToast(`✅ Base de datos restaurada (${res.count} tablas). Actualizando vista...`)
-                            setTimeout(() => window.location.reload(), 800)
+                            showToast(`✅ Base de datos restaurada (${res.count} registros). Actualizando ERP...`)
+                            setTimeout(() => window.location.reload(), 900)
                           } else {
                             showToast(`⚠️ Error al importar: ${res.error}`, true)
                           }
@@ -1009,7 +1017,10 @@ export function AjustesHome() {
                 <input
                   type="text"
                   value={cloudSync.config.teamWorkspaceId}
-                  onChange={(e) => cloudSync.saveConfig({ teamWorkspaceId: e.target.value })}
+                  onChange={(e) => {
+                    cloudSync.saveConfig({ teamWorkspaceId: e.target.value })
+                    showToast('Espacio de trabajo guardado')
+                  }}
                 />
               </div>
 
@@ -1018,7 +1029,10 @@ export function AjustesHome() {
                 <input
                   type="text"
                   value={cloudSync.config.supabaseUrl}
-                  onChange={(e) => cloudSync.saveConfig({ supabaseUrl: e.target.value })}
+                  onChange={(e) => {
+                    cloudSync.saveConfig({ supabaseUrl: e.target.value })
+                    showToast('URL Endpoint guardado')
+                  }}
                 />
               </div>
             </div>

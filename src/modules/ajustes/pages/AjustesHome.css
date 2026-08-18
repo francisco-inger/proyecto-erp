@@ -466,6 +466,34 @@
   background: #1D4ED8;
 }
 
+.ajustes-btn-secondary {
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 140ms ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ajustes-btn-secondary:hover {
+  background: #F1F5F9;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+.ajustes-btn-secondary:active {
+  transform: scale(0.98);
+}
+
 .ajustes-outline-btn {
   background: transparent;
   color: #475569;

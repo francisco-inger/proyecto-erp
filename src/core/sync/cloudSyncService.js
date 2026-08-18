@@ -107,17 +107,38 @@ class CloudSyncService {
   async syncAllNow() {
     this.notifyStatus('syncing')
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       const collections = [
         'ventas_orders_v1',
         'compras_orders_v1',
+        'compras_proveedores_v1',
+        'compras_facturas_v1',
         'appes_inventory_products_v1',
+        'appes_inventory_movements_v1',
         'appes_crm_clients_v1',
+        'appes_crm_opportunities_v1',
         'appes_erp_finanzas_data_v3',
         'rrhh_data_v1',
         'appes_proyectos_data_v1',
+        'erp_usuarios_db_v1',
+        'appes_erp_global_settings_v2',
       ]
+
+      // Sincronizar tanto claves directas como claves con prefijo tenant_
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && (key.startsWith('appes_') || key.startsWith('tenant_') || key.startsWith('ventas_') || key.startsWith('compras_') || key.startsWith('rrhh_') || key.startsWith('erp_'))) {
+          const val = localStorage.getItem(key)
+          if (val) {
+            try {
+              this.pushCollection(key, JSON.parse(val))
+            } catch {
+              this.pushCollection(key, val)
+            }
+          }
+        }
+      }
 
       collections.forEach(colKey => {
         const localData = localStorage.getItem(colKey)
@@ -155,7 +176,7 @@ class CloudSyncService {
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
-      if (key && (key.startsWith('appes_') || key.startsWith('tenant_') || key.startsWith('ventas_') || key.startsWith('compras_') || key.startsWith('rrhh_') || key.startsWith('erp_'))) {
+      if (key && (key.startsWith('appes_') || key.startsWith('tenant_') || key.startsWith('ventas_') || key.startsWith('compras_') || key.startsWith('rrhh_') || key.startsWith('erp_') || key.startsWith('crm_') || key.startsWith('finanzas_'))) {
         try {
           exportBundle.data[key] = JSON.parse(localStorage.getItem(key))
         } catch {
@@ -172,19 +193,24 @@ class CloudSyncService {
    */
   importTeamDatabaseJSON(jsonString) {
     try {
-      const bundle = JSON.parse(jsonString)
-      if (!bundle.data) throw new Error('Formato de base de datos inválido.')
+      const bundle = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString
+      const dataPayload = bundle.data || bundle
+      if (!dataPayload || typeof dataPayload !== 'object') throw new Error('Formato de archivo de base de datos no reconocido.')
 
-      Object.entries(bundle.data).forEach(([key, val]) => {
-        if (typeof val === 'object') {
-          localStorage.setItem(key, JSON.stringify(val))
-        } else {
-          localStorage.setItem(key, String(val))
+      let count = 0
+      Object.entries(dataPayload).forEach(([key, val]) => {
+        if (key && val !== undefined) {
+          if (typeof val === 'object') {
+            localStorage.setItem(key, JSON.stringify(val))
+          } else {
+            localStorage.setItem(key, String(val))
+          }
+          count++
         }
       })
 
       this.syncAllNow()
-      return { success: true, count: Object.keys(bundle.data).length }
+      return { success: true, count }
     } catch (err) {
       return { success: false, error: err.message }
     }
