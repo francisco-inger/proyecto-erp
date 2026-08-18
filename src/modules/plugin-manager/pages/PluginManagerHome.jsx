@@ -138,6 +138,9 @@ export function PluginManagerHome() {
   const [infoPlugin, setInfoPlugin] =
     useState(null)
 
+  const [resourceModal, setResourceModal] =
+    useState(null) // 'doc' | 'dev' | 'support' | null
+
   const [configSavedToast, setConfigSavedToast] =
     useState('')
 
@@ -2213,9 +2216,11 @@ export function PluginManagerHome() {
 
             <div>
 
-              <a
-                href="#doc"
+              <div
                 className="plugins-resource-item"
+                onClick={() => setResourceModal('doc')}
+                style={{ cursor: 'pointer' }}
+                title="Ver Guías y Documentación de Plugins"
               >
                 <span className="plugins-resource-icon">
                   📖
@@ -2227,15 +2232,16 @@ export function PluginManagerHome() {
                   </span>
 
                   <span className="plugins-resource-desc">
-                    Guías y documentación
-                    oficial
+                    Guías y arquitectura oficial
                   </span>
                 </div>
-              </a>
+              </div>
 
-              <a
-                href="#dev"
+              <div
                 className="plugins-resource-item"
+                onClick={() => setResourceModal('dev')}
+                style={{ cursor: 'pointer' }}
+                title="Manual de Desarrollo de Plugins"
               >
                 <span className="plugins-resource-icon">
                   👥
@@ -2247,14 +2253,16 @@ export function PluginManagerHome() {
                   </span>
 
                   <span className="plugins-resource-desc">
-                    Crea tus propios plugins
+                    Crea tus propios plugins ZIP
                   </span>
                 </div>
-              </a>
+              </div>
 
-              <a
-                href="#soporte"
+              <div
                 className="plugins-resource-item"
+                onClick={() => setResourceModal('support')}
+                style={{ cursor: 'pointer' }}
+                title="Contactar Soporte Técnico de Plugins"
               >
                 <span className="plugins-resource-icon">
                   🎧
@@ -2266,10 +2274,10 @@ export function PluginManagerHome() {
                   </span>
 
                   <span className="plugins-resource-desc">
-                    Obtén ayuda y soporte
+                    Obtén ayuda y soporte técnico
                   </span>
                 </div>
-              </a>
+              </div>
 
             </div>
 
@@ -3028,6 +3036,140 @@ export function PluginManagerHome() {
                 onClick={() => setInfoPlugin(null)}
               >
                 Cerrar Ficha Técnica
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE RECURSOS (DOCUMENTACIÓN, DESARROLLADORES Y SOPORTE) */}
+      {resourceModal && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setResourceModal(null)
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              width: 580,
+              maxWidth: '100%',
+              padding: 26,
+              background: '#FFFFFF',
+              borderRadius: 14,
+              boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
+            }}
+          >
+            {resourceModal === 'doc' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                    📖
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                      Guías y Documentación de Plugins
+                    </h3>
+                    <span style={{ fontSize: 11, color: '#64748B' }}>Arquitectura Modular appes.erp v2.0</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20, fontSize: 13, color: '#334155', lineHeight: 1.6 }}>
+                  <div style={{ padding: 14, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <strong style={{ color: '#1E293B', display: 'block', marginBottom: 4 }}>1. Estructura del Ecosistema</strong>
+                    Cada módulo opera como un micro-frontend autónomo conectado mediante el registro central <code>core/moduleRegistry.js</code> y sincronizado con <code>erpSyncEngine</code>.
+                  </div>
+                  <div style={{ padding: 14, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <strong style={{ color: '#1E293B', display: 'block', marginBottom: 4 }}>2. Aislamiento Multi-Tenant</strong>
+                    Todos los plugins respetan las llaves de aislamiento por empresa y almacenamiento seguro persistente.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {resourceModal === 'dev' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                    👥
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                      Manual para Desarrolladores de Plugins
+                    </h3>
+                    <span style={{ fontSize: 11, color: '#64748B' }}>Creación de paquetes .ZIP compatibles</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20, fontSize: 13, color: '#334155' }}>
+                  <div style={{ padding: 14, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <strong style={{ color: '#1E293B', display: 'block', marginBottom: 6 }}>Requisitos del archivo manifest.json:</strong>
+                    <pre style={{ background: '#0F172A', color: '#38BDF8', padding: 10, borderRadius: 6, fontSize: 11, margin: 0, overflowX: 'auto' }}>
+{`{
+  "id": "mi-extension-erp",
+  "nombre": "Mi Plugin Personalizado",
+  "version": "1.0.0",
+  "categoria": "Utilidades",
+  "descripcion": "Descripción del plugin"
+}`}
+                    </pre>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: '#64748B' }}>
+                    Comprime tu código en un archivo <code>.zip</code> que contenga el <code>manifest.json</code> en la raíz y súbelo desde el botón <strong>"Subir Plugin (.ZIP)"</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {resourceModal === 'support' && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                    🎧
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+                      Mesa de Ayuda y Soporte de Plugins
+                    </h3>
+                    <span style={{ fontSize: 11, color: '#64748B' }}>Atención técnica especializada 24/7</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20, fontSize: 13 }}>
+                  <div style={{ padding: 12, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Correo de Soporte Oficial</span>
+                    <strong style={{ color: '#2563EB' }}>soporte@appes.com</strong>
+                  </div>
+                  <div style={{ padding: 12, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Teléfono y WhatsApp Corporativo</span>
+                    <strong style={{ color: '#0F172A' }}>+1 (809) 555-0199</strong>
+                  </div>
+                  <div style={{ padding: 12, background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: 11, color: '#64748B', display: 'block' }}>Ubicación</span>
+                    <strong style={{ color: '#0F172A' }}>Torre Blue Mall, Nivel 14, Piantini, Santo Domingo</strong>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setResourceModal(null)}
+              >
+                Cerrar
               </button>
             </div>
           </div>
