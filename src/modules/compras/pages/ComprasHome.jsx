@@ -177,7 +177,9 @@ export function ComprasHome() {
   const [deletingOrden, setDeletingOrden] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showNewProveedorModal, setShowNewProveedorModal] = useState(false)
+  const [showNewFacturaModal, setShowNewFacturaModal] = useState(false)
   const [proveedoresList, setProveedoresList] = useState([])
+  const [facturasList, setFacturasList] = useState([])
   const [newProveedorForm, setNewProveedorForm] = useState({
     nombre: '',
     rnc: '',
@@ -187,6 +189,20 @@ export function ComprasHome() {
     categoria: 'Insumos Generales',
     direccion: 'Santo Domingo, D.N.',
     diasCredito: 30,
+  })
+
+  const [newFacturaForm, setNewFacturaForm] = useState({
+    numeroFactura: '',
+    ncf: '',
+    proveedor: '',
+    rnc: '',
+    ordenId: '',
+    monto: '',
+    fecha: new Date().toLocaleDateString('es-DO'),
+    categoria: 'Insumos Generales',
+    estado: 'Pendiente Pago',
+    cuentaPago: 'Banco Popular 960-123456',
+    concepto: 'Factura de compras & gastos operativos',
   })
 
   useEffect(() => {
@@ -454,6 +470,125 @@ export function ComprasHome() {
       setSelectedOrden(prev => ({ ...prev, estado: newStatus, entregado: newStatus === 'Recibida' ? today : '—' }))
     }
     showToastMsg(`Estado de ${id} actualizado a: ${newStatus} (Sincronizado)`)
+  }
+
+  // Guardar nuevo Proveedor con validación y persistencia
+  const handleCreateProveedor = (e) => {
+    e.preventDefault()
+    if (!newProveedorForm.nombre.trim()) {
+      showToastMsg('⚠️ El nombre o razón social del proveedor es obligatorio')
+      return
+    }
+
+    const nextId = `PRV-${String(proveedoresList.length + 1).padStart(3, '0')}`
+    const nuevo = {
+      id: nextId,
+      nombre: newProveedorForm.nombre.trim(),
+      rnc: newProveedorForm.rnc.trim() || '1-01-' + Math.floor(10000 + Math.random() * 90000) + '-1',
+      contacto: newProveedorForm.contacto.trim() || 'Representante Comercial',
+      telefono: newProveedorForm.telefono.trim() || '(809) 555-0100',
+      email: newProveedorForm.email.trim() || `contacto@${newProveedorForm.nombre.toLowerCase().replace(/\s+/g, '')}.do`,
+      categoria: newProveedorForm.categoria || 'Insumos Generales',
+      diasCredito: Number(newProveedorForm.diasCredito) || 30,
+      balance: 0,
+      estado: 'Activo',
+    }
+
+    const updated = [nuevo, ...proveedoresList]
+    setProveedoresList(updated)
+    setTenantData('compras_proveedores_v1', updated)
+    erpSync.emit('compras:proveedor_created', nuevo)
+
+    setShowNewProveedorModal(false)
+    setNewProveedorForm({
+      nombre: '',
+      rnc: '',
+      contacto: '',
+      telefono: '',
+      email: '',
+      categoria: 'Insumos Generales',
+      direccion: 'Santo Domingo, D.N.',
+      diasCredito: 30,
+    })
+    showToastMsg(`✅ Proveedor ${nuevo.nombre} (${nuevo.id}) registrado con éxito`)
+  }
+
+  // Guardar nueva Factura de Gasto con validación y sincronización con Finanzas
+  const handleCreateFactura = (e) => {
+    e.preventDefault()
+    if (!newFacturaForm.proveedor.trim()) {
+      showToastMsg('⚠️ Debe indicar el proveedor de la factura')
+      return
+    }
+    const montoNum = Number(newFacturaForm.monto)
+    if (!montoNum || montoNum <= 0) {
+      showToastMsg('⚠️ Ingrese un monto total válido mayor a 0')
+      return
+    }
+
+    const nextFacNum = newFacturaForm.numeroFactura.trim() || `FAC-PRV-${1000 + (facturasList.length || ordenes.length) + 1}`
+    const nextNcf = newFacturaForm.ncf.trim() || `B01000${45900 + (facturasList.length || ordenes.length) + 1}`
+
+    const nuevaFac = {
+      id: `FC-${Date.now()}`,
+      facturaNum: nextFacNum,
+      ncf: nextNcf,
+      proveedor: newFacturaForm.proveedor.trim(),
+      rnc: newFacturaForm.rnc.trim() || '1-31-89234-5',
+      ordenId: newFacturaForm.ordenId || 'Compra Directa',
+      fecha: newFacturaForm.fecha || new Date().toLocaleDateString('es-DO'),
+      monto: montoNum,
+      categoria: newFacturaForm.categoria || 'Gastos Operativos',
+      estado: newFacturaForm.estado || 'Pendiente Pago',
+      cuentaPago: newFacturaForm.cuentaPago || 'Banco Popular 960-123456',
+      concepto: newFacturaForm.concepto || 'Factura de Compras & Servicios Recibidos',
+    }
+
+    const updated = [nuevaFac, ...facturasList]
+    setFacturasList(updated)
+    setTenantData('compras_facturas_v1', updated)
+
+    // Sincronizar comprobante de gasto en Finanzas
+    try {
+      const finData = getTenantData('appes_erp_finanzas_data_v3', {})
+      const comprobantes = finData.comprobantes || []
+      const nextCompNum = `CP-G-${String(comprobantes.length + 1).padStart(4, '0')}`
+      const nuevoComprobante = {
+        id: String(Date.now()),
+        numero: nextCompNum,
+        tipo: 'Gasto',
+        categoria: nuevaFac.categoria,
+        descripcion: `Compra / Factura ${nuevaFac.facturaNum} (${nuevaFac.proveedor}) - NCF ${nuevaFac.ncf}`,
+        monto: montoNum,
+        fecha: nuevaFac.fecha,
+        cuenta: nuevaFac.cuentaPago,
+        estado: nuevaFac.estado === 'Pagada' ? 'Aprobado' : 'Pendiente',
+        creadoPor: 'Módulo de Compras / Cuentas por Pagar',
+      }
+      setTenantData('appes_erp_finanzas_data_v3', {
+        ...finData,
+        comprobantes: [nuevoComprobante, ...comprobantes],
+      })
+      erpSync.emit('finanzas:comprobante_created', nuevoComprobante)
+    } catch (err) {
+      console.warn('Error sincronizando con Finanzas:', err)
+    }
+
+    setShowNewFacturaModal(false)
+    setNewFacturaForm({
+      numeroFactura: '',
+      ncf: '',
+      proveedor: '',
+      rnc: '',
+      ordenId: '',
+      monto: '',
+      fecha: new Date().toLocaleDateString('es-DO'),
+      categoria: 'Insumos Generales',
+      estado: 'Pendiente Pago',
+      cuentaPago: 'Banco Popular 960-123456',
+      concepto: 'Factura de compras & gastos operativos',
+    })
+    showToastMsg(`✅ Factura ${nuevaFac.facturaNum} registrada y sincronizada con Finanzas`)
   }
 
   // Eliminar orden
@@ -1107,7 +1242,7 @@ export function ComprasHome() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 className="compras-btn-primary"
-                onClick={() => showToastMsg('✅ Módulo conectado con Finanzas y DGII')}
+                onClick={() => setShowNewFacturaModal(true)}
               >
                 + Registrar Factura de Gasto
               </button>
@@ -1129,6 +1264,32 @@ export function ComprasHome() {
                 </tr>
               </thead>
               <tbody>
+                {facturasList.map((fac) => {
+                  const neto = Number(fac.monto) / 1.18
+                  const itbis = Number(fac.monto) - neto
+                  return (
+                    <tr key={fac.id} style={{ background: '#F8FAFC' }}>
+                      <td>
+                        <strong style={{ color: '#0F172A' }}>{fac.facturaNum}</strong>
+                        <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 700 }}>NCF: {fac.ncf}</div>
+                      </td>
+                      <td>
+                        <strong>{fac.proveedor}</strong>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>RNC: {fac.rnc}</div>
+                      </td>
+                      <td>{fac.fecha}</td>
+                      <td><span style={{ color: '#2563EB', fontWeight: 700 }}>{fac.ordenId}</span></td>
+                      <td>{money(neto)}</td>
+                      <td style={{ color: '#D97706', fontWeight: 600 }}>{money(itbis)}</td>
+                      <td><strong style={{ color: '#0F172A' }}>{money(fac.monto)}</strong></td>
+                      <td>
+                        <span style={{ background: fac.estado === 'Pagada' ? '#DCFCE7' : '#FEF3C7', color: fac.estado === 'Pagada' ? '#16A34A' : '#D97706', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                          ● {fac.estado}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
                 {ordenes.map((ord, idx) => {
                   const itbis = ord.total - (ord.total / 1.18)
                   const neto = ord.total / 1.18
@@ -2105,6 +2266,249 @@ export function ComprasHome() {
                 Aplicar Filtros
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Registrar Factura de Gasto ── */}
+      {showNewFacturaModal && (
+        <div className="compras-modal-backdrop" onClick={() => setShowNewFacturaModal(false)}>
+          <div className="compras-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="compras-modal-header">
+              <h3>🧾 Registrar Factura de Gasto / Proveedor</h3>
+              <button className="compras-modal-close" onClick={() => setShowNewFacturaModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateFactura}>
+              <div className="compras-modal-body">
+                <div className="compras-form-group">
+                  <EnterprisePicker
+                    label="Proveedor Emisor *"
+                    required
+                    value={newFacturaForm.proveedor}
+                    onChange={(val, item) => {
+                      setNewFacturaForm(f => ({
+                        ...f,
+                        proveedor: val,
+                        rnc: item?.rnc || f.rnc,
+                        categoria: item?.categoria || f.categoria,
+                      }))
+                    }}
+                    items={proveedoresList.length > 0 ? proveedoresList : SEED_PROVEEDORES}
+                    displayField="nombre"
+                    subtitleField="categoria"
+                    filterField="categoria"
+                    filterLabel="Categoría"
+                    modalTitle="Directorio de Proveedores Homologados"
+                    icon="🏭"
+                    placeholder="Escriba o seleccione el proveedor emisor..."
+                  />
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>RNC Emisor</label>
+                    <input
+                      placeholder="1-31-89234-5"
+                      value={newFacturaForm.rnc}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, rnc: formatRNC(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>No. de Factura Proveedor</label>
+                    <input
+                      placeholder="Ej: FAC-99824"
+                      value={newFacturaForm.numeroFactura}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, numeroFactura: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>NCF Fiscal (DGII)</label>
+                    <input
+                      placeholder="Ej: B0100045899"
+                      value={newFacturaForm.ncf}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, ncf: e.target.value }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>Monto Total Factura (RD$) *</label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={newFacturaForm.monto}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, monto: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>Fecha de Emisión</label>
+                    <input
+                      placeholder="DD/MM/AAAA"
+                      value={newFacturaForm.fecha}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, fecha: e.target.value }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>Estado de Pago</label>
+                    <select
+                      value={newFacturaForm.estado}
+                      onChange={e => setNewFacturaForm(f => ({ ...f, estado: e.target.value }))}
+                    >
+                      <option value="Pendiente Pago">Pendiente Pago</option>
+                      <option value="Pagada">Pagada (Efectivo/Transferencia)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="compras-form-group">
+                  <label>Cuenta de Pago / Tesorería</label>
+                  <select
+                    value={newFacturaForm.cuentaPago}
+                    onChange={e => setNewFacturaForm(f => ({ ...f, cuentaPago: e.target.value }))}
+                  >
+                    <option value="Banco Popular 960-123456">Banco Popular Dominicano (Cta. Corriente)</option>
+                    <option value="Banco BHD 450-987654">Banco BHD (Cta. Ahorros)</option>
+                    <option value="Efectivo / Caja Chica">Caja Operativa / Efectivo</option>
+                  </select>
+                </div>
+
+                <div className="compras-form-group">
+                  <label>Concepto / Detalle del Gasto</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Descripción del bien adquirido o servicio prestado..."
+                    value={newFacturaForm.concepto}
+                    onChange={e => setNewFacturaForm(f => ({ ...f, concepto: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="compras-modal-footer">
+                <button type="button" className="compras-outline-btn" onClick={() => setShowNewFacturaModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="compras-btn-primary">
+                  Registrar Factura en Sistema
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Nuevo Proveedor Homologado ── */}
+      {showNewProveedorModal && (
+        <div className="compras-modal-backdrop" onClick={() => setShowNewProveedorModal(false)}>
+          <div className="compras-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="compras-modal-header">
+              <h3>🏢 Registrar Nuevo Proveedor</h3>
+              <button className="compras-modal-close" onClick={() => setShowNewProveedorModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateProveedor}>
+              <div className="compras-modal-body">
+                <div className="compras-form-group">
+                  <label>Razón Social / Nombre del Proveedor *</label>
+                  <input
+                    required
+                    placeholder="Ej: Distribuidora Nacional SRL"
+                    value={newProveedorForm.nombre}
+                    onChange={e => setNewProveedorForm(f => ({ ...f, nombre: e.target.value }))}
+                  />
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>RNC / Identificación Fiscal</label>
+                    <input
+                      placeholder="1-31-89234-5"
+                      value={newProveedorForm.rnc}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, rnc: formatRNC(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>Categoría Principal</label>
+                    <select
+                      value={newProveedorForm.categoria}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, categoria: e.target.value }))}
+                    >
+                      <option value="Tecnología & Hardware">Tecnología & Hardware</option>
+                      <option value="Componentes Electrónicos">Componentes Electrónicos</option>
+                      <option value="Insumos de Oficina">Insumos de Oficina</option>
+                      <option value="Mantenimiento & Herramientas">Mantenimiento & Herramientas</option>
+                      <option value="Mobiliario & Oficina">Mobiliario & Oficina</option>
+                      <option value="Seguridad & Salud Ocupacional">Seguridad & Salud Ocupacional</option>
+                      <option value="Licencias & Software">Licencias & Software</option>
+                      <option value="Empaque & Logística">Empaque & Logística</option>
+                      <option value="Insumos Generales">Insumos Generales</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>Persona de Contacto</label>
+                    <input
+                      placeholder="Ej: Lic. Marcos Santana"
+                      value={newProveedorForm.contacto}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, contacto: e.target.value }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>Teléfono de Contacto</label>
+                    <input
+                      placeholder="(809) 555-0199"
+                      value={newProveedorForm.telefono}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, telefono: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="compras-form-row">
+                  <div className="compras-form-group">
+                    <label>Correo Electrónico Comercial</label>
+                    <input
+                      type="email"
+                      placeholder="ventas@proveedor.com"
+                      value={newProveedorForm.email}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, email: e.target.value }))}
+                    />
+                  </div>
+                  <div className="compras-form-group">
+                    <label>Término de Crédito (Días)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="180"
+                      placeholder="30"
+                      value={newProveedorForm.diasCredito}
+                      onChange={e => setNewProveedorForm(f => ({ ...f, diasCredito: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="compras-form-group">
+                  <label>Dirección / Ubicación</label>
+                  <input
+                    placeholder="Av. Principal #100, Santo Domingo, D.N."
+                    value={newProveedorForm.direccion}
+                    onChange={e => setNewProveedorForm(f => ({ ...f, direccion: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="compras-modal-footer">
+                <button type="button" className="compras-outline-btn" onClick={() => setShowNewProveedorModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="compras-btn-primary">
+                  Guardar Proveedor Homologado
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
