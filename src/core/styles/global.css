@@ -939,6 +939,101 @@ textarea {
   background-color: #334155 !important;
 }
 
+/* ── Ajustes Adicionales de Dark Mode en Barra Superior y Barra Lateral ── */
+[data-theme="dark"] .sidebar-plan-card {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .sidebar-plan-btn {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #60A5FA !important;
+}
+
+[data-theme="dark"] .sidebar-plan-btn:hover {
+  background-color: #334155 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .sidebar-plan-badge {
+  background-color: #334155 !important;
+  color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] .sidebar-plan-progress-bg {
+  background-color: #334155 !important;
+}
+
+[data-theme="dark"] .topbar-hamburger-btn {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .topbar-search-wrapper > div {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .topbar-search-wrapper input {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .topbar-datetime-widget {
+  background: #0F172A !important;
+  border-color: #334155 !important;
+  color: #60A5FA !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .topbar-datetime-widget span {
+  color: #60A5FA !important;
+}
+
+[data-theme="dark"] .topbar-scanner-btn,
+[data-theme="dark"] .topbar-help-btn {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .topbar-scanner-btn:hover,
+[data-theme="dark"] .topbar-help-btn:hover {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .topbar-user-email span:first-child {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .topbar-user-email span:last-child {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .topbar-user-menu-btn,
+[data-theme="dark"] div[title="Ver opciones de cuenta"] {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .topbar-shortcut-pill {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] .ajustes-badge-status {
+  background-color: rgba(30, 64, 175, 0.3) !important;
+  color: #93C5FD !important;
+}
+
+[data-theme="dark"] .ajustes-badge-status.green {
+  background-color: rgba(6, 95, 70, 0.3) !important;
+  color: #6EE7B7 !important;
+}
+
 
 
 
