@@ -719,7 +719,7 @@ textarea {
   line-height: 1.4 !important;
 }
 
-/* Modales en cualquier pantalla: estructura sin deformaciones */
+/* Modales en cualquier pantalla: estructura sin deformaciones y pie de formulario siempre visible */
 .fn-modal-card,
 .rrhh-modal-box,
 .ventas-modal-box,
@@ -727,9 +727,25 @@ textarea {
 .inv-modal-box,
 .ep-modal-box,
 .crm-modal-box {
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  max-height: 90vh !important;
+  overflow: hidden !important;
+}
+
+/* Formularios dentro de modales: ocupan el 100% de la altura y permiten scroll en el cuerpo */
+.compras-modal-box form,
+.ventas-modal-box form,
+.rrhh-modal-box form,
+.inv-modal-box form,
+.crm-modal-box form,
+.fn-modal-card form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 .fn-modal-body,
@@ -737,10 +753,23 @@ textarea {
 .ventas-modal-body,
 .compras-modal-body,
 .inv-modal-body,
-.crm-modal-body {
-  overflow-y: auto;
-  max-height: 75vh;
-  box-sizing: border-box;
+.crm-modal-body,
+.fn-modal-form {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.compras-modal-footer,
+.ventas-modal-footer,
+.rrhh-modal-footer,
+.inv-modal-footer,
+.crm-modal-footer,
+.fn-modal-actions {
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .ep-input-wrapper {
@@ -753,6 +782,7 @@ textarea {
   width: 100%;
   box-sizing: border-box;
 }
+
 
 
 

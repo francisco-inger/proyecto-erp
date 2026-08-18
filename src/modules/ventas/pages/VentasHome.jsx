@@ -212,19 +212,267 @@ export function VentasHome() {
     showToastMsg(`Estado actualizado a ${newStatus}`)
   }
 
+  // Impresión profesional de Factura / Pedido de Venta idéntica al diseño del ERP
+  const handlePrintOrder = (order) => {
+    const printWindow = window.open('', '_blank', 'width=850,height=900')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    const subtotal = Number(order.total) / 1.18
+    const itbis = Number(order.total) - subtotal
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Factura / Pedido de Venta - ${order.numero}</title>
+        <meta charset="utf-8" />
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            color: #0F172A;
+            margin: 0;
+            padding: 36px;
+            background: #FFFFFF;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #2563EB;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+          }
+          .logo-title h1 {
+            margin: 0;
+            color: #1E3A8A;
+            font-size: 24px;
+            font-weight: 800;
+          }
+          .logo-title p {
+            margin: 4px 0 0;
+            color: #64748B;
+            font-size: 12px;
+          }
+          .oc-badge {
+            text-align: right;
+          }
+          .oc-number {
+            font-size: 22px;
+            font-weight: 800;
+            color: #2563EB;
+          }
+          .oc-date {
+            font-size: 12px;
+            color: #64748B;
+            margin-top: 4px;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+          }
+          .info-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 14px 18px;
+          }
+          .info-box h3 {
+            margin: 0 0 10px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2563EB;
+          }
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+          }
+          .info-label { color: #64748B; font-weight: 500; }
+          .info-val { font-weight: 700; color: #0F172A; }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+          }
+          th {
+            background: #1E3A8A;
+            color: #FFFFFF;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+            padding: 10px 12px;
+          }
+          td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 12px;
+          }
+          .totals-box {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 36px;
+          }
+          .totals-table {
+            width: 320px;
+          }
+          .totals-table td {
+            padding: 6px 12px;
+            border-bottom: none;
+          }
+          .total-highlight {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1E3A8A;
+            border-top: 2px solid #E2E8F0;
+          }
+          .notes-box {
+            background: #F1F5F9;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #475569;
+            margin-bottom: 40px;
+          }
+          .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            padding-top: 20px;
+          }
+          .signature-line {
+            width: 200px;
+            border-top: 1px solid #94A3B8;
+            text-align: center;
+            font-size: 11px;
+            color: #64748B;
+            padding-top: 6px;
+          }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-title">
+            <h1>APPEX.ERP Enterprise Suite</h1>
+            <p>Módulo de Ventas & Facturación Comercial · RNC: 1-30-99887-1</p>
+            <p>Av. Winston Churchill #109, Santo Domingo, D.N. · Tel: (809) 555-0192</p>
+          </div>
+          <div class="oc-badge">
+            <div class="oc-number">FACTURA / PEDIDO</div>
+            <div class="oc-number" style="font-size: 18px;">${order.numero}</div>
+            <div class="oc-date">Fecha: ${order.fecha}</div>
+            <div class="oc-date">Estado: <strong>${order.estado}</strong></div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <h3>Datos del Cliente</h3>
+            <div class="info-row"><span class="info-label">Cliente / Razón Social:</span><span class="info-val">${order.cliente}</span></div>
+            <div class="info-row"><span class="info-label">Comprobante Fiscal:</span><span class="info-val">B0100004521 (Crédito Fiscal)</span></div>
+            <div class="info-row"><span class="info-label">Canal de Venta:</span><span class="info-val">Venta Directa Corporativa</span></div>
+          </div>
+          <div class="info-box">
+            <h3>Detalles de la Operación</h3>
+            <div class="info-row"><span class="info-label">Fecha de Registro:</span><span class="info-val">${order.fecha}</span></div>
+            <div class="info-row"><span class="info-label">Moneda:</span><span class="info-val">Pesos Dominicanos (RD$)</span></div>
+            <div class="info-row"><span class="info-label">Términos:</span><span class="info-val">Contado / Transferencia</span></div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Descripción de Bienes / Servicios</th>
+              <th style="text-align: center; width: 80px;">Cant.</th>
+              <th style="text-align: right; width: 140px;">Precio Unit.</th>
+              <th style="text-align: right; width: 140px;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><strong>${order.observaciones || 'Suministro y entrega de productos autorizados según pedido'}</strong></td>
+              <td style="text-align: center;">1</td>
+              <td style="text-align: right;">RD$ ${Number(order.total).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+              <td style="text-align: right;"><strong>RD$ ${Number(order.total).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="totals-box">
+          <table class="totals-table">
+            <tr>
+              <td>Subtotal Neto:</td>
+              <td style="text-align: right;">RD$ ${subtotal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+            </tr>
+            <tr>
+              <td>ITBIS (18%):</td>
+              <td style="text-align: right;">RD$ ${itbis.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+            </tr>
+            <tr class="total-highlight">
+              <td>Total Factura:</td>
+              <td style="text-align: right; color: #2563EB;">RD$ ${Number(order.total).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${order.observaciones ? `
+          <div class="notes-box">
+            <strong>Observaciones del Pedido:</strong><br/>
+            ${order.observaciones}
+          </div>
+        ` : ''}
+
+        <div class="signatures">
+          <div class="signature-line">
+            Firma del Vendedor / Autorizado
+          </div>
+          <div class="signature-line">
+            Recibido Conforme por el Cliente
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.open()
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+  }
+
   // Exportar pedidos a CSV
   const handleExportCSV = () => {
-    const csvContent = [
-      ['Numero', 'Cliente', 'Fecha', 'Estado', 'Total', 'Observaciones'].join(','),
+    const csvContent = '\uFEFF' + [
+      ['Numero', 'Cliente', 'Fecha', 'Estado', 'Total DOP', 'Observaciones'].join(','),
       ...orders.map(o => [
         `"${o.numero}"`,
         `"${o.cliente}"`,
         `"${o.fecha}"`,
         `"${o.estado}"`,
         o.total,
-        `"${o.observaciones || ''}"`,
+        `"${(o.observaciones || '').replace(/"/g, '""')}"`,
       ].join(',')),
-    ].join('\n')
+    ].join('\r\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -234,7 +482,7 @@ export function VentasHome() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    showToastMsg('Pedidos exportados a CSV')
+    showToastMsg('Pedidos exportados a CSV con éxito')
   }
 
   return (
@@ -639,9 +887,15 @@ export function VentasHome() {
               </select>
             </div>
 
-            <button className="ventas-full-detail-btn" onClick={() => showToastMsg(`Detalle completo del pedido ${selectedOrder.numero}`)}>
-              Ver detalle completo
-            </button>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                className="ventas-full-detail-btn"
+                style={{ flex: 1, background: '#2563EB', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                onClick={() => handlePrintOrder(selectedOrder)}
+              >
+                <span>🖨️</span> Imprimir Factura
+              </button>
+            </div>
           </div>
         )}
       </div>

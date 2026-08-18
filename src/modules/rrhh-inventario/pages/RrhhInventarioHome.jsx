@@ -1130,7 +1130,7 @@ export function RrhhInventarioHome() {
                 const rows = products.map(p => {
                   const margen = p.precio > 0 ? (((p.precio - p.costo) / p.precio) * 100).toFixed(1) : '0'
                   return [
-                    `"${p.nombre}"`,
+                    `"${(p.nombre || '').replace(/"/g, '""')}"`,
                     `"${p.codigo || ''}"`,
                     p.stock,
                     p.costo,
@@ -1139,7 +1139,7 @@ export function RrhhInventarioHome() {
                     `"${margen}%"`,
                   ]
                 })
-                const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+                const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n')
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
                 const url = URL.createObjectURL(blob)
                 const link = document.createElement('a')
@@ -1151,7 +1151,115 @@ export function RrhhInventarioHome() {
                 showToastMsg('✅ Reporte Kardex exportado correctamente en CSV')
               }}
             >
-              📥 Exportar Kardex (Excel/CSV)
+              📥 Exportar Excel/CSV
+            </button>
+            <button
+              className="inv-btn-secondary"
+              style={{ background: '#2563EB', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+              onClick={() => {
+                const printWindow = window.open('', '_blank', 'width=850,height=900')
+                if (!printWindow) {
+                  window.print()
+                  return
+                }
+
+                const totalVal = products.reduce((acc, p) => acc + ((p.stock || 0) * (p.costo || 0)), 0)
+
+                const htmlContent = `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>Reporte Oficial de Inventario y Valoración Kardex</title>
+                    <meta charset="utf-8" />
+                    <style>
+                      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                      body { font-family: 'Inter', sans-serif; color: #0F172A; margin: 0; padding: 36px; background: #FFFFFF; }
+                      .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563EB; padding-bottom: 20px; margin-bottom: 24px; }
+                      .logo-title h1 { margin: 0; color: #1E3A8A; font-size: 24px; font-weight: 800; }
+                      .logo-title p { margin: 4px 0 0; color: #64748B; font-size: 12px; }
+                      .badge-box { text-align: right; }
+                      .badge-title { font-size: 18px; font-weight: 800; color: #2563EB; }
+                      .badge-date { font-size: 12px; color: #64748B; margin-top: 4px; }
+                      table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+                      th { background: #1E3A8A; color: #FFFFFF; font-size: 11px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+                      td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
+                      .totals-box { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+                      .totals-table { width: 320px; }
+                      .totals-table td { padding: 6px 12px; border-bottom: none; }
+                      .total-highlight { font-size: 15px; font-weight: 800; color: #1E3A8A; border-top: 2px solid #E2E8F0; }
+                      .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; }
+                      .signature-line { width: 220px; border-top: 1px solid #94A3B8; text-align: center; font-size: 11px; color: #64748B; padding-top: 6px; }
+                      @media print { body { padding: 0; } }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <div class="logo-title">
+                        <h1>APPEX.ERP Enterprise Suite</h1>
+                        <p>Gestión de Inventarios & Almacén Central · RNC: 1-30-99887-1</p>
+                        <p>Av. Winston Churchill #109, Santo Domingo, D.N.</p>
+                      </div>
+                      <div class="badge-box">
+                        <div class="badge-title">VALORACIÓN DE INVENTARIO</div>
+                        <div class="badge-date">Fecha: ${new Date().toLocaleDateString('es-DO')}</div>
+                        <div class="badge-date">Estado: <strong>Oficial / Auditado</strong></div>
+                      </div>
+                    </div>
+
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>SKU</th>
+                          <th>Producto / Bien</th>
+                          <th style="text-align: center;">Stock</th>
+                          <th style="text-align: right;">Costo Unit.</th>
+                          <th style="text-align: right;">Precio Venta</th>
+                          <th style="text-align: right;">Valor en Stock</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${products.map(p => `
+                          <tr>
+                            <td><strong>${p.codigo || 'SKU'}</strong></td>
+                            <td><strong>${p.nombre}</strong><br/><span style="color:#64748B; font-size:10px;">${p.categoria || 'General'}</span></td>
+                            <td style="text-align: center;">${p.stock} uds.</td>
+                            <td style="text-align: right;">RD$ ${Number(p.costo || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                            <td style="text-align: right;">RD$ ${Number(p.precio || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                            <td style="text-align: right; font-weight: 700;">RD$ ${Number((p.stock || 0) * (p.costo || 0)).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+
+                    <div class="totals-box">
+                      <table class="totals-table">
+                        <tr class="total-highlight">
+                          <td>Valor Total del Inventario:</td>
+                          <td style="text-align: right; color: #2563EB;">RD$ ${totalVal.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <div class="signatures">
+                      <div class="signature-line">Encargado de Almacén / Kardex</div>
+                      <div class="signature-line">Contraloría / Auditor de Activos</div>
+                    </div>
+
+                    <script>
+                      window.onload = function() {
+                        window.print();
+                      };
+                    </script>
+                  </body>
+                  </html>
+                `
+
+                printWindow.document.open()
+                printWindow.document.write(htmlContent)
+                printWindow.document.close()
+              }}
+            >
+              📄 Exportar PDF
             </button>
           </div>
 

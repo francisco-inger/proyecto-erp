@@ -10,7 +10,118 @@ export function ReportesFinancierosTab({ kpis, categorias, comprobantes, cuentas
   const totalActivos = (cuentas || []).reduce((acc, c) => acc + (c.saldo || 0), 0)
 
   const handleExportPDF = () => {
-    window.print()
+    const printWindow = window.open('', '_blank', 'width=850,height=900')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    const titleMap = {
+      pyg: 'Estado de Ganancias y Pérdidas (P&G)',
+      balance: 'Balance General Simplificado',
+      flujo: 'Flujo de Efectivo Detallado'
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Informe Financiero Oficial - ${titleMap[reporteTipo] || 'Reporte'}</title>
+        <meta charset="utf-8" />
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body { font-family: 'Inter', sans-serif; color: #0F172A; margin: 0; padding: 36px; background: #FFFFFF; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563EB; padding-bottom: 20px; margin-bottom: 24px; }
+          .logo-title h1 { margin: 0; color: #1E3A8A; font-size: 24px; font-weight: 800; }
+          .logo-title p { margin: 4px 0 0; color: #64748B; font-size: 12px; }
+          .badge-box { text-align: right; }
+          .badge-title { font-size: 18px; font-weight: 800; color: #2563EB; }
+          .badge-date { font-size: 12px; color: #64748B; margin-top: 4px; }
+          .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+          .kpi-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; text-align: center; }
+          .kpi-val { font-size: 18px; font-weight: 800; color: #1E3A8A; }
+          .kpi-lbl { font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+          th { background: #1E3A8A; color: #FFFFFF; font-size: 11px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+          td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; }
+          .signature-line { width: 220px; border-top: 1px solid #94A3B8; text-align: center; font-size: 11px; color: #64748B; padding-top: 6px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-title">
+            <h1>APPEX.ERP Enterprise Suite</h1>
+            <p>Dirección de Finanzas & Contabilidad Corporativa · RNC: 1-30-99887-1</p>
+            <p>Av. Winston Churchill #109, Santo Domingo, D.N.</p>
+          </div>
+          <div class="badge-box">
+            <div class="badge-title">${(titleMap[reporteTipo] || 'ESTADO FINANCIERO').toUpperCase()}</div>
+            <div class="badge-date">Período: ${periodo}</div>
+            <div class="badge-date">Moneda: Pesos Dominicanos (RD$)</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #059669;">RD$ ${totalIngresos.toLocaleString('es-DO')}</div>
+            <div class="kpi-lbl">Ingresos Operativos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #DC2626;">RD$ ${totalGastos.toLocaleString('es-DO')}</div>
+            <div class="kpi-lbl">Egresos / Gastos</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #2563EB;">RD$ ${resultadoNeto.toLocaleString('es-DO')}</div>
+            <div class="kpi-lbl">Resultado Neto</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto Contable</th>
+              <th style="text-align: right;">Monto (RD$)</th>
+              <th style="text-align: right;">% Ratio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Ingresos Operativos Totales</strong></td>
+              <td style="text-align: right; font-weight: 700; color: #059669;">RD$ ${totalIngresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+              <td style="text-align: right;">100.0%</td>
+            </tr>
+            <tr>
+              <td><strong>2. Egresos Operativos y Gastos</strong></td>
+              <td style="text-align: right; font-weight: 700; color: #DC2626;">RD$ ${totalGastos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+              <td style="text-align: right;">${totalIngresos > 0 ? ((totalGastos / totalIngresos) * 100).toFixed(1) : 0}%</td>
+            </tr>
+            <tr style="background: #EFF6FF; font-weight: 800;">
+              <td>3. Utilidad Neta del Ejercicio</td>
+              <td style="text-align: right; color: #2563EB;">RD$ ${resultadoNeto.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+              <td style="text-align: right; color: #2563EB;">${totalIngresos > 0 ? ((resultadoNeto / totalIngresos) * 100).toFixed(1) : 0}%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="signatures">
+          <div class="signature-line">Contador General / CPA</div>
+          <div class="signature-line">Auditor Financiero Autorizado</div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.open()
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
   }
 
   return (

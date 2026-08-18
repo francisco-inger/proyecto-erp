@@ -332,6 +332,113 @@ export function CrmHome() {
   }
 
   // ── Exportación de Reportes ──
+  const handleExportPDF = () => {
+    const printWindow = window.open('', '_blank', 'width=850,height=900')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Informe Oficial de Gestión CRM & Oportunidades</title>
+        <meta charset="utf-8" />
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body { font-family: 'Inter', sans-serif; color: #0F172A; margin: 0; padding: 36px; background: #FFFFFF; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563EB; padding-bottom: 20px; margin-bottom: 24px; }
+          .logo-title h1 { margin: 0; color: #1E3A8A; font-size: 24px; font-weight: 800; }
+          .logo-title p { margin: 4px 0 0; color: #64748B; font-size: 12px; }
+          .badge-box { text-align: right; }
+          .badge-title { font-size: 18px; font-weight: 800; color: #2563EB; }
+          .badge-date { font-size: 12px; color: #64748B; margin-top: 4px; }
+          .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+          .kpi-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; text-align: center; }
+          .kpi-val { font-size: 20px; font-weight: 800; color: #1E3A8A; }
+          .kpi-lbl { font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+          th { background: #1E3A8A; color: #FFFFFF; font-size: 11px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+          td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; }
+          .signature-line { width: 220px; border-top: 1px solid #94A3B8; text-align: center; font-size: 11px; color: #64748B; padding-top: 6px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-title">
+            <h1>APPEX.ERP Enterprise Suite</h1>
+            <p>Gerencia Comercial & Gestión de Clientes CRM · RNC: 1-30-99887-1</p>
+            <p>Av. Winston Churchill #109, Santo Domingo, D.N.</p>
+          </div>
+          <div class="badge-box">
+            <div class="badge-title">REPORTE COMERCIAL CRM</div>
+            <div class="badge-date">Fecha: ${new Date().toLocaleDateString('es-DO')}</div>
+            <div class="badge-date">Estado: <strong>Oficial</strong></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #2563EB;">${clients.length}</div>
+            <div class="kpi-lbl">Clientes Registrados</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #059669;">${conversionRateVal}%</div>
+            <div class="kpi-lbl">Tasa de Conversión</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color: #1E3A8A;">${fmtMoney(totalPotentialRevenue)}</div>
+            <div class="kpi-lbl">Pipeline Comercial</div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; margin: 0 0 10px; color: #1E3A8A; text-transform: uppercase;">Oportunidades de Venta y Pipeline</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Oportunidad / Título</th>
+              <th>Cliente Asociado</th>
+              <th>Etapa</th>
+              <th>Probabilidad</th>
+              <th style="text-align: right;">Valor Estimado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${opportunities.map(op => `
+              <tr>
+                <td><strong>${op.titulo}</strong></td>
+                <td>${op.cliente}</td>
+                <td><span style="color: #2563EB; font-weight: 600;">${op.etapa}</span></td>
+                <td>${op.probabilidad}%</td>
+                <td style="text-align: right; font-weight: 700;">${fmtMoney(op.valor)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="signatures">
+          <div class="signature-line">Director Comercial / CRM</div>
+          <div class="signature-line">Gerente de Cuentas Clave</div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `
+
+    printWindow.document.open()
+    printWindow.document.write(htmlContent)
+    printWindow.document.close()
+    showToastMsg('Informe CRM en PDF preparado')
+  }
+
   const handleExportJSON = () => {
     const data = {
       generado: new Date().toISOString(),
@@ -1175,9 +1282,14 @@ export function CrmHome() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="crm-toolbar">
             <span style={{ fontWeight: 700, color: 'var(--color-ink)' }}>Análisis Comercial del Periodo (Mayo 2025)</span>
-            <button className="crm-btn-primary" onClick={handleExportJSON}>
-              📥 Exportar Datos (JSON)
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="crm-btn-primary" onClick={handleExportPDF} style={{ background: '#2563EB', color: '#FFF' }}>
+                <span>📄</span> Exportar PDF Oficial
+              </button>
+              <button className="crm-btn-secondary" onClick={handleExportJSON}>
+                <span>📥</span> Exportar JSON
+              </button>
+            </div>
           </div>
 
           <div className="crm-reports-grid">

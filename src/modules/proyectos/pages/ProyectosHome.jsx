@@ -176,7 +176,110 @@ export function ProyectosHome() {
               + Nuevo Proyecto
             </button>
             <button
-              onClick={() => window.print()}
+              onClick={() => {
+                const printWindow = window.open('', '_blank', 'width=850,height=900')
+                if (!printWindow) {
+                  window.print()
+                  return
+                }
+
+                const totalPresupuesto = proyectos.reduce((acc, p) => acc + (Number(p.presupuesto) || 0), 0)
+
+                const htmlContent = `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>Reporte Oficial de Proyectos & Roadmap Corporativo</title>
+                    <meta charset="utf-8" />
+                    <style>
+                      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                      body { font-family: 'Inter', sans-serif; color: #0F172A; margin: 0; padding: 36px; background: #FFFFFF; }
+                      .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2563EB; padding-bottom: 20px; margin-bottom: 24px; }
+                      .logo-title h1 { margin: 0; color: #1E3A8A; font-size: 24px; font-weight: 800; }
+                      .logo-title p { margin: 4px 0 0; color: #64748B; font-size: 12px; }
+                      .badge-box { text-align: right; }
+                      .badge-title { font-size: 18px; font-weight: 800; color: #2563EB; }
+                      .badge-date { font-size: 12px; color: #64748B; margin-top: 4px; }
+                      table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12px; }
+                      th { background: #1E3A8A; color: #FFFFFF; font-size: 11px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+                      td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
+                      .totals-box { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+                      .totals-table { width: 320px; }
+                      .totals-table td { padding: 6px 12px; border-bottom: none; }
+                      .total-highlight { font-size: 15px; font-weight: 800; color: #1E3A8A; border-top: 2px solid #E2E8F0; }
+                      .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; }
+                      .signature-line { width: 220px; border-top: 1px solid #94A3B8; text-align: center; font-size: 11px; color: #64748B; padding-top: 6px; }
+                      @media print { body { padding: 0; } }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <div class="logo-title">
+                        <h1>APPEX.ERP Enterprise Suite</h1>
+                        <p>Gestión de Proyectos & Roadmap Corporativo · RNC: 1-30-99887-1</p>
+                        <p>Av. Winston Churchill #109, Santo Domingo, D.N.</p>
+                      </div>
+                      <div class="badge-box">
+                        <div class="badge-title">ESTADO DE PROYECTOS</div>
+                        <div class="badge-date">Fecha: ${new Date().toLocaleDateString('es-DO')}</div>
+                        <div class="badge-date">Estado: <strong>Oficial</strong></div>
+                      </div>
+                    </div>
+
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Código</th>
+                          <th>Proyecto / Nombre</th>
+                          <th>Cliente</th>
+                          <th>Fecha Límite</th>
+                          <th style="text-align: center;">Avance</th>
+                          <th style="text-align: right;">Presupuesto</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${proyectos.map(p => `
+                          <tr>
+                            <td><strong>${p.id}</strong></td>
+                            <td><strong>${p.nombre}</strong></td>
+                            <td>${p.cliente}</td>
+                            <td>${p.fechaFin}</td>
+                            <td style="text-align: center; font-weight: 700; color: #2563EB;">${p.avance}%</td>
+                            <td style="text-align: right; font-weight: 700;">RD$ ${Number(p.presupuesto || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                            <td><strong>${p.estado}</strong></td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+
+                    <div class="totals-box">
+                      <table class="totals-table">
+                        <tr class="total-highlight">
+                          <td>Presupuesto Total Gestionado:</td>
+                          <td style="text-align: right; color: #2563EB;">RD$ ${totalPresupuesto.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <div class="signatures">
+                      <div class="signature-line">Director de Proyectos / PMO</div>
+                      <div class="signature-line">Dirección de Operaciones</div>
+                    </div>
+
+                    <script>
+                      window.onload = function() {
+                        window.print();
+                      };
+                    </script>
+                  </body>
+                  </html>
+                `
+
+                printWindow.document.open()
+                printWindow.document.write(htmlContent)
+                printWindow.document.close()
+              }}
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 color: '#FFFFFF',
@@ -191,7 +294,7 @@ export function ProyectosHome() {
                 gap: 6
               }}
             >
-              🖨️ Imprimir Roadmaps
+              📄 Exportar PDF
             </button>
           </div>
         </div>
